@@ -105,14 +105,5 @@ public sealed class DevelopmentInputContractTests
             if (existed) PlayerPrefs.SetInt(key, saved); else PlayerPrefs.DeleteKey(key);
         }
     }
-
-    [Test]
-    public void RuntimeNeutralFeedbackMatchesDevelopmentAdapterDefaults()
-    {
-        var settings = new CombatFeelLabSettings();
-        foreach (var descriptor in CombatFeelLabSettings.Descriptors)
-            Assert.That(CombatFeelParameterDefaults.Get(descriptor.Parameter),
-                Is.EqualTo(settings.Get(descriptor.Parameter)), descriptor.Parameter.ToString());
-    }
 }
 #endif

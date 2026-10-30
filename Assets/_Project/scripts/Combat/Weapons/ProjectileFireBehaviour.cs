@@ -108,11 +108,6 @@ public sealed class ProjectileFireBehaviour : MonoBehaviour, IWeaponFireBehaviou
             context.KnockbackForce
         );
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.RegisterProjectile(
-            projectileObject, context.Direction);
-#endif
-
         ProjectileCombatContext projectileContext = pooled != null
             ? pooled.CombatContext
             : projectileObject.GetComponent<ProjectileCombatContext>();

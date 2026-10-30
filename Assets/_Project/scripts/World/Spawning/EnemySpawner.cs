@@ -626,9 +626,9 @@ public partial class EnemySpawner : MonoBehaviour
     }
 
     [Header("Feel Test Production Prefab Catalog")]
-    [SerializeField] private GameObject feelTestBasicPrefab;
-    [SerializeField] private GameObject feelTestElitePrefab;
-    [SerializeField] private GameObject feelTestShooterPrefab;
+    [SerializeField] private GameObject debugBasicPrefab;
+    [SerializeField] private GameObject debugElitePrefab;
+    [SerializeField] private GameObject debugShooterPrefab;
 #endif
     [Header("Legacy Spawn Settings")]
     [Tooltip("Used when the selected level has no EnemySpawnProfile.")]
@@ -953,9 +953,9 @@ public partial class EnemySpawner : MonoBehaviour
     {
         GameObject catalogPrefab = archetype switch
         {
-            DebugEnemyArchetype.Basic => feelTestBasicPrefab,
-            DebugEnemyArchetype.Elite => feelTestElitePrefab,
-            DebugEnemyArchetype.Shooter => feelTestShooterPrefab,
+            DebugEnemyArchetype.Basic => debugBasicPrefab,
+            DebugEnemyArchetype.Elite => debugElitePrefab,
+            DebugEnemyArchetype.Shooter => debugShooterPrefab,
             _ => null
         };
         if (archetype == DebugEnemyArchetype.Basic ||
@@ -1057,16 +1057,6 @@ public partial class EnemySpawner : MonoBehaviour
         // Intentionally bypasses SpawnCycle, maxAlive and wave gates while
         // reusing the single production initialization path.
         return SpawnEnemyAt(prefab, position, false);
-    }
-
-    public void ConfigureFeelTestPrefabCatalog(
-        GameObject basic,
-        GameObject elite,
-        GameObject shooter)
-    {
-        feelTestBasicPrefab = basic;
-        feelTestElitePrefab = elite;
-        feelTestShooterPrefab = shooter;
     }
 
     private static bool IsFinite(Vector3 value) =>

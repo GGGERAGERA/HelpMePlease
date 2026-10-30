@@ -709,7 +709,7 @@ public sealed class EnemyOrbitalLabSandboxTests
         var go = new GameObject("Ricochet fixture"); go.transform.position = position;
         go.AddComponent<CircleCollider2D>().radius = .25f;
         var hp = go.AddComponent<EnemyHealth>(); hp.SetRuntimeMaxHealth(100);
-        var dummy = go.AddComponent<CombatFeelTestDummy>(); dummy.Initialize(null); dummy.Invulnerable = false;
+        var dummy = go.AddComponent<LabEnemyDummy>(); dummy.Initialize(); dummy.Invulnerable = false;
         return hp;
     }
     [UnityTest]

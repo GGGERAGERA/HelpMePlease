@@ -27,7 +27,6 @@ public sealed class BotBatchRunner : MonoBehaviour
     {
         if (IsActive || count < 1 || count > 100 || !(golden ? session.CanStartGoldenPath : session.CanStart) || (speed != 1f && speed != 5f && speed != 10f)) return false;
         goldenPath = golden;
-        PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
         originalScale = Time.timeScale > 0f ? Time.timeScale : 1f;
         Result = new BotBatchResult { RequestedRuns = count, SeedMode = mode.ToString(), FixedSeed = fixedSeed, SimulationSpeed = speed };
         if (golden) Result.Strategy = "GoldenPath";

@@ -117,7 +117,7 @@ public static class OrbitalConstructorSmoke
         var inside=lab.SpawnTarget(false,center);
         var outside=lab.SpawnTarget(false,center+Vector2.right*(def.DiskRadius+.6f));
         foreach (var enemy in new[] { onFrame,inside,outside })
-        { enemy.GetComponent<CombatFeelTestDummy>().ApplyMode(CombatFeelDummyMode.Static); enemy.SetRuntimeMaxHealth(1000); }
+        { enemy.GetComponent<LabEnemyDummy>().ApplyMode(LabEnemyDummyMode.Static); enemy.SetRuntimeMaxHealth(1000); }
         int calculations=lab.RotationRecalculations;
         lab.Resume(); yield return .08f;
         Require(inside.CurrentHealth==988 && lab.Combat.ContactHits==1,"only the actual saw disk applies one 12-damage hit");
@@ -128,12 +128,12 @@ public static class OrbitalConstructorSmoke
         Require(lab.RotationRecalculations==calculations,"rotation is not recalculated each frame");
         yield return .1f;
         Require(lab.Combat.ContactHits==1,"per-target repeat interval still applies");
-        outside.GetComponent<CombatFeelTestDummy>().MoveRoot(center+Vector2.right*(def.DiskRadius-.1f));
+        outside.GetComponent<LabEnemyDummy>().MoveRoot(center+Vector2.right*(def.DiskRadius-.1f));
         yield return .08f;
         Require(outside.CurrentHealth==988,"moving target into visible disk produces contact");
         lab.Pause(); lab.ClearEncounter();
         var near=lab.SpawnTarget(false,new Vector2(1.2f,.4f));
-        near.GetComponent<CombatFeelTestDummy>().ApplyMode(CombatFeelDummyMode.Static); near.SetRuntimeMaxHealth(1000);
+        near.GetComponent<LabEnemyDummy>().ApplyMode(LabEnemyDummyMode.Static); near.SetRuntimeMaxHealth(1000);
         lab.Resume();
         for (int angle=0;angle<=360;angle+=15) lab.Combat.Tick(lab.Assembly,lab.gameObject.scene,Vector2.zero,angle);
         Require(near.CurrentHealth==1000 && lab.Combat.ContactHits==0,"full far-saw revolution cannot damage dummy inside the empty inner region");

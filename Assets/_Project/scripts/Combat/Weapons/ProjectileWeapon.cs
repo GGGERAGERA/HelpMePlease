@@ -37,28 +37,6 @@ public class ProjectileWeapon : BaseWeapon
     private Quaternion recoilRestRotation;
     private Vector3 recoilRestScale;
     private bool recoilRestStateCaptured;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private Vector3 combatFeelOffset;
-    private float combatFeelRotation;
-    private Vector2 combatFeelScale;
-    public Transform DebugRecoilVisual => recoilVisual;
-
-    public void SetCombatFeelLayer(Vector3 offset, float rotation, Vector2 scale)
-    {
-        combatFeelOffset = offset;
-        combatFeelRotation = rotation;
-        combatFeelScale = scale;
-        ApplyRecoil();
-    }
-
-    public void ClearCombatFeelLayer()
-    {
-        combatFeelOffset = Vector3.zero;
-        combatFeelRotation = 0f;
-        combatFeelScale = Vector2.zero;
-        ApplyRecoil();
-    }
-#endif
 
     protected override void Start()
     {
@@ -197,14 +175,7 @@ public class ProjectileWeapon : BaseWeapon
             0f,
             recoilRotationDegrees * recoilAmount
         );
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        position += combatFeelOffset;
-        rotation *= Quaternion.Euler(0f, 0f, combatFeelRotation);
-        recoilVisual.localScale = Vector3.Scale(recoilRestScale,
-            new Vector3(1f + combatFeelScale.x, 1f + combatFeelScale.y, 1f));
-#else
         recoilVisual.localScale = recoilRestScale;
-#endif
         recoilVisual.localPosition = position;
         recoilVisual.localRotation = rotation;
     }
@@ -212,11 +183,6 @@ public class ProjectileWeapon : BaseWeapon
     private void OnDisable()
     {
         currentRecoil = 0f;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        combatFeelOffset = Vector3.zero;
-        combatFeelRotation = 0f;
-        combatFeelScale = Vector2.zero;
-#endif
 
         if (!recoilRestStateCaptured || recoilVisual == null)
             return;

@@ -198,25 +198,6 @@ public class DamagePopup : MonoBehaviour
         float critLifetime = criticalLifetime;
         float critRise = criticalRise;
         float critPunch = criticalPunch;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        // F1 is an optional relative experiment over the authored production look.
-        // Neutral/Reset must leave the exact same result in Editor and Release.
-        initialScale = LabAdjustment(initialScale, CombatFeelParameter.PopupInitialScale);
-        scalePunch = LabAdjustment(scalePunch, CombatFeelParameter.PopupScalePunch);
-        riseSpeed = LabAdjustment(riseSpeed, CombatFeelParameter.PopupRiseSpeed);
-        feelLifetime = LabAdjustment(feelLifetime, CombatFeelParameter.PopupLifetime);
-        fadeDelay = LabAdjustment(fadeDelay, CombatFeelParameter.PopupFadeDelay);
-        fadeDuration = LabAdjustment(fadeDuration, CombatFeelParameter.PopupFadeDuration);
-        spawnDelay = LabAdjustment(spawnDelay, CombatFeelParameter.PopupDelay);
-        drift = LabAdjustment(drift, CombatFeelParameter.PopupHorizontalDrift);
-        driftRandomness = LabAdjustment(driftRandomness, CombatFeelParameter.PopupDriftRandomness);
-        rotation = LabAdjustment(rotation, CombatFeelParameter.PopupRotation);
-        rotationRandomness = LabAdjustment(rotationRandomness, CombatFeelParameter.PopupRotationRandomness);
-        critScale = LabAdjustment(critScale, CombatFeelParameter.CritPopupScale);
-        critLifetime = LabAdjustment(critLifetime, CombatFeelParameter.CritPopupLifetime);
-        critRise = LabAdjustment(critRise, CombatFeelParameter.CritPopupRise);
-        critPunch = LabAdjustment(critPunch, CombatFeelParameter.CritPopupPunch);
-#endif
         if (critical)
         {
             feelLifetime *= critLifetime;
@@ -226,7 +207,6 @@ public class DamagePopup : MonoBehaviour
             riseSpeed *= critRise;
             scalePunch *= critPunch;
         }
-        // Lab's expanded experiment ranges include zero lifetime/fade duration.
         feelLifetime = Mathf.Max(.01f, feelLifetime);
         fadeDelay = Mathf.Clamp(fadeDelay, 0f, feelLifetime);
         fadeDuration = Mathf.Max(.01f, fadeDuration);
@@ -263,13 +243,4 @@ public class DamagePopup : MonoBehaviour
             Release();
         }
     }
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private static float LabAdjustment(float authored, CombatFeelParameter parameter)
-    {
-        float neutral = CombatFeelParameterDefaults.Get(parameter);
-        float value = PhysicalCombatFeedbackRuntime.GetLabValue(parameter);
-        return neutral == 0f ? authored + value : authored * value / neutral;
-    }
-#endif
 }

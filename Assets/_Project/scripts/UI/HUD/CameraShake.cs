@@ -9,7 +9,6 @@ public class CameraShake : MonoBehaviour
     private Coroutine shakeRoutine;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool debugSuppressed;
-    private Vector3 combatFeelOffset;
     public bool DebugSuppressed => debugSuppressed;
 #endif
 
@@ -38,21 +37,11 @@ public class CameraShake : MonoBehaviour
         if (debugSuppressed)
             StopAllShakes();
     }
-
-    public void SetCombatFeelOffset(Vector3 offset)
-    {
-        combatFeelOffset = offset;
-        transform.localPosition = originalLocalPosition + combatFeelOffset;
-    }
 #endif
 
     private IEnumerator ShakeRoutine(float duration, float magnitude)
     {
-        Vector3 basePosition = transform.localPosition
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            - combatFeelOffset
-#endif
-            ;
+        Vector3 basePosition = transform.localPosition;
 
         float elapsed = 0f;
 
@@ -66,21 +55,13 @@ public class CameraShake : MonoBehaviour
 
             Vector3 offset = new Vector3(x, y, 0f) * magnitude * damping;
 
-            transform.localPosition = basePosition + offset
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                + combatFeelOffset
-#endif
-                ;
+            transform.localPosition = basePosition + offset;
 
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        transform.localPosition = basePosition
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            + combatFeelOffset
-#endif
-            ;
+        transform.localPosition = basePosition;
         shakeRoutine = null;
     }
 
@@ -97,18 +78,11 @@ public class CameraShake : MonoBehaviour
 
     private void RestoreCameraState()
     {
-        transform.localPosition = originalLocalPosition
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            + combatFeelOffset
-#endif
-            ;
+        transform.localPosition = originalLocalPosition;
     }
 
     private void OnDisable()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        combatFeelOffset = Vector3.zero;
-#endif
         StopAllShakes();
 
         if (Instance == this)

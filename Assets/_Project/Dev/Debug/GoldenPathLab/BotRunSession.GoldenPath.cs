@@ -179,7 +179,6 @@ public sealed partial class BotRunSession
             goldenSceneObjects.Add(station); goldenSceneObjects.Add(flow); goldenSceneObjects.Add(rewards);
             goldenOldObjects.AddRange(station.GetComponentsInChildren<Transform>(true));
             IsStarting = false; IsRunning = ownsSpeed = true;
-            PhysicalCombatFeedbackRuntime.CancelHitStopForExternalTimeControl();
             Time.timeScale = Result.SimulationSpeed;
             goldenChoiceAt = 0;
             SetGoldenStage("Gameplay");

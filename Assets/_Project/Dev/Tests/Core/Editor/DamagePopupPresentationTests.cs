@@ -20,12 +20,11 @@ public sealed class DamagePopupPresentationTests
     [SetUp] public void Preserve() => CoreTestSupport.PreservePreferences();
 
     [UnityTest]
-    public IEnumerator DamageAnimatesWithoutLabAndReturnsToExistingPool()
+    public IEnumerator DamageAnimatesAndReturnsToExistingPool()
     {
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         yield return new EnterPlayMode();
         Time.timeScale = 1f;
-        Assert.That(PhysicalCombatFeedbackRuntime.LabAvailable, Is.False);
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
         var owner = new GameObject("Popup pool test owner").AddComponent<EnemyWhiteFlash>();
         var pool = new SimplePrefabPool(owner, prefab, 1, 1);
@@ -36,8 +35,7 @@ public sealed class DamagePopupPresentationTests
         popup.SetDamage(42);
         Assert.That(text.text, Is.EqualTo("42"));
         Assert.That(popup.transform.localScale.y, Is.GreaterThan(authoredScale.y),
-            "The ordinary production path needs an immediate, brief impact accent without F1 Lab.");
-        float initialScale = popup.transform.localScale.y;
+            "The ordinary production path needs an immediate, brief impact accent.");
         float initialAlpha = text.color.a;
         Material damageMaterial = text.fontSharedMaterial;
         // This fixture is driven by EditModeRunner even after EnterPlayMode;
@@ -58,20 +56,6 @@ public sealed class DamagePopupPresentationTests
         Assert.That(text.color.a, Is.EqualTo(initialAlpha).Within(.001f), "A pooled fade must reset its opacity.");
         Assert.That(text.fontSharedMaterial, Is.SameAs(damageMaterial));
         reused.Release();
-        var labOwner = new GameObject("Popup lab test owner");
-        var tuning = labOwner.AddComponent<ProductionFeelTuningController>();
-        tuning.Configure();
-        reused = pool.Get(Vector3.zero, Quaternion.identity);
-        reused.DamagePopup.SetDamage(9);
-        Assert.That(reused.transform.localScale.y, Is.EqualTo(initialScale).Within(.001f),
-            "Neutral F1 Lab must preserve the authored production animation.");
-        reused.Release();
-        tuning.Lab.Set(CombatFeelParameter.PopupScalePunch, .3f);
-        reused = pool.Get(Vector3.zero, Quaternion.identity);
-        reused.DamagePopup.SetDamage(9);
-        Assert.That(reused.transform.localScale.y, Is.GreaterThan(initialScale), "F1 punch tuning must remain effective.");
-        reused.Release();
-        Object.Destroy(labOwner);
         pool.Dispose();
         Object.Destroy(owner.gameObject);
         yield return new ExitPlayMode();

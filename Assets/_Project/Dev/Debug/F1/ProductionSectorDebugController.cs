@@ -577,87 +577,6 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         ApplyProductionAnomalySnapshots();
     }
 
-    public void RefreshVisualTunerTargetCache()
-    {
-        RefreshVisualTunerTargets(false);
-    }
-
-    public void SelectPreviousVisualTunerTarget()
-    {
-        RefreshVisualTunerTargets(false);
-
-        if (visualTunerSites.Count == 0)
-            return;
-
-        visualTunerIndex = (visualTunerIndex - 1 + visualTunerSites.Count) %
-            visualTunerSites.Count;
-    }
-
-    public void SelectNextVisualTunerTarget()
-    {
-        RefreshVisualTunerTargets(false);
-
-        if (visualTunerSites.Count == 0)
-            return;
-
-        visualTunerIndex = (visualTunerIndex + 1) % visualTunerSites.Count;
-    }
-
-    public bool SelectVisualTunerTargetByType(string typeToken)
-    {
-        RefreshVisualTunerTargets(false);
-        for (int i = 0; i < visualTunerSites.Count; i++)
-        {
-            ProductionAnomalySite site = visualTunerSites[i];
-            if (site != null && site.VisualTunerTypeName.IndexOf(
-                    typeToken, System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                visualTunerIndex = i;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public VisualAnomalyTuningSnapshot[] CaptureVisualTunerSnapshots()
-    {
-        RefreshVisualTunerTargets(false);
-        VisualAnomalyTuningSnapshot[] snapshots =
-            new VisualAnomalyTuningSnapshot[visualTunerSites.Count];
-        for (int i = 0; i < visualTunerSites.Count; i++)
-        {
-            ProductionAnomalySite site = visualTunerSites[i];
-            if (site == null)
-                continue;
-            snapshots[i] = new VisualAnomalyTuningSnapshot
-            {
-                Target = site.DebugZoneName,
-                Type = site.VisualTunerTypeName,
-                ArtHooksVisible = site.ArtHooksVisible,
-                Values = site.VisualTunerValues
-            };
-        }
-        return snapshots;
-    }
-
-    public void ApplyVisualTunerValues(AnomalyVisualTuningValues values)
-    {
-        if (monochromeAnomalies && VisualTunerTarget != null)
-            values = BuildMonochromeValues(
-                values,
-                VisualTunerTarget.VisualTunerCapabilities);
-
-        VisualTunerTarget?.ApplyVisualTunerValues(values);
-    }
-
-    public void ResetVisualTuner()
-    {
-        if (monochromeAnomalies)
-            SetMonochromeAnomalies(false);
-
-        VisualTunerTarget?.ResetVisualTuner();
-    }
-
     public void SetMonochromeAnomalies(bool enabled)
     {
         if (enabled == monochromeAnomalies)
@@ -672,31 +591,6 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         monochromeAnomalies = true;
         monochromeOriginalValues.Clear();
         MaintainMonochromeAnomalies();
-    }
-
-    public void SetVisualTunerArtHooksVisible(bool visible)
-    {
-        VisualTunerTarget?.SetArtHooksVisible(visible);
-    }
-
-    public void ApplyVisualTunerPreset(string preset)
-    {
-        VisualTunerTarget?.ApplyVisualTunerPreset(preset);
-    }
-
-    public void CopyVisualTunerValues()
-    {
-        ProductionAnomalySite target = VisualTunerTarget;
-
-        if (target == null)
-        {
-            Debug.Log("[AnomalyVisualTuner] No active anomaly target.");
-            return;
-        }
-
-        string values = target.GetVisualTunerValuesText();
-        GUIUtility.systemCopyBuffer = values;
-        Debug.Log($"[AnomalyVisualTuner]\n{values}", target);
     }
 
     public void SetEnemyOutlineEnabled(bool enabled)
@@ -716,11 +610,6 @@ public sealed class ProductionSectorDebugController : MonoBehaviour
         ResetWorldVisualSettings();
         ResetEnemyVisualSettings();
         ResetAnomalyVisualSettings();
-    }
-
-    public void ResetVisualTestSettings()
-    {
-        ResetEnemyVisualSettings();
     }
 
     public void ResetWorldVisualSettings()

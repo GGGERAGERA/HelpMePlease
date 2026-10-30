@@ -97,7 +97,7 @@ namespace Subject42.DebugLabs.EliteOrbit
                     for (int i=0;i<4;i++)
                     {
                         var ally=Instantiate(OrdinaryPrefab,new Vector3(5.7f+(i%2)*1.1f,(i/2==0 ? 1 : -1)*2.5f,0),Quaternion.identity,transform);
-                        var marker=ally.AddComponent<CombatFeelTestDummy>(); marker.Initialize(null); marker.Invulnerable=false;
+                        var marker=ally.AddComponent<LabEnemyDummy>(); marker.Initialize(); marker.Invulnerable=false;
                         ordinary.Add(ally.GetComponent<EnemyHealth>());
                     }
                 notice=Presets[Encounter].Hint;

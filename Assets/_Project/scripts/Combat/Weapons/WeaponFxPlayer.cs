@@ -25,28 +25,6 @@ public sealed class WeaponFxPlayer : MonoBehaviour
     [SerializeField] private float critShakeDuration = 0.12f;
     [SerializeField] private float critShakeMagnitude = 0.16f;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public float FireShakeDuration => fireShakeDuration;
-    public float FireShakeMagnitude => fireShakeMagnitude;
-    public float HitShakeDuration => hitShakeDuration;
-    public float HitShakeMagnitude => hitShakeMagnitude;
-    public float CritShakeDuration => critShakeDuration;
-    public float CritShakeMagnitude => critShakeMagnitude;
-
-    public void SetFireShakeDuration(float value) =>
-        fireShakeDuration = Mathf.Max(0f, value);
-    public void SetFireShakeMagnitude(float value) =>
-        fireShakeMagnitude = Mathf.Max(0f, value);
-    public void SetHitShakeDuration(float value) =>
-        hitShakeDuration = Mathf.Max(0f, value);
-    public void SetHitShakeMagnitude(float value) =>
-        hitShakeMagnitude = Mathf.Max(0f, value);
-    public void SetCritShakeDuration(float value) =>
-        critShakeDuration = Mathf.Max(0f, value);
-    public void SetCritShakeMagnitude(float value) =>
-        critShakeMagnitude = Mathf.Max(0f, value);
-#endif
-
     private void Awake()
     {
         if (muzzleFxPrefab != null)
@@ -74,49 +52,29 @@ public sealed class WeaponFxPlayer : MonoBehaviour
 
     public void PlayFire(Vector2 position, Vector2 direction)
     {
-        GameObject spawned = SpawnParticle(
+        SpawnParticle(
             muzzlePool,
             muzzleFxPrefab,
             position,
             direction,
             muzzleFxLifetime
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            * PhysicalCombatFeedbackRuntime.GetLabValue(
-                CombatFeelParameter.MuzzleDuration)
-#endif
-            );
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.ConfigureSpawnedEffect(
-            spawned, true, direction);
-#endif
+        );
 
         CameraShake.Instance?.Shake(
             fireShakeDuration,
             fireShakeMagnitude
         );
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        // Run additive debug response last so production shake cannot replace it.
-        PhysicalCombatFeedbackRuntime.NotifyWeaponFired(this, direction);
-#endif
     }
 
     public void PlayHit(Vector2 position, Vector2 normalDirection, bool isCritical)
     {
-        GameObject spawned = SpawnParticle(
+        SpawnParticle(
             impactPool,
             impactFxPrefab,
             position,
             normalDirection,
             impactFxLifetime
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            * PhysicalCombatFeedbackRuntime.GetLabValue(
-                CombatFeelParameter.ImpactLifetime)
-#endif
-            );
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        PhysicalCombatFeedbackRuntime.ConfigureSpawnedEffect(
-            spawned, false, normalDirection);
-#endif
+        );
 
         CameraShake.Instance?.Shake(
             isCritical ? critShakeDuration : hitShakeDuration,

@@ -82,7 +82,7 @@ public static class EliteOrbitalLabAuthoring
         }
         foreach (var group in elite.GetComponentsInChildren<SortingGroup>()) group.sortingOrder=45;
         elite.GetComponent<EnemyHealth>().maxHealth=160;
-        elite.AddComponent<CombatFeelTestDummy>(); elite.AddComponent<EliteOrbitEnemy>();
+        elite.AddComponent<LabEnemyDummy>(); elite.AddComponent<EliteOrbitEnemy>();
         elite.SetActive(false);
         lab.ElitePrefab=PrefabUtility.SaveAsPrefabAsset(elite,AssetsRoot+"/OrbitalElite.prefab"); Object.DestroyImmediate(elite);
         EditorSceneManager.SaveScene(scene,EliteOrbitalLab.ScenePath); AssetDatabase.SaveAssets();
