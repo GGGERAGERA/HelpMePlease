@@ -20,6 +20,7 @@ public sealed class TrailerCaptureSession : MonoBehaviour
     private bool worldRuleChanged;
     private bool spawnSnapshot, hudSnapshot, numbersSnapshot, invulnerabilitySnapshot;
     private bool buildChanged;
+    private bool ownsAiFreeze;
     private bool playerMoved;
     private Vector3 playerPositionSnapshot;
     private OrbitalStationRuntime.RmbMode rightMouseSnapshot;
@@ -200,6 +201,12 @@ public sealed class TrailerCaptureSession : MonoBehaviour
 
     public void Heal() { if (Capture()) health.Heal(health.MaxHealth); }
     public void SetInvulnerable(bool value) { if (Capture()) health.DebugInvulnerable = value; }
+    public void SetEnemyAiFrozen(bool value)
+    {
+        if (!Capture()) return;
+        ownsAiFreeze = true;
+        EnemyDebugAiFreeze.SetFrozen(value);
+    }
     public void SetHudVisible(bool value) { if (Capture()) hud?.DebugSetHudVisible(value); }
     public void SetNumbersVisible(bool value) { if (Capture()) DamagePopup.DebugDamageNumbersVisible = value; }
     public void SetSpawning(bool value)
@@ -279,6 +286,7 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         if (worldRuleChanged) modifiers?.DebugApplyCaptureWorldRule(worldRuleSnapshot);
         enemies?.DebugSetCaptureDensity(densitySnapshot);
         RestoreVisibility();
+        ReleaseAiFreeze();
         if (enemies != null && spawnSnapshot) enemies.ResumeSpawning();
         run.UnregisterSceneCleanup(Release);
         run = null;
@@ -295,6 +303,12 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         hud?.DebugSetHudVisible(hudSnapshot);
         DamagePopup.DebugDamageNumbersVisible = numbersSnapshot;
     }
+    private void ReleaseAiFreeze()
+    {
+        if (!ownsAiFreeze) return;
+        EnemyDebugAiFreeze.SetFrozen(false);
+        ownsAiFreeze = false;
+    }
     private void Release()
     {
         if (run == null) return;
@@ -303,6 +317,7 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         enemies?.DebugSetCaptureDensity(densitySnapshot);
         if (worldRuleChanged) worldRules?.Clear();
         RestoreVisibility();
+        ReleaseAiFreeze();
         if (health != null) health.DebugInvulnerable = invulnerabilitySnapshot;
         run.UnregisterSceneCleanup(Release);
         run = null;

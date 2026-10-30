@@ -302,7 +302,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         Additional,
         OrbitalProduction,
         FeelTest,
-        VisualTest
+        VisualTest,
+        Sandbox
     }
 
 
@@ -341,7 +342,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private static readonly string[] TabLabels =
     {
         "Бункер", "Игрок", "Мир", "Инструменты",
-        "Орбиты", "Боевые эффекты", "Внешний вид"
+        "Орбиты", "Боевые эффекты", "Внешний вид", "ПЕСОЧНИЦА"
     };
 
 
@@ -1370,7 +1371,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             return;
         }
 
-        if (!IsRuntimeLabTab(tab) && tab != DebugTab.Bunker)
+        if (!IsRuntimeLabTab(tab) && tab != DebugTab.Bunker && tab != DebugTab.Sandbox)
             AddTabHeading(TabLabels[(int)tab]);
 
         if (IsRuntimeLabTab(tab) && characterSpawner == null)
@@ -1401,6 +1402,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 break;
             case DebugTab.VisualTest:
                 AddInteractiveAnomalyVisualTest();
+                break;
+            case DebugTab.Sandbox:
+                BuildSandbox();
                 break;
         }
 
@@ -1440,7 +1444,9 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             menuHeader.sizeDelta = new Vector2(0f, compact ? 44f : 62f);
         if (menuTitle != null)
         {
-            menuTitle.text = activeTab == DebugTab.VisualTest
+            menuTitle.text = activeTab == DebugTab.Sandbox
+                ? "ПЕСОЧНИЦА"
+                : activeTab == DebugTab.VisualTest
                 ? "Внешний вид"
                 : activeTab == DebugTab.FeelTest
                     ? "Боевые эффекты"

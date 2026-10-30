@@ -31,7 +31,7 @@ public sealed partial class Subject42DebugMenu
     }
 
     private const string HubFavoritesKey = "Subject42.DebugHub.Favorites.v1";
-    private static readonly string[] HubCategories = { "Визуал", "Забег", "Бой и события", "Диагностика" };
+    private static readonly string[] HubCategories = { "Визуал", "Забег", "Бой и события", "Диагностика", "ПЕСОЧНИЦА" };
     private readonly List<HubCommand> hubCommands = new();
     private readonly HashSet<string> hubFavorites = new(StringComparer.Ordinal);
     private readonly Queue<string> hubLogs = new();
@@ -91,8 +91,14 @@ public sealed partial class Subject42DebugMenu
         for (int i = 0; i < HubCategories.Length; i++)
         {
             int selected = i;
-            var tab = CreateButton(hubPanel, HubCategories[i], () => { hubCategory = selected; RefreshHub(); }, 138f);
-            HubPlace(tab.GetComponent<RectTransform>(), 18f + i * 142f, 84f, 138f, 36f);
+            float width = (568f - (HubCategories.Length - 1) * 4f) / HubCategories.Length;
+            var tab = CreateButton(hubPanel, HubCategories[i], () =>
+            {
+                hubCategory = selected;
+                if (selected == HubCategories.Length - 1) OpenSandbox();
+                else RefreshHub();
+            }, width, i != HubCategories.Length - 1 || IsSandboxScene);
+            HubPlace(tab.GetComponent<RectTransform>(), 18f + i * (width + 4f), 84f, width, 36f);
             tab.GetComponentInChildren<TextMeshProUGUI>().fontSize = 14f;
             hubCategoryImages.Add(tab.targetGraphic as Image);
         }
@@ -172,6 +178,7 @@ public sealed partial class Subject42DebugMenu
         Add("diagnostics.snapshot", 3, "Диагностический снимок", "Состояние production-систем и последние 30 записей лога", SaveHubSnapshot);
         Add("diagnostics.logs", 3, "Последние логи и исключения", "Ограниченный журнал текущего запуска", () => { hubStatusText.text = hubLogs.Count == 0 ? "С момента создания меню записей нет." : hubLogs.Last(); ShowHubLogs(); });
         Add("diagnostics.tools", 3, "Существующие QA-инструменты", "Исходная навигация инструментов и тестов", () => HubOpenLegacyTool(DebugTab.Additional));
+        Add("sandbox.open", 4, "ПЕСОЧНИЦА", "Билд, подготовка теста, спавн и эксперименты оружия", OpenSandbox, () => IsSandboxScene);
     }
 
     private void ToggleHub()
