@@ -45,10 +45,6 @@ namespace Subject42.Combat.OrbitalStation
         // Only Development/Editor code can opt in; public builds never apply this profile.
         [UnityEngine.SerializeField] private bool chargedLineSniperExperiment;
         public bool ChargedLineSniperExperiment => chargedLineSniperExperiment;
-        [UnityEngine.SerializeField] private bool sweepingShotgunExperiment;
-        public bool SweepingShotgunExperiment => sweepingShotgunExperiment;
-        [UnityEngine.SerializeField] private bool ramSlugShotgunExperiment;
-        public bool RamSlugShotgunExperiment => ramSlugShotgunExperiment;
         [UnityEngine.SerializeField] private bool pulsedSawExperiment;
         public bool PulsedSawExperiment => pulsedSawExperiment;
         [UnityEngine.SerializeField] private bool inertialSawExperiment;
@@ -73,20 +69,6 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (enabled && inertialSawExperiment) return;
             pulsedSawExperiment = enabled;
-            Revision++;
-        }
-
-        internal void SetSweepingShotgunExperiment(bool enabled)
-        {
-            if (enabled && ramSlugShotgunExperiment) return;
-            sweepingShotgunExperiment = enabled;
-            Revision++;
-        }
-
-        internal void SetRamSlugShotgunExperiment(bool enabled)
-        {
-            if (enabled && sweepingShotgunExperiment) return;
-            ramSlugShotgunExperiment = enabled;
             Revision++;
         }
 
@@ -619,6 +601,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool CanInstallModule(OrbitalModuleKind kind, int ringId, int mountIndex, out string error) =>
             CanCommit(out error) && Rule(Enum.IsDefined(typeof(OrbitalModuleKind), kind) && NextStableModuleId < int.MaxValue,
                 "unknown module kind or exhausted ID allocator", out error) &&
+            Rule(IsWeaponAvailable(kind), "Пила временно недоступна в основном ране.", out error) &&
             Rule(!UsesSegmentedOrbit || IsSegmentedWeapon(kind), "module is not supported by Segmented Orbit", out error) &&
             CanOccupy(ringId, mountIndex, 0, out error);
 

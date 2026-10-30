@@ -1,0 +1,30 @@
+Production Saw availability — 2026-10-31
+Design record: Artifacts/DebugMenuAudit/SegmentedWeaponPass.md; GDD §4.5 Рост силы.
+
+Owned changes:
+- Assets/_Project/scripts/Combat/OrbitalStation/OrbitalRunState.Segmented.cs
+  Nonserialized per-instance production policy; IsWeaponAvailable(kind); idempotent installed-Saw-to-reserve compatibility; guarded reserve grants, installs and transfers.
+- Assets/_Project/scripts/Combat/OrbitalStation/OrbitalStationRuntime.cs
+  Reapply policy from the explicit segmentedOrbit production bootstrap in Initialize, before presentation is constructed. Only current CharacterSpawner callers pass true; laboratory Ensure calls retain permissive defaults.
+- Assets/_Project/scripts/Combat/OrbitalStation/OrbitalRewardProvider.cs
+  IsSupportedByState applies the same policy, covering normal reward pool, eligibility, active catalogue, F1 grant validation and direct/stale RewardFlow.Begin data. Shared Saw definition remains. Removed the retired RamSlug-only shotgun description branch; ordinary shotgun and other descriptions remain.
+- Assets/_Project/scripts/Combat/OrbitalStation/OrbitalInteractionPresentation.Constructor.cs
+  Reserve Saw ownership/count remains visible with a temporary-unavailability label; row is disabled. BeginDrag explicitly rejects unavailable weapons because EventTrigger bypasses Button.interactable. Existing CanTransfer state checks reject drops/commits too. Removed only the retired RamSlug constructor-label branch.
+
+Compatibility contract:
+- No enum IDs, Saw backend/runtime factory, shared/lab components, state version or validation schema removed.
+- Production binding moves each existing installed Saw object into SegmentedWeapons unchanged except StableRingId=0 and MountIndex=-1. IDs, upgrades, allocator, existing stock and unrelated modules/links remain.
+- The same object is retained, not recreated. Rebinding/restoring twice adds no duplicates and makes no further inventory/revision changes once all Saw objects are stowed.
+- Stowing remains allowed. No production grant, reserve install or transfer can reinstall a Saw while the policy is active.
+- The policy is not serialized. JSON snapshots retain inventory normally, and production Initialize reapplies policy on every restore/rebuild. Fresh laboratory states are permissive, even when they use the shared Segmented backend.
+- OnAfterDeserialize/MigrateRetiredModules remain unchanged; reading old states does not globally ban Saw in laboratories.
+- Pistol/MissReturn, ordinary shotgun values, damage, reward amounts, save ownership and shared Saw combat are unchanged by this boundary.
+
+Parent integration required:
+- OrbitalRunState.cs CanInstallModule: add Rule(IsWeaponAvailable(kind), "Пила временно недоступна в основном ране.", out error) && after the enum/allocator Rule. This covers generic installation and its wrappers; file is owned by the Shotgun-removal agent/root.
+- F1 UI/catalogue explicit Saw entries and GDD are owned by parent.
+
+Verification boundary:
+- This agent performs source/diff checks only. No Unity, tests, builds or Git mutations.
+- Scoped git diff --check for the state/provider/constructor files exited 0. Source audit confirms the production Initialize call and guarded grant/install/transfer/provider/drag paths; laboratory Ensure callers omit the production bootstrap flag.
+- Parent owns the requested Editor compile and one short smoke, including old-state restore and permissive lab availability.

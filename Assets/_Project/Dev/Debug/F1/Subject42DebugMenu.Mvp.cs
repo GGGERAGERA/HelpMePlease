@@ -126,7 +126,7 @@ public sealed partial class Subject42DebugMenu
     }
 
     private static bool IsMvpBuildReward(OrbitalRewardKind kind) => kind is
-        OrbitalRewardKind.Pistol or OrbitalRewardKind.Sniper or OrbitalRewardKind.Shotgun or OrbitalRewardKind.Saw or
+        OrbitalRewardKind.Pistol or OrbitalRewardKind.Sniper or OrbitalRewardKind.Shotgun or
         OrbitalRewardKind.NewRing or OrbitalRewardKind.AddMount || OrbitalRewardProvider.GetSegmentedLinkKind(kind).HasValue;
 
     private void BuildMvpOrbits()
@@ -137,7 +137,7 @@ public sealed partial class Subject42DebugMenu
         var state = station.State;
         AddHint("Выдача пополняет запас. Закройте карточку/F1, откройте Tab и перетащите предмет на подходящую ячейку. Установленное оружие занимает общий лимит.");
         AddSectionTitle("Оружие", "");
-        foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw })
+        foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun })
         {
             var module = OrbitalRewardProvider.GetModuleKind(kind);
             AddMvpBuildReward(kind, $"Установлено: {state.Modules.Count(w => w.ModuleType == module)} · В запасе: {state.SegmentedWeapons.Count(w => w.ModuleType == module)}");
@@ -169,17 +169,6 @@ public sealed partial class Subject42DebugMenu
         Group("Снайперка", OrbitalModuleKind.Sniper, "Обычная", "Обычный одиночный выстрел в одну цель.",
             ("Заряженная линия", () => state.ChargedLineSniperExperiment, station.DebugSetChargedLineSniperExperiment,
                 "Подготовка 0,45 с, затем пробитие до трёх тел. Q/E ведут линию до выпуска."));
-        Group("Дробовик", OrbitalModuleKind.Shotgun, "Обычный", "Семь дробин одним широким залпом.",
-            ("Веерная очередь", () => state.SweepingShotgunExperiment, station.DebugSetSweepingShotgunExperiment,
-                "Три залпа по две дробины через 0,12 с: слева, центр, справа. Q/E ведут очередь."),
-            ("Картечный таран", () => state.RamSlugShotgunExperiment, station.DebugSetRamSlugShotgunExperiment,
-                "Один медленный снаряд на 3,5 м, до трёх тел; щиты сохраняют защиту."));
-        Group("Пила", OrbitalModuleKind.Saw, "Обычная", "Непрерывный контакт по штатному интервалу.",
-            ("Импульсная", () => state.PulsedSawExperiment, station.DebugSetPulsedSawExperiment,
-                "0,8 с увеличенного контакта, затем 0,4 с остановки без урона."),
-            ("Инерционная", () => state.InertialSawExperiment, station.DebugSetInertialSawExperiment,
-                "Контакт только при фактическом Q/E-вращении кольца. Нужна энергия; первый шаг запоминает фазу."));
-
         void Group(string title, OrbitalModuleKind kind, string normal, string normalDescription,
             params (string Label, Func<bool> Active, Func<bool, bool> Set, string Description)[] modes)
         {

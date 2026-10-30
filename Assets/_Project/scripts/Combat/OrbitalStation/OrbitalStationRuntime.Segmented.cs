@@ -5,19 +5,6 @@ namespace Subject42.Combat.OrbitalStation
     public sealed partial class OrbitalStationRuntime
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        public bool DebugSetRamSlugShotgunExperiment(bool enabled)
-        {
-            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
-                runStateManager == null || State.RamSlugShotgunExperiment == enabled ||
-                enabled && State.SweepingShotgunExperiment) return false;
-            if (enabled) runStateManager.DebugMarkDevelopmentRun();
-            State.SetRamSlugShotgunExperiment(enabled);
-            foreach (var module in modules)
-                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Shotgun)
-                    projectile.RefreshRamSlugShotgunExperiment();
-            return true;
-        }
-
         public bool DebugSetInertialSawExperiment(bool enabled)
         {
             if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
@@ -51,19 +38,6 @@ namespace Subject42.Combat.OrbitalStation
             State.SetPulsedSawExperiment(enabled);
             foreach (var module in modules)
                 if (module is OrbitalSawModule saw) saw.ResetPulsePhase();
-            return true;
-        }
-
-        public bool DebugSetSweepingShotgunExperiment(bool enabled)
-        {
-            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
-                runStateManager == null || State.SweepingShotgunExperiment == enabled ||
-                enabled && State.RamSlugShotgunExperiment) return false;
-            if (enabled) runStateManager.DebugMarkDevelopmentRun();
-            State.SetSweepingShotgunExperiment(enabled);
-            foreach (var module in modules)
-                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Shotgun)
-                    projectile.RefreshSweepingShotgunExperiment();
             return true;
         }
 

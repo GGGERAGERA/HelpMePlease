@@ -125,7 +125,9 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         internal static bool IsSupportedByState(OrbitalRewardKind kind, OrbitalRunState state) =>
-            Enum.IsDefined(typeof(OrbitalRewardKind), kind) && (state?.UsesSegmentedOrbit == true
+            Enum.IsDefined(typeof(OrbitalRewardKind), kind) &&
+            (GetModuleKind(kind) is not OrbitalModuleKind module || state == null || state.IsWeaponAvailable(module)) &&
+            (state?.UsesSegmentedOrbit == true
                 ? kind is not (OrbitalRewardKind.RingSpeed or OrbitalRewardKind.RingPower or OrbitalRewardKind.RingCapacity or
                     OrbitalRewardKind.ArcEmitter or OrbitalRewardKind.LinkPair or OrbitalRewardKind.LinkMatrix or OrbitalRewardKind.ModuleDamage)
                 : !GetSegmentedLinkKind(kind).HasValue);
@@ -300,13 +302,6 @@ namespace Subject42.Combat.OrbitalStation
                 {
                     definition.upgradeName = "reward.shotgun";
                     definition.description = segmented ? "reward.segmentedShotgunDescription" : "reward.shotgunDescription";
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    if (segmented && state.RamSlugShotgunExperiment)
-                    {
-                        definition.upgradeName = "reward.ramSlugShotgun";
-                        definition.description = "reward.ramSlugShotgunDescription";
-                    }
-#endif
                 }
                 if (definition.RewardKind == OrbitalRewardKind.Saw)
                 {

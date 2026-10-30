@@ -182,7 +182,7 @@ public sealed partial class Subject42DebugMenu
         Add("visual.segmented", 4, "Внешний вид Segmented · F9", "Действующие настройки линий и оформления орбит", () => { CloseHub(); ToggleMvpOrbitSurface(); }, () => IsSandboxScene && MvpCanEdit);
         Add("diagnostics.snapshot", 5, "Диагностический снимок", "Состояние production-систем и последние 30 записей лога", SaveHubSnapshot);
         Add("diagnostics.logs", 5, "Последние логи и исключения", "Ограниченный журнал текущего запуска", ShowHubLogs);
-        Add("diagnostics.tools", 5, "Боты, эксперименты и расширенные инструменты", "Боты, Golden Path, шесть вариантов оружия, восемь экспериментов врагов и XP-лаборатория", () => HubOpenUtilityPage(DebugTab.Additional));
+        Add("diagnostics.tools", 5, "Боты, эксперименты и расширенные инструменты", "Боты, Golden Path, варианты пистолета и снайперки, восемь экспериментов врагов и XP-лаборатория", () => HubOpenUtilityPage(DebugTab.Additional));
     }
 
     private void ToggleHub()

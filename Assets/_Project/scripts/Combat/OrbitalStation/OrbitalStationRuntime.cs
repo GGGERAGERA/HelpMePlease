@@ -165,6 +165,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             State = state;
             if (segmentedOrbit) State.EnableSegmentedOrbit();
+            State.ApplyProductionWeaponAvailability(segmentedOrbit);
             try
             {
                 if (!OrbitalPresentationConfig.TryGetRequired(out var config, out error))
@@ -208,6 +209,16 @@ namespace Subject42.Combat.OrbitalStation
                     FlashLink(point, point - direction * size - side * size * .7f, strike, life * .8f, family);
                     FlashLink(point - side * size * .3f, point + side * size * .3f,
                         Color.Lerp(color, Color.white, .75f), life * .45f, family);
+                };
+                ((ProductionOrbitalCombatAdapter)Combat).ChargedLineVisualImpact = (point, direction) =>
+                {
+                    Vector2 side = new(-direction.y, direction.x);
+                    FlashLink(point - side * .24f, point + side * .24f, new Color(.25f, .75f, 1.7f, .8f), .08f,
+                        OrbitalFlashFamily.ImpactSniper, 3f);
+                    FlashLink(point - direction * .15f, point + direction * .15f, new Color(1.8f, 2f, 2.3f, 1f), .055f,
+                        OrbitalFlashFamily.ImpactSniper, 1.3f, 1);
+                    FlashLink(point - side * .1f, point + side * .1f, Color.white, .045f,
+                        OrbitalFlashFamily.ImpactSniper, 1f, 1);
                 };
                 for (int i = 0; i < config.FlashPoolCapacity; i++) idleFlashes.Push(CreateFlashLine());
                 InputOwner = authoredView.Input;
@@ -766,17 +777,18 @@ namespace Subject42.Combat.OrbitalStation
             CreatePixelVisual(name, color, scale, 14);
 
         public void FlashLink(Vector2 from, Vector2 to, Color color, float life,
-            OrbitalFlashFamily family = OrbitalFlashFamily.Other)
+            OrbitalFlashFamily family = OrbitalFlashFamily.Other, float widthScale = 1f, int sortingOffset = 0)
         {
             if (!initialized || idleFlashes.Count == 0)
                 return;
             LineRenderer line = idleFlashes.Pop();
+            line.sortingOrder = OrbitalPresentationConfig.Active.EnergyLinePrefab.sortingOrder + sortingOffset;
             line.enabled = true;
             line.SetPosition(0, from);
             line.SetPosition(1, to);
             var style = OrbitalPresentationConfig.Active.GetFlashStyle(family);
             line.startColor = line.endColor = style.ApplyColor(color);
-            float width = OrbitalPresentationConfig.Active.EnergyLinePrefab.widthMultiplier;
+            float width = OrbitalPresentationConfig.Active.EnergyLinePrefab.widthMultiplier * Mathf.Max(.01f, widthScale);
             line.widthMultiplier = width * style.Width;
             flashes.Add((line, color, Time.time, Time.time + life, family, width));
         }

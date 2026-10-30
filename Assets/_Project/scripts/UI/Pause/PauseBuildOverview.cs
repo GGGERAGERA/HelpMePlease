@@ -177,8 +177,6 @@ public sealed class PauseBuildOverview : MonoBehaviour
         {
             if (kind == OrbitalModuleKind.Pistol && state.MissReturnPistolExperiment)
                 return LocalizationService.EnsureExists().Get("reward.missReturnPistol");
-            if (kind == OrbitalModuleKind.Shotgun && state.RamSlugShotgunExperiment)
-                return LocalizationService.EnsureExists().Get("reward.ramSlugShotgun");
             if (kind == OrbitalModuleKind.Saw && state.PulsedSawExperiment)
                 return LocalizationService.EnsureExists().Get("reward.pulsedSaw");
         }

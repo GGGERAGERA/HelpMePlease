@@ -166,6 +166,11 @@ namespace Subject42.Combat.OrbitalStation
                 constructorDragWeapon = state.SegmentedWeapons.FirstOrDefault(gun => gun.ModuleType == constructorWeaponKinds[weaponItem]);
             else if (moduleItem >= 0 && state.SegmentedLinkStock.Contains(constructorModuleKinds[moduleItem]))
                 constructorDragModuleKind = constructorModuleKinds[moduleItem];
+            if (constructorDragWeapon != null && !state.IsWeaponAvailable(constructorDragWeapon.ModuleType))
+            {
+                ResetConstructorDrag();
+                return;
+            }
             if (!ConstructorDragging) return;
             constructorDragRevision = state.Revision;
             if (cell < 0)
@@ -307,9 +312,6 @@ namespace Subject42.Combat.OrbitalStation
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var state = station?.State;
-            if (state?.UsesSegmentedOrbit == true && state.RamSlugShotgunExperiment &&
-                constructorWeaponKinds[index] == OrbitalModuleKind.Shotgun)
-                return LocalizationService.EnsureExists().Get("constructor.ramSlugShotgunLabel");
             if (state?.UsesSegmentedOrbit == true && state.MissReturnPistolExperiment &&
                 constructorWeaponKinds[index] == OrbitalModuleKind.Pistol)
                 return LocalizationService.EnsureExists().Get("constructor.missReturnPistolLabel");
@@ -386,8 +388,11 @@ namespace Subject42.Combat.OrbitalStation
                 weaponRows++;
                 int displayedCount = count - (ConstructorDragging && constructorDragCell < 0 &&
                     constructorDragWeapon?.ModuleType == constructorWeaponKinds[i] ? 1 : 0);
-                ButtonText(constructorWeapons[i], ConstructorWeaponLabel(i) + "  ×" + displayedCount);
-                constructorWeapons[i].interactable = true;
+                bool available = state.IsWeaponAvailable(constructorWeaponKinds[i]);
+                string availability = available ? "" : constructorLanguage == GameLanguage.Russian
+                    ? " · временно недоступна" : " · temporarily unavailable";
+                ButtonText(constructorWeapons[i], ConstructorWeaponLabel(i) + "  ×" + displayedCount + availability);
+                constructorWeapons[i].interactable = available;
             }
             for (int i = 0; i < constructorLinks.Length; i++)
             {

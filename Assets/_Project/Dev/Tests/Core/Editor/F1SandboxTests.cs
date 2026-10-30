@@ -38,7 +38,7 @@ public sealed class F1SandboxTests
 
     private static IEnumerator WeaponModesAndSegmentedFeedbackScenario()
     {
-        const string output = "Artifacts/DebugMenuAudit/LegacyRemovalSmoke";
+        const string output = "Artifacts/DebugMenuAudit/SegmentedWeaponSmoke-20261031";
         Directory.CreateDirectory(output);
         yield return CoreTestSupport.LoadBunker();
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>(
@@ -50,137 +50,162 @@ public sealed class F1SandboxTests
             Object.FindFirstObjectByType<CharacterSpawner>()?.Station is { IsInitialized: true } &&
             Object.FindFirstObjectByType<Subject42DebugMenu>() != null);
         yield return null;
-        File.WriteAllText(output + "/progress.txt", "Production MVP and station ready.\n");
         var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
-        File.AppendAllText(output + "/progress.txt", "Menu found: " + (menu != null) + "\n");
-        var spawnerOwner = Object.FindFirstObjectByType<CharacterSpawner>();
-        Assert.That(spawnerOwner, Is.Not.Null);
-        var station = spawnerOwner.Station;
-        Assert.That(station, Is.Not.Null);
+        var station = Object.FindFirstObjectByType<CharacterSpawner>().Station;
+        var spawner = Object.FindFirstObjectByType<EnemySpawner>();
+        var run = RunStateManager.Instance;
+        spawner.StopSpawning();
+
+        // A pre-restriction save stays valid and the same item survives the production bind.
+        var oldState = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(station.State));
+        int ringId = oldState.Rings[0].StableRingId;
+        Assert.That(oldState.TryGrantSegmentedWeapon(OrbitalModuleKind.Saw), Is.True, "Unbound lab/old states remain permissive.");
+        Assert.That(oldState.TryInstallSegmentedWeapon(OrbitalModuleKind.Saw, ringId, 6, out var oldSaw, out var error), Is.True, error);
+        oldSaw.DamageLevel = 2;
+        int sawId = oldSaw.StableModuleId;
+        Assert.That(run.DebugReplaceOrbitalState(oldState), Is.True);
+        station.RebuildRuntimeFromState();
         var state = station.State;
-        Assert.That(state, Is.Not.Null);
-        Assert.That(state.Modules, Is.Not.Null);
-        Assert.That(state.SegmentedWeapons, Is.Not.Null);
-        File.AppendAllText(output + "/progress.txt", "Station/state/collections found.\n");
-        int installed = state.Modules.Count, stock = state.SegmentedWeapons.Count;
-        try { OpenSandbox(menu); }
-        catch (Exception exception)
-        {
-            File.AppendAllText(output + "/progress.txt", exception.ToString() + "\n");
-            throw;
-        }
-        File.AppendAllText(output + "/progress.txt", "Sandbox opened.\n");
-        Choose("Пистолет", "Возврат промаха");
-        Assert.That(state.MissReturnPistolExperiment, Is.True);
+        Assert.That(state.Modules.Any(gun => gun.ModuleType == OrbitalModuleKind.Saw), Is.False);
+        Assert.That(state.SegmentedWeapons.Single(gun => gun.StableModuleId == sawId).DamageLevel, Is.EqualTo(2));
+        Assert.That(state.IsWeaponAvailable(OrbitalModuleKind.Saw), Is.False);
+        Assert.That(state.TryInstallSegmentedWeapon(OrbitalModuleKind.Saw, ringId, 6, out _, out _), Is.False);
+        Assert.That(state.CanTransferSegmentedWeapon(sawId, true, ringId, 6, out _), Is.False);
+        Assert.That(state.CanInstallModule(OrbitalModuleKind.Saw, ringId, 6, out _), Is.False);
+        station.RebuildRuntimeFromState();
+        Assert.That(state.SegmentedWeapons.Count(gun => gun.StableModuleId == sawId), Is.EqualTo(1), "Restore must be idempotent.");
+        using (var provider = new OrbitalRewardProvider(Array.Empty<UpgradeData>()))
+            Assert.That(provider.GetEligibleNormalRewards(state, run.ItemSlots).Cast<OrbitalRewardData>()
+                .Any(data => data.RewardKind == OrbitalRewardKind.Saw), Is.False);
+        var manager = UpgradeManager.Instance;
+        Assert.That(manager.DebugRewardCatalogue.Any(data => data.RewardKind == OrbitalRewardKind.Saw), Is.False);
+        Assert.That(manager.DebugOfferCatalogueReward(OrbitalRewardKind.Saw, true), Is.False);
+        File.WriteAllText(output + "/progress.txt", "PASS: Saw compatibility, production pool/catalogue/grant/install/transfer guards.\n");
+
+        OpenSandbox(menu);
+        Assert.That(Root(menu, "menuRoot").GetComponentsInChildren<TMP_Text>()
+            .Count(text => text.text.StartsWith("Вариант:", StringComparison.Ordinal)), Is.EqualTo(2));
+        Click(menu, "Снайперка +1");
+        OpenSandbox(menu);
+        Click(menu, "Дробовик +1");
+        Assert.That(station.InputOwner.TryToggleConstructor(), Is.True);
+        Assert.That(station.ConstructWeapon(OrbitalModuleKind.Sniper, ringId, 2, out error), Is.True, error);
+        Assert.That(station.ConstructWeapon(OrbitalModuleKind.Shotgun, ringId, 4, out error), Is.True, error);
+        Assert.That(station.InputOwner.TryToggleConstructor(), Is.True);
+        OpenSandbox(menu);
+        WeaponMode(menu, "Снайперка", "Заряженная линия").onClick.Invoke();
+        Assert.That(state.ChargedLineSniperExperiment, Is.True);
         Call(menu, "CloseMenu");
         OpenSandbox(menu);
-        Assert.That(WeaponMode(menu, "Пистолет", "Возврат промаха").interactable, Is.False);
-        Choose("Пистолет", "Обычный");
-        Assert.That(state.MissReturnPistolExperiment, Is.False);
-        Choose("Снайперка", "Заряженная линия");
-        Assert.That(state.ChargedLineSniperExperiment, Is.True);
-        Choose("Снайперка", "Обычная");
-        Assert.That(state.ChargedLineSniperExperiment, Is.False);
-        Choose("Дробовик", "Веерная очередь");
-        Assert.That(state.SweepingShotgunExperiment && !state.RamSlugShotgunExperiment, Is.True);
-        Choose("Дробовик", "Картечный таран");
-        Assert.That(!state.SweepingShotgunExperiment && state.RamSlugShotgunExperiment, Is.True);
-        Choose("Дробовик", "Веерная очередь");
-        Assert.That(state.SweepingShotgunExperiment && !state.RamSlugShotgunExperiment, Is.True);
-        Choose("Дробовик", "Обычный");
-        Assert.That(!state.SweepingShotgunExperiment && !state.RamSlugShotgunExperiment, Is.True);
-        Choose("Пила", "Импульсная");
-        Assert.That(state.PulsedSawExperiment && !state.InertialSawExperiment, Is.True);
-        Choose("Пила", "Инерционная");
-        Assert.That(!state.PulsedSawExperiment && state.InertialSawExperiment, Is.True);
-        Choose("Пила", "Импульсная");
-        Assert.That(state.PulsedSawExperiment && !state.InertialSawExperiment, Is.True);
-        Choose("Пила", "Обычная");
-        Assert.That(!state.PulsedSawExperiment && !state.InertialSawExperiment, Is.True);
-        File.AppendAllText(output + "/progress.txt", "All four groups switched mutually exclusively.\n");
-
-        Choose("Пистолет", "Возврат промаха");
-        Click(menu, "QA / Лаборатории");
-        Root(menu, "menuRoot").GetComponentsInChildren<Button>()
-            .Single(b => b.transform.parent.name == "Оружие: эксперименты").onClick.Invoke();
-        Assert.That(WeaponMode(menu, "Пистолет", "Возврат промаха").interactable, Is.False,
-            "QA and Sandbox must read the same runtime flags.");
-        Choose("Снайперка", "Заряженная линия");
-        Choose("Дробовик", "Картечный таран");
-        Choose("Пила", "Инерционная");
-        Assert.That(Root(menu, "menuRoot").GetComponentsInChildren<TMP_Text>()
-            .Count(t => t.text.Contains("Не установлен: профиль применится после установки")), Is.EqualTo(3));
-        Canvas.ForceUpdateCanvases();
-        yield return null;
-        ScreenCapture.CaptureScreenshot(Path.GetFullPath(output + "/selectors.png"));
-        yield return new WaitForSecondsRealtime(.15f);
-        Choose("Пистолет", "Обычный");
-        Choose("Снайперка", "Обычная");
-        Choose("Дробовик", "Обычный");
-        Choose("Пила", "Обычная");
-        Assert.That(state.Modules.Count, Is.EqualTo(installed));
-        Assert.That(state.SegmentedWeapons.Count, Is.EqualTo(stock));
-        Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True,
-            "Returning to Normal must not restore production progression eligibility.");
-
-        var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        spawner.StopSpawning();
-        File.AppendAllText(output + "/progress.txt", "Preparing actual projectile target.\n");
-        var pistol = station.Modules.OfType<OrbitalProjectileModule>().Single(m => m.Kind == OrbitalModuleKind.Pistol);
-        Assert.That(pistol.CurrentMount, Is.Not.Null);
-        Assert.That(pistol.CurrentMount.Transform, Is.Not.Null);
-        Vector2 direction = ((Vector2)pistol.CurrentMount.Transform.position - (Vector2)station.transform.position).normalized;
-        Vector2 targetPosition = pistol.WorldPosition + direction * 2f;
-        var enemy = spawner.SpawnDebugEnemyAt(spawner.FindDebugEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Basic), targetPosition);
-        Assert.That(enemy, Is.Not.Null);
-        foreach (var movement in enemy.GetComponents<EnemyMovement>()) movement.enabled = false;
-        var body = enemy.GetComponent<Rigidbody2D>();
-        Assert.That(body, Is.Not.Null);
-        body.bodyType = RigidbodyType2D.Kinematic;
-        body.linearVelocity = Vector2.zero;
-        yield return null;
-        var health = enemy.GetComponent<EnemyHealth>();
-        health.SetRuntimeMaxHealth(16f);
-        var presentation = enemy.GetComponent<EnemyHealthPresentation>();
-        Assert.That(presentation.DeathFxPrefab, Is.Not.Null);
-        bool died = false, deathFx = false, popup = false, projectile = false;
-        int hits = 0, shotsBefore = pistol.ShotsFired;
-        health.DeathFeedback += () =>
+        Assert.That(WeaponMode(menu, "Снайперка", "Заряженная линия").interactable, Is.False);
+        var sniper = station.Modules.OfType<OrbitalProjectileModule>().Single(module => module.Kind == OrbitalModuleKind.Sniper);
+        var shotgun = station.Modules.OfType<OrbitalProjectileModule>().Single(module => module.Kind == OrbitalModuleKind.Shotgun);
+        Assert.That(sniper.Settings.ChargeSeconds, Is.EqualTo(.45f));
+        Assert.That(sniper.Settings.Damage, Is.EqualTo(24f));
+        Assert.That(sniper.Settings.BodyPierces, Is.EqualTo(3));
+        Assert.That(sniper.Settings.ProjectileSpeed, Is.EqualTo(120f));
+        Assert.That(sniper.Settings.Range, Is.EqualTo(12f));
+        Assert.That(shotgun.Settings.Pellets, Is.EqualTo(7));
+        Assert.That(shotgun.Settings.BurstShots, Is.EqualTo(1));
+        Assert.That(shotgun.Settings.Damage, Is.EqualTo(3.5f));
+        Assert.That(shotgun.Settings.FireInterval, Is.EqualTo(1.05f));
+        Assert.That(shotgun.Settings.SpreadDegrees, Is.EqualTo(42f));
+        Vector3 mountPosition = sniper.CurrentMount.Transform.localPosition;
+        var direction = ((Vector2)sniper.CurrentMount.Transform.position - (Vector2)station.transform.position).normalized;
+        var targets = new EnemyHealth[3];
+        for (int i = 0; i < targets.Length; i++)
         {
-            died = true;
-            deathFx = Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None)
-                .Any(fx => fx.isPlaying && fx.gameObject.name.StartsWith(presentation.DeathFxPrefab.name, StringComparison.Ordinal));
-        };
+            var enemy = spawner.SpawnDebugEnemyAt(spawner.FindDebugEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Basic),
+                sniper.WorldPosition + direction * (1.2f + i * 1.2f));
+            foreach (var movement in enemy.GetComponents<EnemyMovement>()) movement.enabled = false;
+            var body = enemy.GetComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.linearVelocity = Vector2.zero;
+            targets[i] = enemy.GetComponent<EnemyHealth>();
+            targets[i].SetRuntimeMaxHealth(100f);
+        }
+        yield return null;
+        int hits = 0, audio = 0;
+        float shotResumeScale = 1f;
         station.Combat.Hit += (target, damage) =>
         {
-            if (target != health) return;
+            if (!targets.Contains(target)) return;
+            Assert.That(damage, Is.EqualTo(24f));
             hits++;
-            popup |= Object.FindObjectsByType<DamagePopup>(FindObjectsSortMode.None)
-                .Any(p => p.gameObject.activeInHierarchy && p.GetComponent<TextMeshPro>().text == "8");
             if (hits == 1) ScreenCapture.CaptureScreenshot(Path.GetFullPath(output + "/impact.png"));
         };
-        Call(menu, "CloseMenu");
-        float deadline = Time.realtimeSinceStartup + 6f;
-        while (!died && Time.realtimeSinceStartup < deadline)
+        void Cue(AudioCueId id)
         {
-            projectile |= ((ProductionOrbitalCombatAdapter)station.Combat).LabActiveProjectileCount > 0;
-            yield return null;
+            if (id != AudioCueId.ChargedSniperFire) return;
+            audio++;
+            // Hold the real emitted frame for reliable Game View capture; no production hook is added.
+            shotResumeScale = Time.timeScale;
+            Time.timeScale = 0f;
         }
-        Assert.That(pistol.ShotsFired, Is.GreaterThan(shotsBefore), "The production Segmented pistol must fire itself.");
-        Assert.That(projectile && hits >= 2 && popup && died && deathFx, Is.True,
-            $"projectile={projectile}, hits={hits}, popup={popup}, death={died}, deathFX={deathFx}");
-        ScreenCapture.CaptureScreenshot(Path.GetFullPath(output + "/death.png"));
-        yield return new WaitForSecondsRealtime(.15f);
-        File.WriteAllText(output + "/result.txt", "PASS: four runtime selectors, all six variants, immediate replacement, Normal, reopen and shared QA/Sandbox state.\n" +
-            "Installed build/stock preserved; uninstalled weapon disclosure and irreversible Development flag verified.\n" +
-            "Actual production Segmented pistol fired projectiles, hit twice, produced pooled damage popup and enemy death FX.\n" +
-            "One scripted Editor Play Mode smoke; no physical keyboard/mouse simulation.\n" + Application.dataPath + "\nUnity=" + Application.unityVersion);
-
-        void Choose(string group, string mode)
+        AudioService.Instance.DebugCuePlayed += Cue;
+        try
         {
-            var button = WeaponMode(menu, group, mode);
-            Assert.That(button.interactable, Is.True, group + ": " + mode);
-            button.onClick.Invoke();
+            station.ClearLabFlashes();
+            Call(menu, "CloseMenu");
+            bool mid = false, late = false, shotgunVolley = false;
+            float midBrightness = 0f, lateBrightness = 0f;
+            var charge = typeof(OrbitalProjectileModule).GetField("chargeRemaining", Hidden);
+            float deadline = Time.realtimeSinceStartup + 5f;
+            while (sniper.ShotsFired == 0 && Time.realtimeSinceStartup < deadline)
+            {
+                float remaining = (float)charge.GetValue(sniper);
+                float progress = remaining >= 0f ? 1f - remaining / .45f : 0f;
+                var guide = sniper.CurrentMount.Transform.GetComponentsInChildren<LineRenderer>(true)
+                    .FirstOrDefault(line => line.gameObject.name == "Charged sniper direction");
+                if (!mid && progress >= .45f && guide != null && guide.enabled)
+                {
+                    mid = true; midBrightness = guide.startColor.r;
+                    ScreenCapture.CaptureScreenshot(Path.GetFullPath(output + "/charge.png"));
+                }
+                if (!late && progress >= .86f && guide != null && guide.enabled)
+                {
+                    late = true; lateBrightness = guide.startColor.r;
+                    ScreenCapture.CaptureScreenshot(Path.GetFullPath(output + "/charge-final.png"));
+                }
+                if (!shotgunVolley && shotgun.ShotsFired > 0)
+                {
+                    var shots = (IEnumerable)typeof(ProductionOrbitalCombatAdapter).GetField("projectiles", Hidden).GetValue(station.Combat);
+                    int pellets = 0;
+                    foreach (var shot in shots)
+                        if ((bool)shot.GetType().GetField("Active").GetValue(shot) &&
+                            (OrbitalModuleKind)shot.GetType().GetField("Kind").GetValue(shot) == OrbitalModuleKind.Shotgun) pellets++;
+                    Assert.That(pellets, Is.EqualTo(7), "Ordinary shotgun must emit seven actual projectiles.");
+                    shotgunVolley = true;
+                }
+                yield return null;
+            }
+            Assert.That(sniper.ShotsFired, Is.EqualTo(1));
+            Assert.That(mid && late && shotgunVolley, Is.True);
+            Assert.That(lateBrightness, Is.GreaterThan(midBrightness));
+            Assert.That(audio, Is.GreaterThan(0));
+            Assert.That(sniper.CurrentMount.Transform.localPosition, Is.EqualTo(mountPosition), "Recoil must not move the mount.");
+            ScreenCapture.CaptureScreenshot(Path.GetFullPath(output + "/shot.png"));
+            yield return new WaitForSecondsRealtime(.15f);
+            Time.timeScale = shotResumeScale;
+            yield return new WaitForSecondsRealtime(.12f);
+            Assert.That(hits, Is.EqualTo(3));
+            foreach (var target in targets) Assert.That(target.CurrentHealth, Is.EqualTo(76f));
+            ScreenCapture.CaptureScreenshot(Path.GetFullPath(output + "/fade.png"));
+            yield return new WaitForSecondsRealtime(.15f);
+            OpenSandbox(menu);
+            WeaponMode(menu, "Снайперка", "Обычная").onClick.Invoke();
+            Assert.That(state.ChargedLineSniperExperiment, Is.False);
+            Assert.That(sniper.CurrentMount.Transform.GetComponentsInChildren<LineRenderer>(true)
+                .Where(line => line.gameObject.name.StartsWith("Charged sniper", StringComparison.Ordinal)).All(line => !line.enabled), Is.True);
+            Click(menu, "X");
+            File.WriteAllText(output + "/result.txt", "PASS: only2 F1 groups; sniper toggle/reopen/Normal; charge brightens in final0.1s; charged audio cue; actual three-body24-damage shot; mount unchanged.\n" +
+                "PASS: ordinary shotgun seven actual pellets and unchanged profile; Saw absent from production normal pool, catalogue, grants and installations; old Saw ID/upgrade preserved in reserve; lab policy permissive.\n" +
+                "One scripted Unity Editor Play Mode smoke; physical input and subjective feel not verified.\n" + Application.dataPath + "\nUnity=" + Application.unityVersion);
+        }
+        finally
+        {
+            Time.timeScale = shotResumeScale;
+            if (AudioService.Instance != null) AudioService.Instance.DebugCuePlayed -= Cue;
         }
     }
 
@@ -375,18 +400,10 @@ public sealed class F1SandboxTests
             .Single(s => s.gameObject.activeInHierarchy);
         scroll.verticalNormalizedPosition = 0f;
         yield return Capture("experiments");
-        WeaponMode(menu, "Дробовик", "Веерная очередь").onClick.Invoke();
-        Assert.That(state.SweepingShotgunExperiment, Is.True);
-        WeaponMode(menu, "Дробовик", "Картечный таран").onClick.Invoke();
-        Assert.That(state.RamSlugShotgunExperiment && !state.SweepingShotgunExperiment, Is.True);
-        WeaponMode(menu, "Дробовик", "Обычный").onClick.Invoke();
-        Assert.That(!state.RamSlugShotgunExperiment && !state.SweepingShotgunExperiment, Is.True);
-        WeaponMode(menu, "Пила", "Импульсная").onClick.Invoke();
-        Assert.That(state.PulsedSawExperiment, Is.True);
-        WeaponMode(menu, "Пила", "Инерционная").onClick.Invoke();
-        Assert.That(state.InertialSawExperiment && !state.PulsedSawExperiment, Is.True);
-        WeaponMode(menu, "Пила", "Обычная").onClick.Invoke();
-        Assert.That(!state.InertialSawExperiment && !state.PulsedSawExperiment, Is.True);
+        WeaponMode(menu, "Снайперка", "Заряженная линия").onClick.Invoke();
+        Assert.That(state.ChargedLineSniperExperiment, Is.True);
+        WeaponMode(menu, "Снайперка", "Обычная").onClick.Invoke();
+        Assert.That(state.ChargedLineSniperExperiment, Is.False);
         Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
 
         Click(menu, "Пистолет +1");

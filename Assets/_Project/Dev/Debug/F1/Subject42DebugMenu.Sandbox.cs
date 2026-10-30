@@ -41,7 +41,7 @@ public sealed partial class Subject42DebugMenu
         AddSectionTitle("БИЛД", "Выдача в запас; установка в штатном конструкторе Tab.");
         SandboxRow("Оружие · запас",
             Weapon(OrbitalRewardKind.Pistol, "Пистолет"), Weapon(OrbitalRewardKind.Sniper, "Снайперка"),
-            Weapon(OrbitalRewardKind.Shotgun, "Дробовик"), Weapon(OrbitalRewardKind.Saw, "Пила"));
+            Weapon(OrbitalRewardKind.Shotgun, "Дробовик"));
         SandboxRow("Модули · запас",
             Weapon(OrbitalRewardKind.DamageLink, "DMG"), Weapon(OrbitalRewardKind.FireRateLink, "FR"),
             Weapon(OrbitalRewardKind.ExtraShotLink, "2X"), Weapon(OrbitalRewardKind.RicochetLink, "RIC"));

@@ -25,6 +25,27 @@ namespace Subject42.Combat.OrbitalStation
         public List<SegmentedLinkKind> SegmentedLinkStock = new();
         public List<SegmentedLinkState> SegmentedLinks = new();
 
+        // Bound by the production spawner, never saved into shared laboratory state.
+        [NonSerialized] private bool productionWeaponAvailability;
+        public bool IsWeaponAvailable(OrbitalModuleKind kind) =>
+            !productionWeaponAvailability || kind != OrbitalModuleKind.Saw;
+
+        internal void ApplyProductionWeaponAvailability(bool production)
+        {
+            productionWeaponAvailability = production;
+            if (!production || !UsesSegmentedOrbit) return;
+            bool stowed = false;
+            foreach (var weapon in Modules.Where(gun => gun.ModuleType == OrbitalModuleKind.Saw).ToArray())
+            {
+                Modules.Remove(weapon);
+                weapon.StableRingId = 0;
+                weapon.MountIndex = -1;
+                SegmentedWeapons.Add(weapon);
+                stowed = true;
+            }
+            if (stowed) Revision++;
+        }
+
         public static bool IsSegmentedWeapon(OrbitalModuleKind kind) => kind is
             OrbitalModuleKind.Pistol or OrbitalModuleKind.Shotgun or OrbitalModuleKind.Sniper or OrbitalModuleKind.Saw;
 
@@ -81,7 +102,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool TryGrantSegmentedWeapon(OrbitalModuleKind kind)
         {
-            if (!UsesSegmentedOrbit || !IsSegmentedWeapon(kind) || !CanCommit(out _) || NextStableModuleId == int.MaxValue) return false;
+            if (!UsesSegmentedOrbit || !IsSegmentedWeapon(kind) || !IsWeaponAvailable(kind) ||
+                !CanCommit(out _) || NextStableModuleId == int.MaxValue) return false;
             SegmentedWeapons.Add(new OrbitalModuleState
             {
                 StableModuleId = NextStableModuleId++, ModuleType = kind, StableRingId = 0, MountIndex = -1
@@ -161,6 +183,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool TryInstallSegmentedWeapon(OrbitalModuleKind kind, int ringId, int mount, out OrbitalModuleState weapon, out string error)
         {
             weapon = null;
+            if (!Rule(IsWeaponAvailable(kind), "Пила временно недоступна в основном ране.", out error)) return false;
             if (!UsesSegmentedOrbit || !CanOccupy(ringId, mount, 0, out error))
             { error = "Нужна свободная точка установки."; return false; }
             weapon = SegmentedWeapons.FirstOrDefault(gun => gun.ModuleType == kind);
@@ -179,6 +202,7 @@ namespace Subject42.Combat.OrbitalStation
             var weapon = (fromStock ? SegmentedWeapons : Modules).FirstOrDefault(gun => gun.StableModuleId == id);
             var ring = FindRing(ringId);
             if (!Rule(UsesSegmentedOrbit && weapon != null && IsSegmentedWeapon(weapon.ModuleType), "Оружие недоступно.", out error) ||
+                !Rule(IsWeaponAvailable(weapon.ModuleType), "Пила временно недоступна в основном ране.", out error) ||
                 !Rule(ring != null && IsRingActive(ring) && mount >= 0 && mount < ring.MountCount &&
                     IsSegmentedWeaponSlot(ring.Order, mount), "Выберите открытую синюю ячейку O.", out error)) return false;
             var target = Modules.FirstOrDefault(gun => gun.StableRingId == ringId && gun.MountIndex == mount);

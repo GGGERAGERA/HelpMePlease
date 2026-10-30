@@ -125,6 +125,7 @@ namespace Subject42.Combat.OrbitalStation
             shot.BodiesRemaining = Mathf.Max(1, settings.BodyPierces); shot.Volley = volley;
             shot.Knockback = settings.Knockback;
             shot.Kind = settings.Kind;
+            shot.ChargedLinePresentation = settings.ChargedLinePresentation;
             shot.Presentation = settings.Presentation;
             shot.PresentationScale = settings.ProjectileVisualScale;
             shot.BypassShields = settings.BypassShields;
@@ -133,18 +134,19 @@ namespace Subject42.Combat.OrbitalStation
             {
                 var style = settings.Presentation;
                 shot.BodySize = style.BodySize * settings.ProjectileVisualScale;
-                shot.Color = style.Color;
+                Color shotColor = settings.ChargedLinePresentation ? new Color(1.5f, 1.8f, 2f, style.Color.a) : style.Color;
+                shot.Color = shotColor;
                 foreach (var sprite in shot.Sprites)
                 {
                     Vector2 size = sprite.sprite.bounds.size;
                     sprite.transform.localScale = new Vector3(style.BodySize.x / size.x, style.BodySize.y / size.y, 1f);
-                    sprite.color = style.Color;
+                    sprite.color = shotColor;
                 }
                 foreach (var trail in shot.Trails)
                 {
                     trail.time = style.TrailSeconds;
                     trail.widthMultiplier = style.TrailWidth * settings.ProjectileVisualScale;
-                    Color head = style.Color; head.a *= style.TrailOpacity;
+                    Color head = shotColor; head.a *= style.TrailOpacity;
                     Color tail = head; tail.a = 0f;
                     trail.startColor = head; trail.endColor = tail;
                 }
@@ -194,6 +196,7 @@ namespace Subject42.Combat.OrbitalStation
         }
         private sealed class Projectile
         {
+            public bool ChargedLinePresentation;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             public long LabSequence;
             public bool LabCancelled;
@@ -244,6 +247,7 @@ namespace Subject42.Combat.OrbitalStation
         public Action<Vector2, Vector2, Color> ProjectileImpact;
         // Typed visual routing keeps independent weapon families; existing impact observers remain intact.
         public Action<Vector2, Vector2, Color, OrbitalModuleKind> ProjectileVisualImpact;
+        public Action<Vector2, Vector2> ChargedLineVisualImpact;
 
         public ProductionOrbitalCombatAdapter(Transform runtimeRoot, Sprite sharedSprite)
         {
@@ -401,6 +405,7 @@ namespace Subject42.Combat.OrbitalStation
             projectile.BodySize = Vector2.zero;
             projectile.Color = Color.white;
             projectile.Kind = OrbitalModuleKind.Pistol;
+            projectile.ChargedLinePresentation = false;
             projectile.Presentation = null;
             projectile.PresentationScale = 1f;
             projectile.GameObject.transform.localScale = projectile.AuthoredScale;
@@ -481,6 +486,7 @@ namespace Subject42.Combat.OrbitalStation
             Death = null;
             ProjectileImpact = null;
             ProjectileVisualImpact = null;
+            ChargedLineVisualImpact = null;
             for (int i = 0; i < projectiles.Count; i++)
                 if (projectiles[i].GameObject != null)
                     UnityEngine.Object.Destroy(projectiles[i].GameObject);
@@ -534,7 +540,8 @@ namespace Subject42.Combat.OrbitalStation
                     LabProjectileContact?.Invoke(projectile.LabSequence, Mathf.Clamp(healthBefore - enemy.CurrentHealth, 0f, Mathf.Max(0f, healthBefore)), aliveBefore && enemy.IsDead, false);
 #endif
                 ProjectileImpact?.Invoke(point, projectile.Direction, projectile.Color);
-                ProjectileVisualImpact?.Invoke(point, projectile.Direction, projectile.Color, projectile.Kind);
+                if (projectile.ChargedLinePresentation) ChargedLineVisualImpact?.Invoke(point, projectile.Direction);
+                else ProjectileVisualImpact?.Invoke(point, projectile.Direction, projectile.Color, projectile.Kind);
                 LabBodyImpact?.Invoke(point, projectile.Direction, projectile.BodiesRemaining > 1);
                 if (projectile.Knockback > 0f && !enemy.IsDead && enemy.TryGetComponent<EnemyChaseMovement>(out var movement) &&
                     (projectile.Volley == null || projectile.Volley.Pushed.Add(enemy)))
