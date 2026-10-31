@@ -164,6 +164,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         spawnedSites.Add(site);
+        if (data.AnomalyType == LocalAnomalyType.Stasis)
+            StasisFieldLabVisual.Attach(site);
         nextNormalTerritory++;
         notice = $"Normal anomaly: {data.AnomalyType}";
         return true;
@@ -317,7 +319,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             FirstSiteEvent(), events, anomalies, new Vector2(1000, 1000), .5f, explorationConfig.AnomalyTerritoryFill);
         ClearBootstrapEvent(site);
         if (!initialized || site.AnomalyZone == null) { site.RemoveForLayout(); return false; }
-        spawnedSites.Add(site); return true;
+        spawnedSites.Add(site); StasisFieldLabVisual.Attach(site); return true;
     }
 
     public bool SpawnPortalPair()
@@ -438,7 +440,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         EnsureStyles();
-        float width = Mathf.Min(360f, Screen.width * 0.36f);
+        float width = Mathf.Min(460f, Screen.width * 0.40f);
         Rect panel = new(8f, 8f, width, Mathf.Max(200f, Screen.height - 16f));
         GUI.Box(panel, GUIContent.none);
         GUILayout.BeginArea(new Rect(
@@ -538,23 +540,25 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
         titleStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 18,
+            fontSize = 24,
             fontStyle = FontStyle.Bold,
             normal = { textColor = new Color(0.3f, 0.95f, 1f) }
         };
         sectionStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 13,
+            fontSize = 18,
             fontStyle = FontStyle.Bold,
             normal = { textColor = new Color(1f, 0.78f, 0.28f) }
         };
         buttonStyle = new GUIStyle(GUI.skin.button)
         {
             alignment = TextAnchor.MiddleLeft,
-            fixedHeight = 26f
+            fontSize = 18,
+            fixedHeight = 40f
         };
         noteStyle = new GUIStyle(GUI.skin.label)
         {
+            fontSize = 17,
             wordWrap = true,
             normal = { textColor = new Color(0.8f, 0.86f, 0.9f) }
         };

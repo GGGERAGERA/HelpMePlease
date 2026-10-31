@@ -996,7 +996,8 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         else { WeaponModules?.UpdateSpokes(); sandboxView?.Tick(PanelVisible, PanelRect); }
     }
 
-    protected override Rect PanelRect => new(0, 0, Mathf.Clamp(Screen.width * .25f, 350f, 420f), Screen.height);
+    protected override Rect PanelRect => new(0, 0,
+        AnomalyExperiment != null && AnomalyExperiment.Active ? Mathf.Min(460f,Screen.width*.35f) : Mathf.Clamp(Screen.width * .25f, 350f, 420f), Screen.height);
     protected override void OnGUI()
     {
         if (SegmentedOrbit) segmentedView?.Draw(PanelVisible, PanelRect);

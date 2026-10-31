@@ -64,8 +64,8 @@ public sealed class WorldSystemsLabOrbitExperiment : MonoBehaviour
     public float RotationDrainFactor => ActiveAnomaly == Anomaly.Red ? RedEnergyMultiplier : 1f;
     public EnemyOrbitalLabController Orbit => orbit;
     public int ZoneCount => zones.Count;
-    public Rect PanelRect => new(Screen.width - Mathf.Min(330f,Screen.width * .28f) - 10,78,
-        Mathf.Min(330f,Screen.width * .28f),Mathf.Min(590,Screen.height - 150));
+    public Rect PanelRect => new(Screen.width - Mathf.Min(460f,Screen.width * .32f) - 14,78,
+        Mathf.Min(460f,Screen.width * .32f),Mathf.Min(740,Screen.height - 100));
     public bool BlocksPointer => Active && PanelRect.Contains(new Vector2(Input.mousePosition.x,Screen.height - Input.mousePosition.y));
     public static string Name(Anomaly kind) => kind switch
     {
@@ -278,9 +278,9 @@ public sealed class WorldSystemsLabOrbitExperiment : MonoBehaviour
     void OnGUI()
     {
         if (!Active) return;
-        text ??= new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true };
-        heading ??= new GUIStyle(text) { fontSize = 18, fontStyle = FontStyle.Bold };
-        button ??= new GUIStyle(GUI.skin.button) { fontSize = 13, wordWrap = true, fixedHeight = 29 };
+        text ??= new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true };
+        heading ??= new GUIStyle(text) { fontSize = 22, fontStyle = FontStyle.Bold };
+        button ??= new GUIStyle(GUI.skin.button) { fontSize = 18, wordWrap = true, fixedHeight = 42 };
         Color savedColor = GUI.color;
         GUI.color = new Color(.025f,.035f,.045f,.97f); GUI.DrawTexture(PanelRect,Texture2D.whiteTexture); GUI.color = savedColor;
         GUILayout.BeginArea(PanelRect,GUI.skin.box);
@@ -310,7 +310,7 @@ public sealed class WorldSystemsLabOrbitExperiment : MonoBehaviour
         if (camera == null) return;
         foreach (var zone in zones)
         {
-            if (zone.Source == null) continue;
+            if (zone.Source == null || zone.Kind == Anomaly.Blue) continue;
             Vector3 point = camera.WorldToScreenPoint(zone.Source.transform.position);
             GUI.Label(new Rect(point.x - 100,Screen.height - point.y - 65,200,26),Name(zone.Kind),heading);
         }

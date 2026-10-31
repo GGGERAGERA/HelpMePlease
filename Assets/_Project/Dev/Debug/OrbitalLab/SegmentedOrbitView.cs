@@ -42,6 +42,11 @@ public sealed class SegmentedOrbitView : IDisposable
         linkBadge = new GUIStyle(GUI.skin.label) { fontSize = 11, fontStyle = FontStyle.Bold,
             wordWrap = false, alignment = TextAnchor.MiddleCenter, padding = new RectOffset(2,2,0,0) };
         linkBadge.normal.background = background; linkBadge.normal.textColor = new Color(.9f,.96f,.97f);
+        if (lab.AnomalyExperiment != null && lab.AnomalyExperiment.Active)
+        {
+            text.fontSize = 18; small.fontSize = 16; button.fontSize = selected.fontSize = 18;
+            button.fixedHeight = selected.fixedHeight = 42;
+        }
     }
     LineRenderer Line(string name, int count, float width)
     {
