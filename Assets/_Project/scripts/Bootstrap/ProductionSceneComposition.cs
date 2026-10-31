@@ -134,6 +134,11 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         while (!SubsystemsReady()) yield return null;
         // Scene activation and Start callbacks finish before the transition reveals it.
         yield return null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Rebind only an explicitly started lab session; ordinary gameplay creates none.
+        if (role == SceneRole.Gameplay || role == SceneRole.Bunker)
+            BotRunSession.Current?.BindScene(characters, RunFlowController.Instance, rewards, gameplayArea);
+#endif
         IsReady = true;
     }
 

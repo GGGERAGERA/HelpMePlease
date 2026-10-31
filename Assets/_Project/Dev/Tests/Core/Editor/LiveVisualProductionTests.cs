@@ -11,7 +11,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.TestTools;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 public sealed class LiveVisualProductionTests
@@ -32,7 +31,7 @@ public sealed class LiveVisualProductionTests
     // Create runtime locals and captured lambdas only after the domain reload.
     private static IEnumerator VerifyProductionScenario()
     {
-        string output = Path.Combine("Artifacts/GeneratedQA/LiveVisualStudio",
+        string output = Path.Combine("Artifacts/GeneratedQA/LiveVisualRuntime",
             "run-" + System.DateTime.UtcNow.ToString("yyyyMMddTHHmmssfffZ") + "-" + System.Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(output);
         yield return CoreTestSupport.LoadBunker();
@@ -84,17 +83,6 @@ public sealed class LiveVisualProductionTests
         var collider = one.GetComponent<Collider2D>();
         var colliderBounds = collider != null ? collider.bounds.size : Vector3.zero;
         float redAlpha = ((SpriteRenderer)redTarget.Component).color.a;
-        var debugMenu = Object.FindFirstObjectByType<Subject42DebugMenu>();
-        typeof(Subject42DebugMenu).GetMethod("ShowHub", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(debugMenu, null);
-        yield return null; yield return null;
-        yield return Capture(output, "00-debug-hub.png");
-        typeof(Subject42DebugMenu).GetMethod("CloseHub", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(debugMenu, null);
-        LiveVisualStudio.Open();
-        var studio = Object.FindFirstObjectByType<LiveVisualStudio>();
-        var selected = typeof(LiveVisualStudio).GetField("selected", BindingFlags.Instance | BindingFlags.NonPublic);
-        selected.SetValue(studio, target);
-        typeof(LiveVisualStudio).GetMethod("RefreshSelection", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(studio, null);
-        yield return null; yield return null;
         yield return Capture(output, "01-current.png");
 
         runtime.BeginEdit();
@@ -103,7 +91,7 @@ public sealed class LiveVisualProductionTests
         runtime.Edit("Type", target, contrast, 1.2f);
         runtime.Edit("Type", target, alpha, .6f);
         yield return null;
-        Assert.That(sprite.sharedMaterial, Is.Not.SameAs(originalMaterial), "Only a runtime material clone may carry studio changes.");
+        Assert.That(sprite.sharedMaterial, Is.Not.SameAs(originalMaterial), "Only a runtime material clone may carry profile changes.");
         var block = new MaterialPropertyBlock(); sprite.GetPropertyBlock(block);
         Assert.That(block.GetFloat("_StudioSaturation"), Is.Zero);
         Assert.That(sprite.color.a, Is.EqualTo(.6f).Within(.001f));
@@ -147,14 +135,14 @@ public sealed class LiveVisualProductionTests
         Assert.That(psEdited.main.startSizeMultiplier, Is.EqualTo(.4f));
         Assert.That(psEdited.main.startLifetimeMultiplier, Is.EqualTo(1.5f));
         var particlePrefab = SelectAuthoredPoolPrefab(runtime, output);
-        Debug.Log("[LiveVisualStudio QA] Pool prefab=" + particlePrefab.name + "; systems=" +
+        Debug.Log("[LiveVisualRuntime QA] Pool prefab=" + particlePrefab.name + "; systems=" +
             string.Join(", ", particlePrefab.GetComponentsInChildren<ParticleSystem>(true).Select(ps => ps.name + ":" + ps.main.stopAction)) +
             "; scripts=" + string.Join(", ", particlePrefab.GetComponentsInChildren<MonoBehaviour>(true).Where(b => b != null).Select(b => b.GetType().Name)));
         var pool = new SimplePrefabPool(runtime, particlePrefab, 1, 4);
         void ConfigureOwnedParticles(PooledGameObject item)
         {
             Assert.That(item != null && item.gameObject != null, Is.True, "The pool must supply a live root before presentation configuration.");
-            Debug.Log("[LiveVisualStudio QA] Configure pool root=" + item.name + "; cachedPS=" + (item.PrimaryParticleSystem != null) +
+            Debug.Log("[LiveVisualRuntime QA] Configure pool root=" + item.name + "; cachedPS=" + (item.PrimaryParticleSystem != null) +
                 "; directPS=" + (item.GetComponent<ParticleSystem>() != null));
             Assert.That(item.PrimaryParticleSystem != null, Is.True, "Pool root ParticleSystem was lost before visual configuration: " + item.name);
             var main = item.PrimaryParticleSystem.main;
@@ -166,7 +154,7 @@ public sealed class LiveVisualProductionTests
         yield return null;
         Assert.That(pooled.PrimaryParticleSystem != null, Is.True, particlePrefab.name + " destroyed its root ParticleSystem during preparation.");
         var matches = runtime.Targets.Where(t => ReferenceEquals(t.Component, pooled.PrimaryParticleSystem)).ToArray();
-        Debug.Log($"[LiveVisualStudio QA] Pool source={particlePrefab.name}; particle={pooled.PrimaryParticleSystem.GetInstanceID()}; registered matches={matches.Length}");
+        Debug.Log($"[LiveVisualRuntime QA] Pool source={particlePrefab.name}; particle={pooled.PrimaryParticleSystem.GetInstanceID()}; registered matches={matches.Length}");
         Assert.That(matches.Length, Is.EqualTo(1), "Pool root ParticleSystem must be registered by its actual component identity.");
         var pooledTarget = matches[0];
         var pooledSize = pooledTarget.Properties.Single(p => p.Id == "particles.size");
@@ -202,7 +190,7 @@ public sealed class LiveVisualProductionTests
         Assert.That(sprite.color.a, Is.EqualTo(alpha.Current).Within(.001f));
         runtime.SetMode(VisualComparisonMode.Custom); yield return Capture(output, "06-custom-restored.png");
         foreach (var pair in authored) Assert.That(File.ReadAllBytes(pair.Key), Is.EqualTo(pair.Value), pair.Key + " was changed during live tuning.");
-        File.WriteAllText(Path.Combine(output, "scenario.txt"), "Runtime checks passed: production startup, two enemy types, saturation/HDR/contrast/alpha, new spawn and reuse, particles, Global Light 2D, JSON round trip, Original/Current/Custom, authored asset byte equality.\nPhysical input and PNG appearance require separate observation.\n");
+        File.WriteAllText(Path.Combine(output, "scenario.txt"), "Runtime checks passed: production startup, two enemy types, saturation/HDR/contrast/alpha, new spawn and reuse, particles, Global Light 2D, JSON round trip, Original/Current/Custom, authored asset byte equality.\nPNG appearance requires separate observation.\n");
     }
 
     private static GameObject SelectAuthoredPoolPrefab(LiveVisualRuntime runtime, string output)
@@ -218,7 +206,7 @@ public sealed class LiveVisualProductionTests
         void Record(string message)
         {
             File.AppendAllText(diagnosticPath, message + "\n");
-            Debug.Log("[LiveVisualStudio QA] " + message);
+            Debug.Log("[LiveVisualRuntime QA] " + message);
         }
         foreach (var candidate in candidates)
             Record("catalog=" + candidate.AssetPath + "; prefab=" + DescribeSourceObject(candidate.Prefab) +
@@ -280,7 +268,7 @@ public sealed class LiveVisualProductionTests
         var renderers = actor.GetComponentsInChildren<SpriteRenderer>(true);
         Assert.That(renderers, Is.Not.Null);
         var visible = renderers.Where(s => s != null && s.gameObject != null && s.enabled && s.gameObject.activeInHierarchy).ToArray();
-        Debug.Log("[LiveVisualStudio QA] " + actor.name + " visible renderers: " + string.Join(", ", visible.Select(s => s.name)));
+        Debug.Log("[LiveVisualRuntime QA] " + actor.name + " visible renderers: " + string.Join(", ", visible.Select(s => s.name)));
         var body = visible.SingleOrDefault(s => s.name == name);
         Assert.That(body != null, Is.True, "Required visible production body absent: " + name);
         return body;

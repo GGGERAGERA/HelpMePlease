@@ -1,0 +1,51 @@
+F1 removal: Live Visual Studio UI
+Date: 2026-10-31
+Scope: static edits and inspection only; no Unity, tests, build, staging, commits or branch changes.
+
+DELETED FILES
+- Assets/_Project/Dev/Debug/F1/LiveVisualStudio.cs
+- Assets/_Project/Dev/Debug/F1/LiveVisualStudio.cs.meta
+  Script GUID c11f04bea0b24a5fa2bb52e78f28c636 has no scene/prefab/asset references in Assets, Packages or ProjectSettings.
+  The file was guarded by UNITY_EDITOR || DEVELOPMENT_BUILD. Its consumers were the F1 hub, UI input gates and UI tests; no production profile application depended on the component.
+
+REMOVED UI CLASSES / METHODS
+- LiveVisualGesture: OnPointerDown, OnPointerUp, OnDrag, OnEndDrag.
+- LiveVisualStudio: Open, OwnsPointer, Show, Hide, Build, Update, LateUpdate, RuntimeChanged, RefreshSelection, RefreshBaselineNotes, RefreshValues, DescribeTarget, BuildTargets, Select, Pick, BuildProperties, FavoriteKey, BuildProperty, BuildColorTools, ProfileName, SaveProfile, LoadProfile, ReadProfileText, ValidateProfileText, LoadJson, Safe, SetStatus, Resize, Constrain, SaveWindow, OnDestroy, Number, Clear, Rect, Fill, AnchorTopRight, Vertical, Horizontal, Text, Label, Button, Field, Slider, Width.
+- All LiveVisualStudio state/properties, including IsOpen, Selected, BlocksGameplayPointer, BlocksKeyboardInput, TextFieldFocused, window preferences, selection, picking and UI roots.
+- LiveVisualStudioAuthoring.Verify, Results callback class, TestRunnerApi field and QaDirectory. The Studio-specific Editor verification menu entry is removed; no replacement launcher is added.
+- LiveVisualProfileTests.StudioDestroyRestoresCursorOnlyForOpenOwner.
+- LiveVisualProfileTests.StudioNamedFileSaveLoadPreservesDraftAndRejectsInvalidImport and CountingProfileReader; named-file/UI cursor/size-reader contracts cease to apply with the deleted UI.
+- LiveVisualProductionTests debug hub/panel opening, selection reflection and 00-debug-hub.png capture.
+
+MODIFIED / RETAINED AUTHORING
+- Assets/_Project/Dev/Editor/F1/LiveVisualStudioAuthoring.cs keeps only its existing Prepare method and existing Prepare production catalog menu entry. It binds runtime source identities, baseline, shader and historical materials. Its log/Undo label now describe the runtime catalog.
+- LiveVisualStudioAuthoring.cs.meta is retained because the catalog authoring class remains.
+- Assets/_Project/Dev/Editor/F1/LiveVisualBaselineAuthoring.cs and its meta remain unchanged as independent historical-baseline authoring.
+- No new tool, menu entry, manager, input fallback or replacement UI is introduced.
+
+ADAPTED / RETAINED TEST SOURCE
+- RuntimeProfileExportLoadPreservesSessionAndRejectsInvalidProfiles replaces the old UI file scenario with direct LiveVisualRuntime operations. It retains Type/Group export, Instance exclusion without mutation, real sprite alpha application/restoration, rejection of invalid duplicate keys before Custom/Mode/Revision/history/alpha changes, local/authored production references, authored asset byte equality and global runtime identity. It creates no profile files.
+- Existing LiveVisualProfileTests checks retained: ProductionCatalogReferencesActualPrefabRootsAndHistoricalMaterials; PixelCorrectionPreservesTemporaryCombatFlashMaterial; InstanceWinsOverTypeAndGroupAndDoesNotLeakToSibling; ImportRejectsNonFiniteDuplicateOrUnknownScopeWithoutChangingSession; ProductionSerializationExcludesInstanceOverridesAndRoundTripsTypeDiffs.
+- LiveVisualProductionTests.ProductionTypesNewSpawnsParticlesLightsAndProfileRoundTrip now uses runtime directly. Startup, real enemy types, per-type/group behavior, shader/material isolation, new spawn/reuse, Global Light 2D, particles, actual authored pool source diagnostics, pool identity, owner-configured Current values, first synchronous Emit, JSON round-trip, Original/Current/Custom restoration and authored byte equality remain.
+- Future production scenario captures/logs use LiveVisualRuntime naming. PNG appearance still needs observation.
+- OrbitalVisualAdapterTests and PooledVisualConfigurationTests are untouched.
+
+PRODUCTION DEPENDENCIES RETAINED WITHOUT EDITS BY THIS WORKER
+- scripts/World/Presentation/LiveVisual/LiveVisualRuntime.cs: release/profile attachment, registry, comparison, history, import/export, configured-pool capture/application, cleanup/restoration.
+- VisualProfile.cs, VisualTarget.cs, VisualComponentAdapters.cs and OrbitalVisualAdapter.cs.
+- OrbitalVisualAdapter.BindSavedRingValues retains saved RingSurface/Tier/line/highlight/dimming compatibility. Existing profiles must keep applying those values although controls are gone.
+- ProductionSceneComposition.Attach path and existing VisualTuningPreset reference.
+- Runtime registration/application call sites: EnemySpawner; ProductionSectorProps; ExplosiveZone; EnemyHealthPresentation; EnemyExplosion; EnemyBomberMovement; OrbitalStationModel; OrbitalStationAdapters; OrbitalModuleVisual; SimplePrefabPool.
+- Runtime presentation implementations and independently used laboratory tools remain.
+- VisualTuningSavedValues.asset, LiveVisualProduction.json/.meta, Profiles contents and Artifacts/Subject42Character were not edited, deleted or regenerated by this worker.
+
+DOCUMENTATION
+- Assets/_Project/Documentation/LiveVisualStudio.md now documents retained runtime/profile/catalog ownership and explicitly retires UI operation instructions and UI-only test contracts. Relevant historical profile-copy/pool evidence is distinguished from current verification.
+
+STATIC VERIFICATION
+- Scoped git diff --check: exit 0, no whitespace errors.
+- rg for exact LiveVisualStudio/LiveVisualGesture types, old Studio tests, ShowHub/CloseHub use in owned tests and removed authoring Verify/QaDirectory references: no remaining code/serialized references after coordinated root changes.
+- Script GUID search across Assets, Packages, ProjectSettings (excluding .meta): no matches.
+- Production LiveVisualRuntime Attach/RegisterHierarchy/CaptureConfiguredHierarchy/ApplyHierarchy consumers were inspected and remain present.
+- Scoped diff inspected for authoring and production scenario; all non-UI rendering/pool assertions remain.
+- No compilation, runtime test result, player build or manual playtest is claimed.

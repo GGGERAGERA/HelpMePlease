@@ -83,7 +83,115 @@ public sealed class OrbitalVisualAdapterTests
         Assert.That(settings.Damage, Is.EqualTo(damage));
         Assert.That(settings.ProjectileRadius, Is.EqualTo(radius));
         Assert.That(target.Properties.Any(p => p.Id.Contains("BodySize") || p.Id.Contains("Radius") || p.Id.Contains("FireInterval")), Is.False);
+        Assert.That(target.Properties.Any(p => p.Id.StartsWith("config.Ring") || p.Id.StartsWith("config.Tier")), Is.False,
+            "Saved ring appearance remains compatible without becoming Studio controls.");
         Object.DestroyImmediate(source);
+    }
+
+    [Test]
+    public void SavedRingAppearanceSurvivesImportExportComparisonResetAndDestruction()
+    {
+        var source = ScriptableObject.CreateInstance<OrbitalPresentationConfig>();
+        OrbitalPresentationConfig.Configure(source);
+        var config = OrbitalPresentationConfig.Active;
+        var host = new GameObject("Saved ring profile compatibility");
+        try
+        {
+            var runtime = host.AddComponent<LiveVisualRuntime>();
+            runtime.enabled = false;
+            runtime.Targets.Add(OrbitalVisualAdapter.CreateTarget());
+            runtime.Original.Set("Type", "config:orbital", "config.RingSurface.Glow", .25f);
+            var saved = new VisualProfile();
+            saved.Set("Group", "ORBITAL", "config.RingSurface.Glow", .5f);
+            saved.Set("Type", "config:orbital", "config.RingSurface.Glow", 2f);
+            saved.Set("Instance", "config:orbital", "config.RingSurface.Glow", 3f);
+            saved.Set("Type", "config:orbital", "config.RingLineWidth", .12f);
+            saved.Set("Type", "config:orbital", "config.RingSurface.Pattern", 1.6f);
+            saved.Set("Type", "config:orbital", "config.RingSurface.DashCount", 900f);
+            saved.Set("Type", "config:orbital", "config.RingSurface.PatternSpeed", -99f);
+            runtime.Load(saved);
+            Assert.That(runtime.OriginalMatchedCount, Is.EqualTo(1), "Imported ring IDs still count as an applied baseline contract.");
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(3f));
+            Assert.That(config.RingLineWidth, Is.EqualTo(.12f));
+            Assert.That(config.RingSurface.Pattern, Is.EqualTo(OrbitalPresentationConfig.RingPattern.Energy));
+            Assert.That(config.RingSurface.DashCount, Is.EqualTo(512));
+            Assert.That(config.RingSurface.PatternSpeed, Is.EqualTo(-10f));
+
+            var exported = JsonUtility.FromJson<VisualProfile>(runtime.Export("Saved appearance"));
+            Assert.That(exported.Values.Count, Is.EqualTo(6));
+            Assert.That(exported.Values.Any(v => v.Scope == "Instance"), Is.False);
+            Assert.That(exported.TryGet("Type", "config:orbital", "config.RingSurface.DashCount", out float rawDashCount), Is.True);
+            Assert.That(rawDashCount, Is.EqualTo(900f), "Import/export must retain the saved data, including values sanitized only on application.");
+            runtime.Load(exported);
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(2f), "Production round-trip keeps Type over Group.");
+            config.RingSurface.Saturation = 1.75f; // A laboratory edits an unrelated value.
+            runtime.SetMode(VisualComparisonMode.Current);
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(1f));
+            Assert.That(config.RingSurface.Saturation, Is.EqualTo(1.75f), "Restoration affects only overridden fields.");
+            Assert.That(config.RingLineWidth, Is.EqualTo(.045f));
+            runtime.SetMode(VisualComparisonMode.Original);
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(.25f));
+            runtime.SetMode(VisualComparisonMode.Custom);
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(2f));
+            runtime.Reset("Type");
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(1f));
+            runtime.Undo();
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(2f));
+            Object.DestroyImmediate(host);
+            Assert.That(config.RingSurface.Glow, Is.EqualTo(1f));
+            Assert.That(config.RingLineWidth, Is.EqualTo(.045f));
+            Assert.That(source.RingSurface.Glow, Is.EqualTo(1f), "Authored presentation is never modified.");
+        }
+        finally
+        {
+            if (host != null) Object.DestroyImmediate(host);
+            Object.DestroyImmediate(source);
+        }
+    }
+
+    [TestCase("I", 1)]
+    [TestCase("II", 2)]
+    [TestCase("III", 3)]
+    [TestCase("IV", 4)]
+    public void SavedTierAppearanceAppliesWithoutExposingTierControls(string tierId, int tier)
+    {
+        var source = ScriptableObject.CreateInstance<OrbitalPresentationConfig>();
+        OrbitalPresentationConfig.Configure(source);
+        var config = OrbitalPresentationConfig.Active;
+        var original = config.GetRingTier(tier);
+        var host = new GameObject("Saved tier profile compatibility");
+        try
+        {
+            var runtime = host.AddComponent<LiveVisualRuntime>();
+            runtime.enabled = false;
+            var profile = new VisualProfile();
+            string id = "config.Tier" + tierId;
+            profile.Set("Type", "config:orbital", id + ".BaseColor.r", 4f);
+            profile.Set("Type", "config:orbital", id + ".BaseColor.a", 2f);
+            profile.Set("Type", "config:orbital", id + ".Alpha", .3f);
+            profile.Set("Type", "config:orbital", id + ".Emission", 40f);
+            profile.Set("Type", "config:orbital", id + ".Glow", 5f);
+            profile.Set("Type", "config:orbital", id + ".CoreWhitening", .4f);
+            profile.Set("Type", "config:orbital", id + ".PulseStrength", .5f);
+            profile.Set("Type", "config:orbital", id + ".PulseSpeed", 25f);
+            runtime.Load(profile);
+            var appearance = config.GetRingTier(tier);
+            Assert.That(appearance.BaseColor.r, Is.EqualTo(4f));
+            Assert.That(appearance.BaseColor.a, Is.EqualTo(1f));
+            Assert.That(appearance.Alpha, Is.EqualTo(.3f));
+            Assert.That(appearance.Emission, Is.EqualTo(32f));
+            Assert.That(appearance.Glow, Is.EqualTo(5f));
+            Assert.That(appearance.CoreWhitening, Is.EqualTo(.4f));
+            Assert.That(appearance.PulseStrength, Is.EqualTo(.5f));
+            Assert.That(appearance.PulseSpeed, Is.EqualTo(20f));
+            runtime.SetMode(VisualComparisonMode.Current);
+            Assert.That(config.GetRingTier(tier), Is.EqualTo(original));
+        }
+        finally
+        {
+            Object.DestroyImmediate(host);
+            Object.DestroyImmediate(source);
+        }
     }
 
     [Test]

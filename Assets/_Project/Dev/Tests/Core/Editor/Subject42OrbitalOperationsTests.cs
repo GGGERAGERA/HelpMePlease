@@ -100,7 +100,7 @@ public sealed class Subject42OrbitalOperationsTests
                 var catalogue = manager.DebugRewardCatalogue;
                 Assert.That(state.IsWeaponAvailable(OrbitalModuleKind.Saw), Is.False);
                 Assert.That(catalogue.Any(d => d.RewardKind == OrbitalRewardKind.Saw), Is.False,
-                    "Production F1 catalogue must exclude the temporarily unavailable Saw.");
+                    "The production catalogue must exclude the temporarily unavailable Saw.");
                 Assert.That(manager.GetEligibleNormalRewards().OfType<OrbitalRewardData>()
                     .Any(d => d.RewardKind == OrbitalRewardKind.Saw), Is.False);
                 Assert.That(manager.DebugOfferCatalogueReward(OrbitalRewardKind.Saw, true), Is.False);
@@ -746,7 +746,7 @@ public sealed class Subject42OrbitalOperationsTests
     }
 
     [Category("Core"), UnityTest]
-    public IEnumerator MissReturnPistolProductionMvpF1GameViewCapture()
+    public IEnumerator MissReturnPistolProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution",
             System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).Invoke(null, null);
@@ -764,12 +764,10 @@ public sealed class Subject42OrbitalOperationsTests
         AssertSweepingShotgunProductionReady(station);
         var adapter = (ProductionOrbitalCombatAdapter)station.Combat;
         var gun = station.Modules.OfType<OrbitalProjectileModule>().Single(m => m.Kind == OrbitalModuleKind.Pistol);
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
         var player = PlayerRuntimeReference.CachedPlayer;
         var health = player.GetComponent<PlayerHealth>();
         var body = player.GetComponent<Rigidbody2D>();
-        Assert.That(menu, Is.Not.Null);
         Assert.That(spawner, Is.Not.Null);
         Assert.That(health, Is.Not.Null);
         Assert.That(body, Is.Not.Null);
@@ -777,8 +775,6 @@ public sealed class Subject42OrbitalOperationsTests
         bool invulnerable = health.DebugInvulnerable;
         bool frozen = EnemyDebugAiFreeze.IsFrozen;
         float scale = Time.timeScale;
-        const System.Reflection.BindingFlags hidden = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
-        object Call(string name, params object[] args) => typeof(Subject42DebugMenu).GetMethod(name, hidden).Invoke(menu, args);
         string folder = System.IO.Path.GetFullPath("Artifacts/GeneratedQA/NightShift/MissReturnPistol");
         string outboundPath = System.IO.Path.Combine(folder, "miss-return-outbound.png");
         string inboundPath = System.IO.Path.Combine(folder, "miss-return-inbound.png");
@@ -797,7 +793,7 @@ public sealed class Subject42OrbitalOperationsTests
             Assert.That(station.isActiveAndEnabled && station.InputOwner.IsIdle, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(body.simulated && !health.IsDead, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(ProductionOrbitalCombatAdapter.LabInterceptor, Is.Null);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
@@ -811,19 +807,10 @@ public sealed class Subject42OrbitalOperationsTests
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.False);
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
-            Call("OpenMenu");
-            var tabType = typeof(Subject42DebugMenu).GetNestedType("DebugTab", System.Reflection.BindingFlags.NonPublic);
-            Call("SelectTab", System.Enum.ToObject(tabType, 0), true);
-            var toggle = ((GameObject)typeof(Subject42DebugMenu).GetField("menuRoot", hidden).GetValue(menu))
-                .GetComponentsInChildren<UnityEngine.UI.Button>(true).Single(b => b.gameObject.activeInHierarchy &&
-                    b.GetComponentInChildren<TMPro.TMP_Text>().text == "ВКЛЮЧИТЬ" &&
-                    b.transform.parent.name.StartsWith("Эксперимент: возврат промаха", System.StringComparison.Ordinal));
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            Assert.That(station.DebugSetMissReturnPistolExperiment(true), Is.True);
             Assert.That(station.State.MissReturnPistolExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
             Assert.That(gun.Settings.MissReturnExperiment && gun.Settings.Range == 4f, Is.True);
-            Call("CloseMenu");
             System.IO.Directory.CreateDirectory(folder);
             int shotsBefore = gun.ShotsFired;
             object tracked = null;
@@ -907,7 +894,6 @@ public sealed class Subject42OrbitalOperationsTests
         }
         finally
         {
-            Call("CloseMenu");
             station.DebugSetMissReturnPistolExperiment(experiment);
             health.DebugInvulnerable = invulnerable;
             EnemyDebugAiFreeze.SetFrozen(frozen);

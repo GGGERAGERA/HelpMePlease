@@ -38,7 +38,6 @@ namespace Subject42.Combat.OrbitalStation
     {
 
         private static OrbitalPresentationConfig active;
-        private static OrbitalPresentationConfig authored;
         public static bool IsConfigured => active != null;
         public static int ConfigurationRevision { get; private set; }
 
@@ -196,9 +195,8 @@ namespace Subject42.Combat.OrbitalStation
         public static void Configure(OrbitalPresentationConfig config)
         {
             if (config == null) throw new System.ArgumentNullException(nameof(config));
-            // Presentation is mutable during play; the authored asset remains the explicit save destination.
+            // Presentation changes apply to the runtime clone, leaving the authored asset intact.
             ReleaseRuntimeConfiguration();
-            authored = config;
             active = Instantiate(config);
             active.name = config.name + " (Runtime)";
             active.hideFlags = HideFlags.DontSave;
@@ -214,7 +212,8 @@ namespace Subject42.Combat.OrbitalStation
             ConfigurationRevision++;
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+        // Read compatibility for appearances saved by earlier development players.
         private const string RingAppearancePreferenceKey = "Subject42.Orbits.Appearance";
         [System.Serializable]
         private sealed class SavedRingAppearance
@@ -222,32 +221,12 @@ namespace Subject42.Combat.OrbitalStation
             public RingSurfaceSettings Surface;
             public float Width, Alpha;
         }
-
-        public void SaveRingAppearance()
-        {
-#if UNITY_EDITOR
-            var destination = this == active ? authored : this;
-            if (destination == null || !UnityEditor.AssetDatabase.Contains(destination))
-                throw new System.InvalidOperationException("The ring appearance has no authored save destination.");
-            UnityEditor.Undo.RecordObject(destination, "Save ORBITAL ring appearance");
-            destination.RingSurface = JsonUtility.FromJson<RingSurfaceSettings>(JsonUtility.ToJson(RingSurface));
-            destination.RingLineWidth = RingLineWidth;
-            destination.RingLineAlpha = RingLineAlpha;
-            UnityEditor.EditorUtility.SetDirty(destination);
-            UnityEditor.AssetDatabase.SaveAssetIfDirty(destination);
-#else
-            PlayerPrefs.SetString(RingAppearancePreferenceKey, JsonUtility.ToJson(new SavedRingAppearance
-            { Surface = RingSurface, Width = RingLineWidth, Alpha = RingLineAlpha }));
-            PlayerPrefs.Save();
-#endif
-        }
 #endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetConfiguration()
         {
             ReleaseRuntimeConfiguration();
-            authored = null;
             ConfigurationRevision = 0;
         }
 

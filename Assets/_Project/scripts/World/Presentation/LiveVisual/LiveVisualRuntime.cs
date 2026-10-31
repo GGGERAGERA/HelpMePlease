@@ -32,6 +32,7 @@ namespace Subject42.Visuals
         private readonly List<(VisualTarget target, VisualProperty property, float value)> applied = new();
         private readonly List<VisualProfile> undo = new(), redo = new();
         private int orbitalRevision = -1;
+        private Action applySavedRingValues, restoreSavedRingValues;
         private bool refreshPending;
         private readonly List<EnemyHealth> pendingEnemies = new();
         private float nextCleanup;
@@ -243,6 +244,7 @@ namespace Subject42.Visuals
                 foreach (var target in Targets) if (target.IsAlive && target.IsActive) target.Maintain?.Invoke();
             foreach (var item in applied)
                 if (item.target.IsAlive && item.target.IsActive) { item.target.Maintain?.Invoke(); item.property.Write(item.value); }
+            applySavedRingValues?.Invoke();
         }
         private static string RuleKey(string scope, string target) => scope + "\n" + target;
         private static void Index(VisualProfile profile, Dictionary<string, Dictionary<string, float>> index)
@@ -262,6 +264,8 @@ namespace Subject42.Visuals
         }
         private void Rebuild()
         {
+            restoreSavedRingValues?.Invoke();
+            applySavedRingValues = restoreSavedRingValues = null;
             rules.Clear(); applied.Clear();
             var baselineKeys = new HashSet<string>();
             var profile = Mode == VisualComparisonMode.Original ? Original : Mode == VisualComparisonMode.Custom ? Custom : null;
@@ -289,8 +293,11 @@ namespace Subject42.Visuals
                     else if (property.Touched) { property.RestoreCurrent(); property.Touched = false; }
                 }
             }
-            OriginalMatchedCount = baselineKeys.Count;
-            OriginalUnmatchedCount = Original.Values.Count - baselineKeys.Count;
+            var savedRings = OrbitalVisualAdapter.BindSavedRingValues(profile, Original);
+            applySavedRingValues = savedRings.apply; restoreSavedRingValues = savedRings.restore;
+            applySavedRingValues?.Invoke();
+            OriginalMatchedCount = baselineKeys.Count + savedRings.originalMatches;
+            OriginalUnmatchedCount = Original.Values.Count - OriginalMatchedCount;
             Revision++; Changed?.Invoke();
         }
         public void SetMode(VisualComparisonMode mode)
@@ -355,6 +362,7 @@ namespace Subject42.Visuals
         }
         private void OnDestroy()
         {
+            restoreSavedRingValues?.Invoke();
             EnemyHealth.Spawned -= EnemySpawned; SceneManager.sceneLoaded -= SceneLoaded;
             foreach (var target in Targets)
             {

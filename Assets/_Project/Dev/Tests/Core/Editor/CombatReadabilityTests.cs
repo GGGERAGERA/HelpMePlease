@@ -559,7 +559,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest, Timeout(120000)]
-    public IEnumerator WoundedRetreatChaserProductionMvpF1GameViewCapture()
+    public IEnumerator WoundedRetreatChaserProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -570,11 +570,9 @@ public sealed class CombatReadabilityTests
     private static IEnumerator WoundedRetreatProductionCaptureBody()
     {
         yield return BeginProductionRun(); // Ordinary station, spawning, AI and physics remain live.
-        yield return CoreTestSupport.Await(() => Object.FindFirstObjectByType<Subject42DebugMenu>() != null);
         var player = PlayerRuntimeReference.CachedPlayer;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         Assert.That(player, Is.Not.Null);
         Assert.That(station, Is.Not.Null);
         Assert.That(spawner, Is.Not.Null);
@@ -593,7 +591,6 @@ public sealed class CombatReadabilityTests
         Transform visual = null;
         Quaternion authored = Quaternion.identity;
         Quaternion rootRotation = Quaternion.identity;
-        bool ownsActor = false;
         bool Visible(Vector3 position)
         {
             var camera = Camera.main;
@@ -603,18 +600,14 @@ public sealed class CombatReadabilityTests
         }
         void AssertLive()
         {
-            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "F1-owned wounded retreat chaser must survive this short observation.");
+            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "Debug-spawned wounded retreat chaser must survive this short observation.");
             Assert.That(actor.GetComponent<EnemyHealth>().IsDead, Is.False);
             Assert.That(shooter.isActiveAndEnabled && shooter.IsWoundedRetreatExperiment, Is.True);
-            var owned = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(owned.Count, Is.EqualTo(1));
-            Assert.That(owned[0], Is.SameAs(actor));
             Assert.That(station.isActiveAndEnabled && station.IsInitialized, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(playerBody.simulated && actor.GetComponent<Rigidbody2D>().simulated, Is.True);
             Assert.That(controller.isActiveAndEnabled && !health.IsDead, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
             Assert.That(Visible(actor.transform.position), Is.True, "Need a living visible wounded retreat chaser in the real Game View.");
@@ -625,33 +618,23 @@ public sealed class CombatReadabilityTests
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
             controller.MovementIntent = () => Vector2.zero;
-            OpenEscortF1(menu);
             Assert.That(spawner.WoundedRetreatExperiment, Is.False, "Fresh MVP default OFF.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty, "Do not take ownership of another diagnostic actor.");
             var profile = RunStateManager.Instance.CurrentSector.SpawnProfile;
             var prefab = profile.Phases.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
                 .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
                 .FirstOrDefault(EnemySpawner.IsWoundedRetreatEligible);
             Assert.That(prefab, Is.Not.Null, "Current sector needs an authored eligible Basic chaser; no replacement prefab.");
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Эксперимент: отступающий преследователь");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            spawner.DebugSetWoundedRetreatExperiment(true);
             Assert.That(spawner.WoundedRetreatExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True, "Development must precede manual assignment.");
-            var spawn = EscortF1Button(menu, "+1 ОТСТУПАЮЩИЙ");
-            Assert.That(spawn.interactable, Is.True);
-            spawn.onClick.Invoke();
-            ownsActor = tracked.Count == 1;
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            actor = tracked.Single();
-            Assert.That(actor.name, Is.EqualTo(prefab.name + "(Clone)"), "F1 uses the eligible prefab from this sector.");
+            actor = spawner.DebugSpawnWoundedRetreatAround(prefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
+            Assert.That(actor.name, Is.EqualTo(prefab.name + "(Clone)"), "The debug API uses the eligible prefab from this sector.");
             shooter = actor.GetComponent<EnemyChaseMovement>();
             visual = Read<Transform>(shooter, "flankingVisual");
             Assert.That(visual != actor.transform && visual.IsChildOf(actor.transform), Is.True);
             authored = visual.localRotation;
             rootRotation = actor.transform.rotation;
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False, "Successful real F1 callback closes the menu.");
             yield return null; // Natural Start binds the player before diagnostic placement.
             Assert.That(Read<Transform>(shooter, "player"), Is.EqualTo(player.transform));
             Assert.That(shooter.CanUseWoundedRetreat, Is.True);
@@ -725,8 +708,7 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            EscortF1Call(menu, "CloseMenu");
-            if (ownsActor) EscortF1Call(menu, "ClearDebugEnemies");
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetWoundedRetreatExperiment(experiment);
             controller.MovementIntent = intent;
             MoveEscortPlayer(playerBody, originalPosition);
@@ -768,7 +750,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest, Timeout(120000)]
-    public IEnumerator RecoilingShooterProductionMvpF1GameViewCapture()
+    public IEnumerator RecoilingShooterProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -779,11 +761,9 @@ public sealed class CombatReadabilityTests
     private static IEnumerator RecoilingShooterProductionCaptureBody()
     {
         yield return BeginProductionRun(); // Ordinary station, spawning, AI and physics remain live.
-        yield return CoreTestSupport.Await(() => Object.FindFirstObjectByType<Subject42DebugMenu>() != null);
         var player = PlayerRuntimeReference.CachedPlayer;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         Assert.That(player, Is.Not.Null);
         Assert.That(station, Is.Not.Null);
         Assert.That(spawner, Is.Not.Null);
@@ -802,7 +782,6 @@ public sealed class CombatReadabilityTests
         Transform visual = null;
         Quaternion authored = Quaternion.identity;
         Quaternion rootRotation = Quaternion.identity;
-        bool ownsActor = false;
         bool Visible(Vector3 position)
         {
             var camera = Camera.main;
@@ -812,18 +791,14 @@ public sealed class CombatReadabilityTests
         }
         void AssertLive()
         {
-            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "F1-owned recoiling shooter must survive this short observation.");
+            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "Debug-spawned recoiling shooter must survive this short observation.");
             Assert.That(actor.GetComponent<EnemyHealth>().IsDead, Is.False);
             Assert.That(shooter.isActiveAndEnabled && shooter.RecoilingExperiment, Is.True);
-            var owned = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(owned.Count, Is.EqualTo(1));
-            Assert.That(owned[0], Is.SameAs(actor));
             Assert.That(station.isActiveAndEnabled && station.IsInitialized, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(playerBody.simulated && actor.GetComponent<Rigidbody2D>().simulated, Is.True);
             Assert.That(controller.isActiveAndEnabled && !health.IsDead, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
             Assert.That(Visible(actor.transform.position), Is.True, "Need a living visible recoiling shooter in the real Game View.");
@@ -834,33 +809,23 @@ public sealed class CombatReadabilityTests
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
             controller.MovementIntent = () => Vector2.zero;
-            OpenEscortF1(menu);
             Assert.That(spawner.RecoilingShootersExperiment, Is.False, "Fresh MVP default OFF.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty, "Do not take ownership of another diagnostic actor.");
             var profile = RunStateManager.Instance.CurrentSector.SpawnProfile;
             var prefab = profile.Phases.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
                 .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
                 .FirstOrDefault(EnemySpawner.IsRecoilingShooterPrefabEligible);
             Assert.That(prefab, Is.Not.Null, "Current sector needs an authored eligible shooter; no replacement prefab.");
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Эксперимент: стрелок с отходом");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            spawner.DebugSetRecoilingShootersExperiment(true);
             Assert.That(spawner.RecoilingShootersExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True, "Development must precede manual assignment.");
-            var spawn = EscortF1Button(menu, "+1 С ОТХОДОМ");
-            Assert.That(spawn.interactable, Is.True);
-            spawn.onClick.Invoke();
-            ownsActor = tracked.Count == 1;
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            actor = tracked.Single();
-            Assert.That(actor.name, Is.EqualTo(prefab.name + "(Clone)"), "F1 uses the eligible prefab from this sector.");
+            actor = spawner.DebugSpawnRecoilingShooterAround(prefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
+            Assert.That(actor.name, Is.EqualTo(prefab.name + "(Clone)"), "The debug API uses the eligible prefab from this sector.");
             shooter = actor.GetComponent<EnemyShooterMovement>();
             visual = Read<Transform>(shooter, "visualRoot");
             Assert.That(visual != actor.transform && visual.IsChildOf(actor.transform), Is.True);
             authored = visual.localRotation;
             rootRotation = actor.transform.rotation;
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False, "Successful real F1 callback closes the menu.");
             yield return null; // Natural Start binds the player before diagnostic placement.
             Assert.That(Read<Transform>(shooter, "player"), Is.EqualTo(player.transform));
             Assert.That(shooter.CanUseRecoiling && shooter.HasRecoilingVisual, Is.True);
@@ -923,8 +888,7 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            EscortF1Call(menu, "CloseMenu");
-            if (ownsActor) EscortF1Call(menu, "ClearDebugEnemies");
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetRecoilingShootersExperiment(experiment);
             controller.MovementIntent = intent;
             MoveEscortPlayer(playerBody, originalPosition);
@@ -937,7 +901,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest, Timeout(120000)]
-    public IEnumerator InterceptingBomberProductionMvpF1GameViewCapture()
+    public IEnumerator InterceptingBomberProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -948,11 +912,9 @@ public sealed class CombatReadabilityTests
     private static IEnumerator InterceptingBomberProductionCaptureBody()
     {
         yield return BeginProductionRun(); // Ordinary station, spawning, AI and physics remain live.
-        yield return CoreTestSupport.Await(() => Object.FindFirstObjectByType<Subject42DebugMenu>() != null);
         var player = PlayerRuntimeReference.CachedPlayer;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         Assert.That(player, Is.Not.Null);
         Assert.That(station, Is.Not.Null);
         Assert.That(spawner, Is.Not.Null);
@@ -970,7 +932,6 @@ public sealed class CombatReadabilityTests
         Transform visual = null;
         Quaternion authored = Quaternion.identity;
         Quaternion rootRotation = Quaternion.identity;
-        bool ownsActor = false;
         bool Visible(Vector3 position)
         {
             var camera = Camera.main;
@@ -980,19 +941,15 @@ public sealed class CombatReadabilityTests
         }
         void AssertLive()
         {
-            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "F1-owned interceptor must survive this short observation.");
+            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "Debug-spawned interceptor must survive this short observation.");
             Assert.That(actor.GetComponent<EnemyHealth>().IsDead, Is.False);
             Assert.That(bomber.isActiveAndEnabled && bomber.InterceptingExperiment, Is.True);
             Assert.That(Read<bool>(bomber, "isExploding"), Is.False, "Observation stays outside the authored trigger.");
-            var owned = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(owned.Count, Is.EqualTo(1));
-            Assert.That(owned[0], Is.SameAs(actor));
             Assert.That(station.isActiveAndEnabled && station.IsInitialized, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(playerBody.simulated && actor.GetComponent<Rigidbody2D>().simulated, Is.True);
             Assert.That(controller.isActiveAndEnabled && !health.IsDead, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
             Assert.That(Visible(actor.transform.position), Is.True, "Need a living visible interceptor in the real Game View.");
@@ -1005,33 +962,23 @@ public sealed class CombatReadabilityTests
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
             controller.MovementIntent = () => Vector2.zero;
-            OpenEscortF1(menu);
             Assert.That(spawner.InterceptingBombersExperiment, Is.False, "Fresh MVP default OFF.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty, "Do not take ownership of another diagnostic actor.");
             var profile = RunStateManager.Instance.CurrentSector.SpawnProfile;
             var prefab = profile.Phases.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
                 .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
                 .FirstOrDefault(EnemySpawner.IsInterceptingBomberPrefabEligible);
             Assert.That(prefab, Is.Not.Null, "Current sector needs an authored eligible bomber; no replacement prefab.");
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Эксперимент: подрывник-перехватчик");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            spawner.DebugSetInterceptingBombersExperiment(true);
             Assert.That(spawner.InterceptingBombersExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True, "Development must precede manual assignment.");
-            var spawn = EscortF1Button(menu, "+1 ПЕРЕХВАТЧИК");
-            Assert.That(spawn.interactable, Is.True);
-            spawn.onClick.Invoke();
-            ownsActor = tracked.Count == 1;
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            actor = tracked.Single();
-            Assert.That(actor.name, Is.EqualTo(prefab.name + "(Clone)"), "F1 uses the eligible prefab from this sector.");
+            actor = spawner.DebugSpawnInterceptingBomberAround(prefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
+            Assert.That(actor.name, Is.EqualTo(prefab.name + "(Clone)"), "The debug API uses the eligible prefab from this sector.");
             bomber = actor.GetComponent<EnemyBomberMovement>();
             visual = Read<Transform>(bomber, "visualRoot");
             Assert.That(visual != actor.transform && visual.IsChildOf(actor.transform), Is.True);
             authored = Read<Quaternion>(bomber, "interceptingAuthoredRotation");
             rootRotation = actor.transform.rotation;
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False, "Successful real F1 callback closes the menu.");
             var body = actor.GetComponent<Rigidbody2D>();
             var area = GameplayAreaService.Instance;
             Assert.That(area, Is.Not.Null);
@@ -1089,7 +1036,6 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            EscortF1Call(menu, "CloseMenu");
             // A death-triggered sequence can outlive its Unity owner. Match the managed owner reference,
             // including a destroyed wrapper, so unrelated ordinary bomber warnings are never cancelled.
             var sequenceType = typeof(EnemyBomberMovement).Assembly.GetType("BomberExplosionSequence");
@@ -1097,7 +1043,7 @@ public sealed class CombatReadabilityTests
                 foreach (Component sequence in Resources.FindObjectsOfTypeAll(sequenceType))
                     if (ReferenceEquals(Read<GameObject>(sequence, "owner"), actor))
                         sequenceType.GetMethod("Cancel", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(sequence, null);
-            if (ownsActor) EscortF1Call(menu, "ClearDebugEnemies");
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetInterceptingBombersExperiment(experiment);
             controller.MovementIntent = intent;
             playerBody.linearVelocity = Vector2.zero;
@@ -1357,7 +1303,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest, Timeout(120000)]
-    public IEnumerator FireteamClearanceProductionMvpF1GameViewCapture()
+    public IEnumerator FireteamClearanceProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -1375,8 +1321,6 @@ public sealed class CombatReadabilityTests
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var enemies = Object.FindFirstObjectByType<EnemySpawner>();
         var events = Object.FindFirstObjectByType<WorldEventSpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
-        Assert.That(menu, Is.Not.Null);
         Assert.That(enemies, Is.Not.Null);
         Assert.That(station, Is.Not.Null);
         bool protection = health.DebugInvulnerable, frozen = EnemyDebugAiFreeze.IsFrozen;
@@ -1397,8 +1341,7 @@ public sealed class CombatReadabilityTests
             Assert.That(enemies.isActiveAndEnabled && enemies.IsSpawningEnabled, Is.True, "Ordinary battle must remain running.");
             Assert.That(body.simulated && !health.IsDead, Is.True);
             Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
             Assert.That(clearance != null && clearance.IsStarted && !clearance.IsCompleted, Is.True);
@@ -1435,22 +1378,15 @@ public sealed class CombatReadabilityTests
             EnemyDebugAiFreeze.SetFrozen(false);
             Time.timeScale = 1f;
             Assert.That(experiment, Is.False, "Fresh production attempts default OFF.");
-            OpenEscortF1(menu);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.True);
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Зачистка огневой группы");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
-            Assert.That(events.FireteamClearanceExperimentEnabled, Is.True, Read<string>(menu, "enemyDebugStatus"));
+            Assert.That(events.DebugSetFireteamClearanceExperiment(true, out var eventStatus), Is.True, eventStatus);
+            Assert.That(events.FireteamClearanceExperimentEnabled, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True, "Opt-in marks Development before creation.");
             Assert.That(events.FireteamClearanceExperimentInstance, Is.Null);
-            var spawn = EscortF1Button(menu, "СОЗДАТЬ ЗАЧИСТКУ");
-            Assert.That(spawn.interactable, Is.True);
-            spawn.onClick.Invoke();
+            Assert.That(events.DebugSpawnFireteamClearance(out eventStatus), Is.True, eventStatus);
             clearance = events.FireteamClearanceExperimentInstance;
-            Assert.That(clearance, Is.Not.Null, Read<string>(menu, "enemyDebugStatus"));
+            Assert.That(clearance, Is.Not.Null, eventStatus);
             Assert.That(clearance.SourcePrefab, Is.SameAs(Read<FireteamClearanceEvent>(events, "fireteamClearanceEventPrefab")));
             Assert.That(clearance.TryValidateConfiguration(out var status), Is.True, status);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False, "Successful real F1 callback closes the menu.");
             Assert.That(clearance.IsStarted, Is.False, "Creation must not start the event automatically.");
             Assert.That(Read<EnemyHealth[]>(clearance, "targets").All(t => t == null), Is.True);
             MoveEscortPlayer(body, clearance.transform.position); // Only the real player moves diagnostically.
@@ -1493,7 +1429,6 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            if (menu != null) EscortF1Call(menu, "CloseMenu");
             if (events != null)
             {
                 events.DebugClearFireteamClearance(out _);
@@ -2466,7 +2401,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest]
-    public IEnumerator BlockLockedShieldProductionMvpF1GameViewCapture()
+    public IEnumerator BlockLockedShieldProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -2477,19 +2412,14 @@ public sealed class CombatReadabilityTests
     private static IEnumerator BlockLockedShieldProductionCaptureBody()
     {
         yield return BeginProductionRun(); // Keep the ordinary run alive: no PrepareProduction/StopRunGameplay.
-        float readyDeadline = Time.realtimeSinceStartup + 10f;
-        while (Object.FindFirstObjectByType<Subject42DebugMenu>() == null &&
-               Time.realtimeSinceStartup < readyDeadline) yield return null;
         var player = Object.FindFirstObjectByType<CharacterSpawner>()?.SpawnedPlayer;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         Assert.That(player, Is.Not.Null, "Production player readiness timed out.");
         Assert.That(station, Is.Not.Null, "Production station readiness timed out.");
         Assert.That(station.IsInitialized && station.isActiveAndEnabled, Is.True);
         Assert.That(spawner, Is.Not.Null, "Production EnemySpawner readiness timed out.");
         Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True, "Ordinary spawning must remain active.");
-        Assert.That(menu, Is.Not.Null, "Real production F1 readiness timed out.");
         Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
         Assert.That(RunStateManager.Instance, Is.Not.Null);
         var health = player.GetComponent<PlayerHealth>();
@@ -2509,15 +2439,14 @@ public sealed class CombatReadabilityTests
         }
         void AssertLive()
         {
-            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "F1-owned shield bearer must survive the observation.");
+            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "Debug-spawned shield bearer must survive the observation.");
             Assert.That(actor.GetComponent<EnemyHealth>().IsDead, Is.False);
             Assert.That(shield.isActiveAndEnabled && shield.IsBlockLockedExperiment, Is.True);
             Assert.That(actor.GetComponent<Rigidbody2D>().simulated, Is.True);
             Assert.That(station.isActiveAndEnabled && station.IsInitialized, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             AssertBlockLockedShieldUpdateReady(shield, player.transform);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
@@ -2526,21 +2455,17 @@ public sealed class CombatReadabilityTests
         {
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
-            OpenEscortF1(menu);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.True);
             Assert.That(spawner.BlockLockedShieldsExperiment, Is.False, "Fresh production attempts default OFF.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty, "Only this scenario's manual actor may be cleaned up.");
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Эксперимент: заклинивающий щит");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            var profilePrefab = RunStateManager.Instance.CurrentSector.SpawnProfile.Phases
+                .Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+                .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+                .FirstOrDefault(EnemySpawner.IsBlockLockedShieldPrefabEligible);
+            Assert.That(profilePrefab, Is.Not.Null, "Current sector must offer an eligible authored prefab; no substitute prefab.");
+            spawner.DebugSetBlockLockedShieldsExperiment(true);
             Assert.That(spawner.BlockLockedShieldsExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
-            var spawn = EscortF1Button(menu, "+1 ЗАКЛИНИВАЮЩИЙ");
-            Assert.That(spawn.interactable, Is.True, "Current sector must offer an eligible shield bearer; no substitute prefab.");
-            spawn.onClick.Invoke();
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            actor = tracked.Single();
+            actor = spawner.DebugSpawnBlockLockedShieldAround(profilePrefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
             Assert.That(EnemySpawner.IsBlockLockedShieldEligible(actor), Is.True);
             var profile = RunStateManager.Instance.CurrentSector.SpawnProfile;
             Assert.That(profile.Phases.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
@@ -2548,7 +2473,7 @@ public sealed class CombatReadabilityTests
                 "Eligibility must come from the current production profile, without a fallback prefab.");
             shield = actor.GetComponent<EnemyDirectionalShield>();
             Assert.That(shield, Is.Not.Null);
-            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with owner cleanup.
+            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with the test actor.
             yield return FocusBlockLockedShieldGameView();
             AssertLive();
             Assert.That(GameplayAreaService.Instance, Is.Not.Null);
@@ -2634,8 +2559,7 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            EscortF1Call(menu, "CloseMenu");
-            EscortF1Call(menu, "ClearDebugEnemies"); // Existing owner also removes diagnostic extra HP.
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetBlockLockedShieldsExperiment(experiment);
             playerBody.position = originalPosition;
             Physics2D.SyncTransforms();
@@ -2646,7 +2570,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest]
-    public IEnumerator CommittedRamProductionMvpF1GameViewCapture()
+    public IEnumerator CommittedRamProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -2657,19 +2581,14 @@ public sealed class CombatReadabilityTests
     private static IEnumerator CommittedRamProductionCaptureBody()
     {
         yield return BeginProductionRun(); // Keep the ordinary run alive: no PrepareProduction/StopRunGameplay.
-        float readyDeadline = Time.realtimeSinceStartup + 10f;
-        while (Object.FindFirstObjectByType<Subject42DebugMenu>() == null &&
-               Time.realtimeSinceStartup < readyDeadline) yield return null;
         var player = Object.FindFirstObjectByType<CharacterSpawner>()?.SpawnedPlayer;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         Assert.That(player, Is.Not.Null, "Production player readiness timed out.");
         Assert.That(station, Is.Not.Null, "Production station readiness timed out.");
         Assert.That(station.IsInitialized && station.isActiveAndEnabled, Is.True);
         Assert.That(spawner, Is.Not.Null, "Production EnemySpawner readiness timed out.");
         Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True, "Ordinary spawning must remain active.");
-        Assert.That(menu, Is.Not.Null, "Real production F1 readiness timed out.");
         Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
         Assert.That(RunStateManager.Instance, Is.Not.Null);
         var health = player.GetComponent<PlayerHealth>();
@@ -2688,15 +2607,14 @@ public sealed class CombatReadabilityTests
         }
         void AssertLive()
         {
-            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "F1-owned chase must survive the observation.");
+            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "Debug-spawned chase must survive the observation.");
             Assert.That(actor.GetComponent<EnemyHealth>().IsDead, Is.False);
             Assert.That(chase.isActiveAndEnabled && chase.IsCommittedRamExperiment, Is.True);
             Assert.That(actor.GetComponent<Rigidbody2D>().simulated, Is.True);
             Assert.That(station.isActiveAndEnabled && station.IsInitialized, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
         }
@@ -2704,24 +2622,20 @@ public sealed class CombatReadabilityTests
         {
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
-            OpenEscortF1(menu);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.True);
             Assert.That(spawner.CommittedRamExperiment, Is.False, "Fresh production attempts default OFF.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty, "Only this scenario's manual actor may be cleaned up.");
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Эксперимент: таранный преследователь");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            var profilePrefab = RunStateManager.Instance.CurrentSector.SpawnProfile.Phases
+                .Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+                .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+                .FirstOrDefault(EnemySpawner.IsCommittedRamEligible);
+            Assert.That(profilePrefab, Is.Not.Null, "Current sector must offer an eligible authored prefab; no substitute prefab.");
+            spawner.DebugSetCommittedRamExperiment(true);
             Assert.That(spawner.CommittedRamExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
-            var spawn = EscortF1Button(menu, "+1 ТАРАННЫЙ");
-            Assert.That(spawn.interactable, Is.True, "Current sector must offer an eligible chase; no substitute prefab.");
-            spawn.onClick.Invoke();
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            actor = tracked.Single();
+            actor = spawner.DebugSpawnCommittedRamAround(profilePrefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
             Assert.That(EnemySpawner.IsCommittedRamEligible(actor), Is.True);
             chase = actor.GetComponent<EnemyChaseMovement>();
-            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with owner cleanup.
+            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with the test actor.
             AssertLive();
             Assert.That(GameplayAreaService.Instance, Is.Not.Null);
             // At most one relocation, before observing any cycle; retain normal movement afterwards.
@@ -2791,8 +2705,7 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            EscortF1Call(menu, "CloseMenu");
-            EscortF1Call(menu, "ClearDebugEnemies"); // Existing owner also removes diagnostic extra HP.
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetCommittedRamExperiment(experiment);
             health.DebugInvulnerable = invulnerable;
             EnemyDebugAiFreeze.SetFrozen(frozen);
@@ -2801,7 +2714,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest]
-    public IEnumerator StrafingShooterProductionMvpF1GameViewCapture()
+    public IEnumerator StrafingShooterProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -2812,19 +2725,14 @@ public sealed class CombatReadabilityTests
     private static IEnumerator StrafingShooterProductionCaptureBody()
     {
         yield return BeginProductionRun(); // Keep the ordinary run alive: no PrepareProduction/StopRunGameplay.
-        float readyDeadline = Time.realtimeSinceStartup + 10f;
-        while (Object.FindFirstObjectByType<Subject42DebugMenu>() == null &&
-               Time.realtimeSinceStartup < readyDeadline) yield return null;
         var player = Object.FindFirstObjectByType<CharacterSpawner>()?.SpawnedPlayer;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         Assert.That(player, Is.Not.Null, "Production player readiness timed out.");
         Assert.That(station, Is.Not.Null, "Production station readiness timed out.");
         Assert.That(station.IsInitialized && station.isActiveAndEnabled, Is.True);
         Assert.That(spawner, Is.Not.Null, "Production EnemySpawner readiness timed out.");
         Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True, "Ordinary spawning must remain active.");
-        Assert.That(menu, Is.Not.Null, "Real production F1 readiness timed out.");
         Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
         Assert.That(RunStateManager.Instance, Is.Not.Null);
         var health = player.GetComponent<PlayerHealth>();
@@ -2842,18 +2750,14 @@ public sealed class CombatReadabilityTests
         }
         void AssertLive()
         {
-            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "F1-owned shooter must survive the observation.");
+            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "Debug-spawned shooter must survive the observation.");
             Assert.That(actor.GetComponent<EnemyHealth>().IsDead, Is.False);
             Assert.That(shooter.isActiveAndEnabled && shooter.StrafingExperiment, Is.True);
-            var owned = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(owned.Count, Is.EqualTo(1), "Existing debugEnemies remains the sole manual-spawn owner.");
-            Assert.That(owned[0], Is.SameAs(actor));
             Assert.That(actor.GetComponent<Rigidbody2D>().simulated, Is.True);
             Assert.That(station.isActiveAndEnabled && station.IsInitialized, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
         }
@@ -2861,28 +2765,24 @@ public sealed class CombatReadabilityTests
         {
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
-            OpenEscortF1(menu);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.True);
             Assert.That(spawner.StrafingShootersExperiment, Is.False, "Fresh production attempts default OFF.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty, "Only this scenario's manual actor may be cleaned up.");
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Эксперимент: стрелок на траверсе");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            var profilePrefab = RunStateManager.Instance.CurrentSector.SpawnProfile.Phases
+                .Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+                .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+                .FirstOrDefault(EnemySpawner.IsStrafingShooterEligible);
+            Assert.That(profilePrefab, Is.Not.Null, "Current sector must offer an eligible authored prefab; no substitute prefab.");
+            spawner.DebugSetStrafingShootersExperiment(true);
             Assert.That(spawner.StrafingShootersExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
-            var spawn = EscortF1Button(menu, "+1 НА ТРАВЕРСЕ");
-            Assert.That(spawn.interactable, Is.True, "Current sector must offer an eligible shooter; no substitute prefab.");
-            spawn.onClick.Invoke();
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            actor = tracked.Single();
+            actor = spawner.DebugSpawnStrafingShooterAround(profilePrefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
             var profile = RunStateManager.Instance.CurrentSector.SpawnProfile;
             Assert.That(profile.Phases.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
                 .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
                 .Any(EnemySpawner.IsStrafingShooterEligible), Is.True, "Eligibility must come from the current authored profile.");
             Assert.That(EnemySpawner.IsStrafingShooterEligible(actor), Is.False, "Assigned actor cannot receive a second strafe assignment.");
             shooter = actor.GetComponent<EnemyShooterMovement>();
-            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with owner cleanup.
+            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with the test actor.
             AssertLive();
             yield return null; // Let Start bind the real player before observing movement/shooting.
             Assert.That(Read<Transform>(shooter, "player"), Is.EqualTo(player.transform));
@@ -2976,8 +2876,7 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            EscortF1Call(menu, "CloseMenu");
-            EscortF1Call(menu, "ClearDebugEnemies"); // Existing owner also removes diagnostic extra HP.
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetStrafingShootersExperiment(experiment);
             health.DebugInvulnerable = invulnerable;
             EnemyDebugAiFreeze.SetFrozen(frozen);
@@ -2986,7 +2885,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest]
-    public IEnumerator CommittedVolleyProductionMvpF1GameViewCapture()
+    public IEnumerator CommittedVolleyProductionMvpGameViewCapture()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -2997,19 +2896,14 @@ public sealed class CombatReadabilityTests
     private static IEnumerator CommittedVolleyProductionCaptureBody()
     {
         yield return BeginProductionRun(); // Keep the ordinary run alive: no PrepareProduction/StopRunGameplay.
-        float readyDeadline = Time.realtimeSinceStartup + 10f;
-        while (Object.FindFirstObjectByType<Subject42DebugMenu>() == null &&
-               Time.realtimeSinceStartup < readyDeadline) yield return null;
         var player = Object.FindFirstObjectByType<CharacterSpawner>()?.SpawnedPlayer;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         Assert.That(player, Is.Not.Null, "Production player readiness timed out.");
         Assert.That(station, Is.Not.Null, "Production station readiness timed out.");
         Assert.That(station.IsInitialized && station.isActiveAndEnabled, Is.True);
         Assert.That(spawner, Is.Not.Null, "Production EnemySpawner readiness timed out.");
         Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True, "Ordinary spawning must remain active.");
-        Assert.That(menu, Is.Not.Null, "Real production F1 readiness timed out.");
         Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
         Assert.That(RunStateManager.Instance, Is.Not.Null);
         var health = player.GetComponent<PlayerHealth>();
@@ -3028,15 +2922,14 @@ public sealed class CombatReadabilityTests
         }
         void AssertLive()
         {
-            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "F1-owned shooter must survive the observation.");
+            Assert.That(actor != null && actor.activeInHierarchy, Is.True, "Debug-spawned shooter must survive the observation.");
             Assert.That(actor.GetComponent<EnemyHealth>().IsDead, Is.False);
             Assert.That(shooter.isActiveAndEnabled && shooter.CommittedVolleyExperiment, Is.True);
             Assert.That(actor.GetComponent<Rigidbody2D>().simulated, Is.True);
             Assert.That(station.isActiveAndEnabled && station.IsInitialized, Is.True);
             Assert.That(spawner.isActiveAndEnabled && spawner.IsSpawningEnabled, Is.True);
             Assert.That(Camera.main != null && Camera.main.isActiveAndEnabled, Is.True);
-            Assert.That(EnemyDebugAiFreeze.IsFrozen || Subject42DebugMenu.IsDebugMenuOpen, Is.False);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False);
+            Assert.That(EnemyDebugAiFreeze.IsFrozen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
         }
@@ -3044,24 +2937,20 @@ public sealed class CombatReadabilityTests
         {
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
-            OpenEscortF1(menu);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.True);
             Assert.That(spawner.CommittedVolleyExperiment, Is.False, "Fresh production attempts default OFF.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty, "Only this scenario's manual actor may be cleaned up.");
-            var toggle = EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Эксперимент: залповый стрелок");
-            Assert.That(toggle.interactable, Is.True);
-            toggle.onClick.Invoke();
+            var profilePrefab = RunStateManager.Instance.CurrentSector.SpawnProfile.Phases
+                .Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
+                .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
+                .FirstOrDefault(EnemySpawner.IsCommittedVolleyEligible);
+            Assert.That(profilePrefab, Is.Not.Null, "Current sector must offer an eligible authored prefab; no substitute prefab.");
+            spawner.DebugSetCommittedVolleyExperiment(true);
             Assert.That(spawner.CommittedVolleyExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
-            var spawn = EscortF1Button(menu, "+1 ЗАЛПОВЫЙ");
-            Assert.That(spawn.interactable, Is.True, "Current sector must offer an eligible shooter; no substitute prefab.");
-            spawn.onClick.Invoke();
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            actor = tracked.Single();
+            actor = spawner.DebugSpawnCommittedVolleyAround(profilePrefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
             Assert.That(EnemySpawner.IsCommittedVolleyEligible(actor), Is.True);
             shooter = actor.GetComponent<EnemyShooterMovement>();
-            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with owner cleanup.
+            actor.GetComponent<EnemyHealth>().SetRuntimeMaxHealth(10000f); // Diagnostic survivability, removed with the test actor.
             AssertLive();
             Assert.That(GameplayAreaService.Instance, Is.Not.Null);
             // At most one relocation, before observing any cycle; retain normal movement afterwards.
@@ -3135,8 +3024,7 @@ public sealed class CombatReadabilityTests
         }
         finally
         {
-            EscortF1Call(menu, "CloseMenu");
-            EscortF1Call(menu, "ClearDebugEnemies"); // Existing owner also removes diagnostic extra HP.
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetCommittedVolleyExperiment(experiment);
             health.DebugInvulnerable = invulnerable;
             EnemyDebugAiFreeze.SetFrozen(frozen);
@@ -3776,7 +3664,7 @@ public sealed class CombatReadabilityTests
     }
 
     [UnityTest, Timeout(120000)]
-    public IEnumerator FlankingChaserF1ImmediateSpawnPreservesCadenceAndClosesMenu()
+    public IEnumerator FlankingChaserDebugSpawnPreservesCadenceAndLiveMovement()
     {
         typeof(BunkerStationPresentationTests).GetMethod("SetResolution", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
@@ -3784,23 +3672,11 @@ public sealed class CombatReadabilityTests
         yield return BeginProductionRun();
         var player = PrepareProduction();
         var spawner = Object.FindFirstObjectByType<EnemySpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
-        Assert.That(menu, Is.Not.Null, "Use the existing production F1 instance.");
         var health = player.GetComponent<PlayerHealth>();
         bool wasInvulnerable = health.DebugInvulnerable;
         bool wasFrozen = EnemyDebugAiFreeze.IsFrozen;
         float previousTimeScale = Time.timeScale;
-        object Call(string method, params object[] args) => typeof(Subject42DebugMenu)
-            .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(menu, args);
-        var tabType = typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic);
-        void OpenEnemies()
-        {
-            Call("OpenMenu");
-            Call("SelectTab", Enum.ToObject(tabType, 2), true);
-        }
-        UnityEngine.UI.Button Button(string label, string row = null) => Read<GameObject>(menu, "menuRoot")
-            .GetComponentsInChildren<UnityEngine.UI.Button>(true).Single(b => b.gameObject.activeInHierarchy &&
-                b.GetComponentInChildren<TMPro.TMP_Text>().text == label && (row == null || b.transform.parent.name == row));
+        GameObject actor = null;
         try
         {
             Time.timeScale = 1f;
@@ -3808,9 +3684,6 @@ public sealed class CombatReadabilityTests
             EnemyDebugAiFreeze.SetFrozen(false);
             spawner.ResetForNewLevel();
             spawner.StopSpawning();
-            OpenEnemies();
-            Assert.That(Read<bool>(menu, "isOpen"), Is.True);
-            Assert.That(Button("+1 ФЛАНГОВЫЙ").interactable, Is.False, "Manual option requires opt-in.");
             var prefab = RunStateManager.Instance.CurrentSector.SpawnProfile.Phases
                 .Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
                 .Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab)
@@ -3818,9 +3691,7 @@ public sealed class CombatReadabilityTests
             Assert.That(prefab, Is.Not.Null, "The actual sector must offer an eligible enemy.");
             Assert.That(spawner.DebugSpawnFlankingChaserAround(prefab, player.transform.position, out _), Is.Null,
                 "The API also rejects a disabled experiment.");
-            var tracked = Read<System.Collections.Generic.List<GameObject>>(menu, "debugEnemies");
-            Assert.That(tracked, Is.Empty);
-            Button("ПЕРЕКЛЮЧИТЬ", "Эксперимент: фланговый преследователь").onClick.Invoke();
+            spawner.DebugSetFlankingChasersExperiment(true);
             Assert.That(spawner.FlankingChasersExperiment, Is.True);
             Assert.That(RunStateManager.Instance.IsDevelopmentRun, Is.True);
             var spawn = typeof(EnemySpawner).GetMethod("SpawnEnemyAt", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -3829,17 +3700,12 @@ public sealed class CombatReadabilityTests
             for (int i = 0; i < 3; i++)
                 Assert.That(SpawnTracked().GetComponent<EnemyChaseMovement>().IsFlankingExperiment, Is.False);
             Assert.That(Read<int>(spawner, "flankingEligibleSpawns"), Is.EqualTo(3));
-            var button = Button("+1 ФЛАНГОВЫЙ");
-            Assert.That(button.interactable, Is.True);
-            button.onClick.Invoke(); // Actual listener built by BuildMvpEnemies, not a direct spawn substitute.
-            Assert.That(tracked.Count, Is.EqualTo(1), Read<string>(menu, "enemyDebugStatus"));
-            var actor = tracked.Single();
+            actor = spawner.DebugSpawnFlankingChaserAround(prefab, player.transform.position, out var spawnStatus);
+            Assert.That(actor, Is.Not.Null, spawnStatus);
             Assert.That(EnemySpawner.IsFlankingChaserEligible(actor), Is.True);
             var chase = actor.GetComponent<EnemyChaseMovement>();
             var body = actor.GetComponent<Rigidbody2D>();
             Assert.That(chase.IsFlankingExperiment, Is.True);
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False, "Successful callback closes F1.");
-            Assert.That(Subject42DebugMenu.IsDebugMenuOpen, Is.False);
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
             Assert.That(Read<int>(spawner, "flankingEligibleSpawns"), Is.EqualTo(3));
             Assert.That(Read<int>(spawner, "flankingAssignedSpawns"), Is.Zero);
@@ -3850,24 +3716,15 @@ public sealed class CombatReadabilityTests
             Assert.That(chase.enabled && body.simulated && !EnemyDebugAiFreeze.IsFrozen, Is.True);
             var start = body.position;
             yield return WaitGameTime(.25f);
-            Assert.That(Vector2.Distance(start, body.position), Is.GreaterThan(.01f), "Live AI and physics advance after F1 closes.");
+            Assert.That(Vector2.Distance(start, body.position), Is.GreaterThan(.01f), "Live AI and physics advance after the debug spawn.");
             yield return CoreTestSupport.Await(() => actor != null &&
                 Camera.main.WorldToViewportPoint(actor.transform.position) is var v &&
                 v.z > 0f && v.x > .02f && v.x < .98f && v.y > .02f && v.y < .98f);
-            yield return CaptureFlankingGameView("flanking-f1-immediate");
-            OpenEnemies();
-            var clear = Button("УБРАТЬ");
-            Assert.That(clear.interactable, Is.True);
-            clear.onClick.Invoke();
-            Assert.That(tracked, Is.Empty, "Existing debugEnemies cleanup owns the manual instance.");
-            Call("CloseMenu");
-            yield return null;
-            Assert.That(actor == null, Is.True, "Manual instance is destroyed by the existing cleanup.");
+            yield return CaptureFlankingGameView("flanking-immediate");
         }
         finally
         {
-            Call("CloseMenu");
-            Call("ClearDebugEnemies");
+            if (actor != null) Object.Destroy(actor);
             spawner.DebugSetFlankingChasersExperiment(false);
             health.DebugInvulnerable = wasInvulnerable;
             EnemyDebugAiFreeze.SetFrozen(wasFrozen);
@@ -3894,7 +3751,6 @@ public sealed class CombatReadabilityTests
         var body = player.GetComponent<Rigidbody2D>();
         var station = player.GetComponentInChildren<OrbitalStationRuntime>();
         var events = Object.FindFirstObjectByType<WorldEventSpawner>();
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
         bool protection = health.DebugInvulnerable;
         bool frozen = EnemyDebugAiFreeze.IsFrozen;
         float scale = Time.timeScale;
@@ -3920,15 +3776,13 @@ public sealed class CombatReadabilityTests
             health.DebugInvulnerable = true;
             EnemyDebugAiFreeze.SetFrozen(false);
             Time.timeScale = 1f;
-            OpenEscortF1(menu);
-            EscortF1Button(menu, "ПЕРЕКЛЮЧИТЬ", "Сопровождение груза").onClick.Invoke();
-            Assert.That(events.EscortCargoExperimentEnabled, Is.True, Read<string>(menu, "enemyDebugStatus"));
-            EscortF1Button(menu, "СОЗДАТЬ ГРУЗ").onClick.Invoke();
+            Assert.That(events.DebugSetEscortCargoExperiment(true, out var eventStatus), Is.True, eventStatus);
+            Assert.That(events.EscortCargoExperimentEnabled, Is.True);
+            Assert.That(events.DebugSpawnEscortCargo(out eventStatus), Is.True, eventStatus);
             var escort = events.EscortCargoExperimentInstance;
-            Assert.That(escort, Is.Not.Null, Read<string>(menu, "enemyDebugStatus"));
+            Assert.That(escort, Is.Not.Null, eventStatus);
             cargoEvent = escort;
             destination = escort.RewardPosition;
-            Assert.That(Read<bool>(menu, "isOpen"), Is.False, "Successful actual F1 callback closes the menu.");
             Assert.That(escort.IsStarted, Is.False, "Creation must not accept the event.");
             var cargo = Read<Transform>(escort, "cargo");
             MoveEscortPlayer(body, cargo.position);
@@ -3979,7 +3833,6 @@ public sealed class CombatReadabilityTests
             events.EventCompleted -= OnComplete;
             events.EventFailed -= OnFail;
             RunStateManager.ContentEventCompleted -= OnCredit;
-            EscortF1Call(menu, "CloseMenu");
             events.DebugClearEscortCargo(out _);
             events.DebugSetEscortCargoExperiment(false, out _);
             if (health != null) health.DebugInvulnerable = protection;
@@ -4078,7 +3931,6 @@ public sealed class CombatReadabilityTests
         Assert.That(station.IsInitialized && station.isActiveAndEnabled, Is.True);
         Assert.That(station.InputOwner, Is.Not.Null);
         Assert.That(Object.FindFirstObjectByType<WorldEventSpawner>(), Is.Not.Null, "Production event owner missing.");
-        Assert.That(Object.FindFirstObjectByType<Subject42DebugMenu>(), Is.Not.Null, "Production F1 missing.");
         Assert.That(Camera.main, Is.Not.Null);
     }
 
@@ -4088,21 +3940,6 @@ public sealed class CombatReadabilityTests
         body.linearVelocity = Vector2.zero;
         Physics2D.SyncTransforms();
     }
-
-    private static object EscortF1Call(Subject42DebugMenu menu, string method, params object[] args) =>
-        typeof(Subject42DebugMenu).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(menu, args);
-
-    private static void OpenEscortF1(Subject42DebugMenu menu)
-    {
-        EscortF1Call(menu, "OpenMenu");
-        var tab = typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic);
-        EscortF1Call(menu, "SelectTab", Enum.ToObject(tab, 2), true);
-    }
-
-    private static UnityEngine.UI.Button EscortF1Button(Subject42DebugMenu menu, string label, string row = null) =>
-        Read<GameObject>(menu, "menuRoot").GetComponentsInChildren<UnityEngine.UI.Button>(true).Single(b =>
-            b.gameObject.activeInHierarchy && b.GetComponentInChildren<TMPro.TMP_Text>().text == label &&
-            (row == null || b.transform.parent.name == row));
 
     private static IEnumerator CaptureFlankingGameView(string phase, string content = "FlankingChaser")
     {

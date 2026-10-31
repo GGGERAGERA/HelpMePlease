@@ -1,0 +1,64 @@
+F1 simplification — Live Visual Studio ring appearance removal (2026-10-31)
+
+Scope and deleted UI code
+- Assets/_Project/scripts/World/Presentation/LiveVisual/OrbitalVisualAdapter.cs:
+  CreateTarget no longer creates the ORBITAL ring-surface category, Tier I–IV
+  categories, ring controls or their integer-control metadata. Removed AddTier
+  and ChangeTier, which existed only to construct/write those UI properties.
+  Removed 53 VisualProperty exposures: RingSurface's 7 fields; RingLineWidth,
+  RingLineAlpha, RingUpgradeBrightness, RingUpgradeGlow, RingHighlightBrightness,
+  RingDimmedAlpha; each Tier I–IV BaseColor RGBA plus Alpha, Emission, Glow,
+  CoreWhitening, PulseStrength and PulseSpeed.
+- No change to Dev/Debug/F1/LiveVisualStudio.cs was necessary: it builds its
+  property UI from target.Properties, which now contains no ring config fields.
+- AddProjectile, AddFlashFamily, weapon/effect settings, all actual component
+  adapters, target picking, profile editing and save/load APIs remain.
+
+Necessary saved-data compatibility
+- Original Git-baseline JSON contains exactly 53 historical config.Ring*/
+  config.Tier* values for config:orbital. Removing their only application path
+  would silently change Original and imported/production profiles.
+- A small internal BindSavedRingValues method in the existing adapter admits
+  exactly those historical IDs, without labels, categories, VisualProperties
+  or new UI. Existing LiveVisualRuntime.Rebuild/LateUpdate/OnDestroy use its
+  apply/restore delegates. This is not a new manager or subsystem.
+- Kept existing Instance > Type > Group resolution, finite-value checks, old
+  bounds and Pattern/DashCount rounding; repeats overrides each frame and
+  restores only overridden fields. Unrelated laboratory edits survive reset
+  and mode switches. Original match counts still include supported old IDs.
+- VisualProfile/JSON schema, Copy, ForProduction, save/load, production assets
+  and imported values are unchanged. Export preserves raw saved values and
+  excludes Instance as before. No migration writes or removal of saved values.
+
+Real dependencies inspected and retained
+- scripts/Combat/OrbitalStation/OrbitalRingView.cs reads GetRingTier,
+  RingSurface, width/alpha and ring highlight/upgrade settings during rendering.
+- scripts/Combat/OrbitalStation/OrbitalPresentationConfig.cs owns serialized
+  style data, runtime clones, configuration revision, ring save compatibility
+  and shared presentation references. Not edited.
+- scripts/UI/Pause/PauseBuildOverview.cs reads GetRingTier colors for the build
+  overview. Not edited.
+- Dev/Editor/F1/LiveVisualBaselineAuthoring.cs records historical ring IDs for
+  Original; retained so baseline behavior does not become incomplete.
+- Normal ring rendering, its shader/material/prefabs, gameplay and laboratory
+  consumers were not removed. Generic editing of real scene renderers remains.
+
+Other changes
+- Dev/Tests/Core/Editor/OrbitalVisualAdapterTests.cs: expanded existing adapter
+  boundary check; added SavedRingAppearanceSurvivesImportExportComparisonResetAndDestruction
+  and four SavedTierAppearanceAppliesWithoutExposingTierControls cases.
+  These exercise real runtime import, precedence, sanitization, Original/Current/
+  Custom, reset/undo, export, destruction and preservation of untouched fields.
+- Documentation/LiveVisualStudio.md: replaced obsolete supported-ring controls
+  with current weapon/effects coverage and the compatibility boundary.
+
+Verification evidence / limits
+- git diff --check on the four changed source/test/doc files: no whitespace
+  errors (Git emitted only an existing LF -> CRLF policy warning for the doc).
+- Search found no AddTier/ChangeTier calls or deleted ring-category labels in
+  LiveVisual/ or LiveVisualStudio.cs.
+- Recomputed SHA-256 against user-visual-assets-before.json: all six user files
+  are byte-identical (preset, production JSON/meta, Profiles.meta, named JSON/meta).
+- No Unity, build, automated test or gameplay session run by this worker.
+  Editor scenarios are added but unrun; host owns compilation and one short smoke.
+- No gameplay/GDD change, git add, commit or branch operation performed.

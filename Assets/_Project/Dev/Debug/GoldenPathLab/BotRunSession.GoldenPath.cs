@@ -12,7 +12,7 @@ public sealed partial class BotRunSession
     private void FixedUpdate()
     {
         if (goldenStage != "Gameplay" || controller == null || flow == null || rewards == null ||
-            !rewards.IsRewardQueueIdle || Subject42DebugMenu.IsDebugMenuOpen || Time.timeScale <= 0 || SceneTransitionOverlay.IsTransitioning) return;
+            !rewards.IsRewardQueueIdle || Time.timeScale <= 0 || SceneTransitionOverlay.IsTransitioning) return;
         controller.TickGoldenPath(Result.Duration - goldenSectorTime, flow.FinalBoss, goldenEvents, station.State);
     }
     private string goldenStage;
@@ -94,12 +94,6 @@ public sealed partial class BotRunSession
     {
         Result.WallDuration = Time.realtimeSinceStartup - startedAt;
         if (pendingException != null) { GoldenCheck("Runtime.NoException", false, pendingException); return; }
-        if (Subject42DebugMenu.IsDebugMenuOpen)
-        {
-            goldenDeadline += Time.unscaledDeltaTime;
-            if (goldenCompletedAt >= 0) goldenCompletedAt += Time.unscaledDeltaTime;
-            controller?.Pause("Debug menu"); return;
-        }
         if (goldenStage != "Gameplay" && Time.realtimeSinceStartup > goldenDeadline)
         { GoldenCheck("Progression.TransitionDeadline", false, "No progress for 45 real seconds"); return; }
         if (goldenStage == "Initial Bunker")

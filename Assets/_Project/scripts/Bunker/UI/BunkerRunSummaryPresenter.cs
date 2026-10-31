@@ -99,6 +99,7 @@ public sealed class BunkerRunSummaryPresenter : MonoBehaviour
             yield return null;
         }
         Hide();
+        BunkerAmbientBarks.Instance?.TryPlayEvent("return_from_run");
     }
 
     private static void SetLine(TextMeshProUGUI text, string content, float anchorY)

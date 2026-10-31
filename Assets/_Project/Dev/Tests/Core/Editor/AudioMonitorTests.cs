@@ -73,7 +73,6 @@ public sealed class AudioMonitorTests
         var lockMode = Cursor.lockState;
         toggle.Invoke(audio, null);
         Assert.That((bool)visible.GetValue(audio), Is.True);
-        Assert.That(Subject42DebugMenu.IsDebugMenuOpen, Is.False);
         Assert.That(inputOwner.IsGameplayInputBlocked, Is.EqualTo(blocked));
         Assert.That(Time.timeScale, Is.EqualTo(scale));
         Assert.That(Time.fixedDeltaTime, Is.EqualTo(fixedStep));

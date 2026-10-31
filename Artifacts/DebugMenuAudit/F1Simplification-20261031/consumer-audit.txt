@@ -1,0 +1,54 @@
+F1 simplification: external consumer audit — 2026-10-31
+
+Scope and evidence
+- Read AGENTS.md. Audited project C# consumers, reflection strings, Unity persistent-call targets and script GUID references with rg; reviewed narrow source diffs.
+- No Unity launch, Play Mode, test run, compilation or build was performed by this audit. Static source compatibility is not runtime verification.
+- Source edits were subsequently authorized by the root task for stale tests/verification only. No gameplay implementation, user visual assets, Git index, commits or branches were modified by this subtask.
+
+Runtime contracts that must remain
+- CharacterMovement2D.cs:159 consumes Subject42DebugMenu.HubBlocksKeyboardInput (Editor/development guard).
+- OrbitalInteractionController.cs:79,84 consumes HubBlocksKeyboardInput and HubBlocksGameplayPointer (Editor/development guard). Retain development blocker attachment/release and external Escape consumption on the existing menu owner.
+- LiveVisualStudio.cs:108 consumes IsDebugMenuOpen before restoring cursor ownership.
+- BotRunSession.cs:183 and BotRunSession.GoldenPath.cs:15,97 consume IsDebugMenuOpen; BotRunSession.cs:228 calls RestoreBotResumeScale.
+- GoldenPathLab.cs:200,222 and BotBatchRunner.cs:45 consume IsDebugMenuOpen to defer/cancel bot work.
+- TrailerStandaloneDiagnostics.cs:71 consumes IsDebugMenuOpen for diagnostics.
+- No external runtime caller found for the removed private Build/MVP/Enemies/World/pickup/F9 builders, CompleteLevel, menu-local FindAliveBoss, or AddSliderRow. TacticalMapHUD.FindAliveBoss is an independent method and is untouched.
+
+Serialized references
+- Pickups partial GUID 8e4c2ca8f43eb8849b171a4e56e3b7d2: no references outside metadata in Assets, Packages or ProjectSettings.
+- Mvp partial GUID c77a8214aa477ec46a550e3e49a8c29d: no references outside metadata. Partial source has no independent serialized component consumer.
+- Main script GUID 4d7b2f19a8e64a59b0c3d4219f76e812 remains referenced by Dev/Labs/BunkerSimple/OLD/MainMenu.unity:6799 and SIMPLE/MainMenu.unity:10018. Main Subject42DebugMenu component remains; no scene edit needed for these references.
+- No Subject42DebugMenu persistent UnityEvent target or removed-method persistent call found in project .unity/.prefab/.asset text.
+- Deleted pickup-test GUID e265642d727a0d7458da2c15db7c0c99 and obsolete Play-verifier GUID 7541fb87438a86c44be3d81be2ca7e88: no references outside metadata.
+- activeTab is a private runtime field, not serialized; new enum values do not migrate a saved scene field. Reflection consumers that assumed ordinal indexes required adaptation below.
+
+Stale consumers handled in this subtask
+1. Deleted Dev/Tests/Core/Editor/F1PickupDebugTests.cs and .meta.
+   Its sole test ProductionMenuSpawnsAndClearsOnlyItsOwnPickups exclusively exercised the removed F1 pickup panel and testPickups field. Production pickup behavior/tests elsewhere remain intact.
+2. Deleted Dev/Editor/OrbitalLab/MvpF1Verification.Play.cs and .meta.
+   This opt-in runner assumed removed indexed Build/Catalogue/Enemies/World pages and mvpPreviewKind/mvpPreviewRoot/mvpCategoryFilter/mvpAvailableOnly. Removed its registrations from MvpF1Verification.cs.
+   Preserved MvpF1Verification.cs Audit(), audit.request polling, production reward localization/icons/card reuse/cap checks; moved its required Field/Call reflection helpers into that surviving file. No Play verifier remains registered.
+3. CombatReadabilityTests.OpenEscortF1 and local FlankingChaser OpenEnemies now set additionalSection=1, parse DebugTab.Additional by name, and call HubOpenUtilityPage.
+   Retains all enemy experiment captures and actual UI listener/spawn/cleanup checks. Root confirmed retaining one УБРАТЬ row calling ClearDebugEnemies in this lab.
+4. Subject42OrbitalOperationsTests.MissReturnPistolProductionCaptureBody now calls OpenSandbox and selects the retained Вариант: Пистолет / Возврат промаха button.
+   All live projectile/combat, Development marking and restoration assertions remain.
+5. FireteamClearanceProductionMvpF1GameViewCapture renamed to FireteamClearanceProductionMvpGameViewCapture.
+   Its setup uses existing WorldEventSpawner.DebugSetFireteamClearanceExperiment and DebugSpawnFireteamClearance instead of removed world-page controls. Preserves authored interaction, real target AI/physics, live battle, markers/guidance and captures. Drops the obsolete claim of F1 callback coverage.
+6. EscortCargoProductionMvpEscortPauseAndRewardCapture setup similarly uses existing DebugSetEscortCargoExperiment and DebugSpawnEscortCargo.
+   Preserves real interaction, escort movement/pause and production reward/event checks; no replacement UI was added.
+7. TrailerCaptureSmokeTests.CapturePresetsRepeatHudEventBossAndReset no longer reflects removed PlayerBuild/nonexistent Shooting tabs or deleted SetOpen wrapper.
+   Uses retained OpenMenu/CloseMenu for time/input/HUD checks and preserves independent TrailerCaptureSession event/boss/preset/reset behavior.
+
+Other live tests left intact
+- DevelopmentInputContractTests.AdditiveDevelopmentMenusHaveOneInputOwner validates the surviving component owner.
+- LiveVisualProductionTests still reflects retained ShowHub/CloseHub; LiveVisualProfileTests and AudioMonitorTests read IsDebugMenuOpen.
+- No replacement test-only production wrappers were introduced.
+
+Root-owned follow-up identified
+- F1SandboxTests.NavigateF1WithoutChangingRun previously navigated deleted Build/Enemies pages and called ToggleMvpOrbitSurface/mvpOrbitSaveFooter. Root owns its rewrite for the simplified pages; this subtask did not edit that file.
+- Historical docs/reports mention removed paths and past F1 verification. They are evidence records, not executable consumers; no historical result was rewritten.
+
+Post-edit static review
+- Modified external files contain no removed SetOpen/F9/catalogue-preview/pickup symbols or removed tab names/ordinals.
+- Surviving MvpF1Verification.cs has all reflection helpers needed by its independent Audit; no PollPlay/PlayState/PlayLog references remain.
+- Changes are restricted to the files listed above plus this report. Runtime input/cursor/bot contracts remain a responsibility of the root implementation and require its final verification.

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-30 22:52:04Z" end-time="2026-10-30 22:52:13Z" duration="9,3871621">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="421" result="Passed" start-time="2026-10-30 22:52:04Z" end-time="2026-10-30 22:52:13Z" duration="9.387162" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1534" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="421" result="Passed" start-time="2026-10-30 22:52:04Z" end-time="2026-10-30 22:52:13Z" duration="9.259288" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7928" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1208" name="F1RemovalSmokeTests" fullname="F1RemovalSmokeTests" classname="F1RemovalSmokeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-30 22:52:04Z" end-time="2026-10-30 22:52:13Z" duration="9.252010" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1209" name="ProductionMovesFiresAndUsesNativeConstructorWithoutDebugMenu" fullname="F1RemovalSmokeTests.ProductionMovesFiresAndUsesNativeConstructorWithoutDebugMenu" methodname="ProductionMovesFiresAndUsesNativeConstructorWithoutDebugMenu" classname="F1RemovalSmokeTests" runstate="Runnable" seed="1104908717" result="Passed" start-time="2026-10-30 22:51:56Z" end-time="2026-10-30 22:52:13Z" duration="17.386320" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BunkerHoverOutline] PF_MissionOperator renderers=1
+[BunkerInteractableCollider] PF_MissionOperator source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_EscapeProtocolStation renderers=3
+[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] SlotMachine renderers=56
+[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=PF_RunExitDoor, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_RunExitDoor renderers=46
+[BunkerInteractableCollider] ArcadeInteraction source=p_RouletteTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_RouletteTable1 renderers=19
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
+[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] PF_InteractionArrow source=p_RouletteTable1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerArkade1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+[BunkerHoverOutline] p_PockerTable1 renderers=15
+[BunkerInteractableCollider] ArcadeInteraction source=p_bunkerArkade1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_PockerTable1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_RunExitDoor, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerArkade1 renderers=13
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[TacticalMap] breakableMarkers=0
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=0, DMG=0, SPD=0, XP=0, GOLD=0, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+[Corridor] admitted Random seed=723942778 rotation=0 start=(-41.77, 10.06)
+[WorldEventSpawner] Placement rejected 'PF_CorridorEvent(Clone)': Route intersects static obstacle or reserved exit.
+[Corridor] admitted Random seed=2100470092 rotation=90 start=(43.23, 34.25)
+SECTOR LAYOUT
+Coverage: 96,0%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (-35.89, -29.39), size (28.22, 41.22)
+Normal 2: center (-30.16, 33.76), size (39.67, 32.49)
+Normal 3: center (-30.16, 4.37), size (39.67, 26.30)
+Special ArcNode: center (30.16, -20.61), size (39.67, 58.78), distance 36,5/70,7
+Line-to-Special in Normal: 0%
+Exit: (21.82, 35.18), inside NORMAL
+Attempts: 1
+[ExplorationSector] Special Site: ELECTRIC (ProductionElectricSiteHazard).
+[Breakables] requested=7 spawned=7 visible=7 rejected=0 fallback=0 bounds=100x100
+[GoldenCoin] Awake: object='p_Case3 Visual', renderers=2, lights=2, active=True.
+[WorldLootChest] Production chest spawned in sector 1 at (-26.96, 4.33).
+[PropScatter] seed=4638435, count=238/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 6 Normal, 1 Special (ArcNode), 96% map coverage, 7 breakables, Exit at (21.82, 35.18).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=8
+[EnemySpawner] Spawning stopped.
+[EnemySpawner] Spawning stopped.
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+Saving results to: Artifacts/GeneratedQA/CompactHud/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

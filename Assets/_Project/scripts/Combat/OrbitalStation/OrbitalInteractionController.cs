@@ -75,20 +75,13 @@ namespace Subject42.Combat.OrbitalStation
         }
         public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            || DebugSuppressPlayerInput || (DevelopmentInputBlocker?.Invoke() ?? false)
-            || Subject42DebugMenu.HubBlocksKeyboardInput || Subject42.Visuals.LiveVisualStudio.BlocksKeyboardInput
+            || DebugSuppressPlayerInput
 #endif
             ;
-        public bool IsGameplayPointerBlocked => IsGameplayInputBlocked
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            || Subject42DebugMenu.HubBlocksGameplayPointer || Subject42.Visuals.LiveVisualStudio.BlocksGameplayPointer
-#endif
-            ;
+        public bool IsGameplayPointerBlocked => IsGameplayInputBlocked;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public bool DebugSuppressPlayerInput { get; set; }
-        public System.Func<bool> DevelopmentInputBlocker { get; set; }
         public void DebugConsumeExternalUiEscape() => escapeFrame = consumedFrame = Time.frameCount;
-        public event System.Action ExternalTimeControlStarting;
 #endif
         private bool Alive => station != null && station.IsInitialized && station.Owner != null && !station.Owner.IsDead;
         private System.Func<bool> rewardQueueIdle, rewardChoosing;
@@ -124,9 +117,6 @@ namespace Subject42.Combat.OrbitalStation
 
         public void TickBulletTime(bool active, BulletTimeAbility ability, float unscaledDeltaTime)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (active || ownsBulletTime) ExternalTimeControlStarting?.Invoke();
-#endif
             // Never overwrite another time owner (pause, rewards, transition, death or reset).
             if (!Alive || !IsIdle || !QueueIdle || IsGameplayPointerBlocked || Time.timeScale <= 0f ||
                 ownsBulletTime && !Mathf.Approximately(Time.timeScale, bulletScale))
@@ -165,9 +155,6 @@ namespace Subject42.Combat.OrbitalStation
             // Pause, reward selection, disable and reset release time ownership silently.
             bulletTimeAudioActive = false;
             if (!ownsBulletTime) return;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ExternalTimeControlStarting?.Invoke();
-#endif
             if (Mathf.Approximately(Time.timeScale, bulletScale)) Time.timeScale = bulletBaseScale;
             if (Mathf.Approximately(Time.fixedDeltaTime, bulletFixedStep)) Time.fixedDeltaTime = bulletBaseFixedStep;
             if (movement != null) movement.BulletTimeControlMultiplier = 1f;
@@ -176,9 +163,6 @@ namespace Subject42.Combat.OrbitalStation
         }
         public void PrepareForExternalPause()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ExternalTimeControlStarting?.Invoke();
-#endif
             if (IsConstructing) station.Interaction.CloseConstructor();
             ReleaseBulletTime();
             station?.GetComponent<OrbitalRelocationController>()?.CancelDrag("external pause");
@@ -206,9 +190,6 @@ namespace Subject42.Combat.OrbitalStation
             beforeDraw = Mode;
             beforeDrawScale = Time.timeScale;
             Mode = OrbitalInteractionMode.CustomDrawing;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ExternalTimeControlStarting?.Invoke();
-#endif
             Time.timeScale = 0f;
         }
         public void EndCustomDraw()
