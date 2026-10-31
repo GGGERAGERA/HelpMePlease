@@ -13,6 +13,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 {
     public const string ScenePath =
         "Assets/_Project/Dev/Labs/WorldSystemsLab/WorldSystemsLab.unity";
+    [SerializeField] private WorldSystemsLabOrbitExperiment orbitExperiment;
 
     [Header("Production scene objects")]
     [SerializeField] private Transform player;
@@ -122,6 +123,9 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     }
 
     public bool SpawnNormalAnomaly()
+        => SpawnNormalAnomaly(null);
+
+    public bool SpawnNormalAnomaly(LocalAnomalyData selected)
     {
         if (!CanSpawnSite() || normalAnomalyAssets.Length == 0)
             return false;
@@ -133,7 +137,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             return false;
         }
 
-        LocalAnomalyData data = normalAnomalyAssets[
+        LocalAnomalyData data = selected != null ? selected : normalAnomalyAssets[
             nextNormalAnomaly++ % normalAnomalyAssets.Length
         ];
         var region = territoryRegions[nextNormalTerritory];
@@ -424,6 +428,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     private void OnGUI()
     {
+        if (orbitExperiment != null && orbitExperiment.Active) return;
 
         if (!panelVisible)
         {
@@ -459,6 +464,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         Section("ANOMALY");
+        if (orbitExperiment != null && GUILayout.Button("Segmented Orbit × 5 аномалий", buttonStyle))
+            orbitExperiment.Begin();
         if (GUILayout.Button("spawn normal zone", buttonStyle))
             SpawnNormalAnomaly();
         if (GUILayout.Button("spawn special zone", buttonStyle))

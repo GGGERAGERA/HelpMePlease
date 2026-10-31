@@ -8,6 +8,7 @@ namespace Subject42.Combat.OrbitalStation
         public const float WorldSize = .36f;
         public static readonly Color LinkColor = new(.25f, .78f, 1f);
         private static readonly Sprite[] icons = new Sprite[4];
+        private static Sprite suppressionCross;
         private static readonly string[][] masks =
         {
             new[] { ".....##.....", "..#..##..#..", "...######...", "..########..", "...######...", "############", "############", "...######...", "..########..", "...######...", "..#..##..#..", ".....##....." },
@@ -19,6 +20,8 @@ namespace Subject42.Combat.OrbitalStation
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetIcons()
         {
+            if (suppressionCross != null)
+            { Object.Destroy(suppressionCross.texture); Object.Destroy(suppressionCross); suppressionCross = null; }
             for (int i = 0; i < icons.Length; i++)
             {
                 if (icons[i] == null) continue;
@@ -60,6 +63,21 @@ namespace Subject42.Combat.OrbitalStation
             icons[index].name = texture.name;
             icons[index].hideFlags = HideFlags.HideAndDontSave;
             return icons[index];
+        }
+        public static Sprite SuppressionCross()
+        {
+            if (suppressionCross != null) return suppressionCross;
+            const int side = 16;
+            var pixels = new Color32[side * side];
+            for (int y = 1; y < side - 1; y++) for (int x = 1; x < side - 1; x++)
+                if (Mathf.Abs(x - y) <= 1 || Mathf.Abs(x + y - side + 1) <= 1)
+                    pixels[y * side + x] = new Color32(255,35,45,255);
+            var texture = new Texture2D(side,side,TextureFormat.RGBA32,false)
+            { name = "Suppressed module cross", filterMode = FilterMode.Point, hideFlags = HideFlags.HideAndDontSave };
+            texture.SetPixels32(pixels); texture.Apply(false,true);
+            suppressionCross = Sprite.Create(texture,new Rect(0,0,side,side),Vector2.one * .5f,side);
+            suppressionCross.name = texture.name; suppressionCross.hideFlags = HideFlags.HideAndDontSave;
+            return suppressionCross;
         }
     }
 }

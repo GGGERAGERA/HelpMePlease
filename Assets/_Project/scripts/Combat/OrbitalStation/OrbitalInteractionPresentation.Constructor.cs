@@ -25,6 +25,7 @@ namespace Subject42.Combat.OrbitalStation
         private UpgradePanelView constructorRewardPanel;
         private readonly List<LineRenderer> constructorWorldLines = new();
         private readonly List<SpriteRenderer> constructorWorldModules = new();
+        private readonly List<SpriteRenderer> constructorWorldModuleCrosses = new();
         private readonly List<RaycastResult> constructorHits = new();
         private readonly List<Vector3> constructorArcPoints = new(64);
         private int constructorRevision = -1, constructorDragRevision, constructorDragCell = -1, constructorDropCell = -1;
@@ -486,6 +487,11 @@ namespace Subject42.Combat.OrbitalStation
                     var marker = created.GetComponent<SpriteRenderer>();
                     marker.sharedMaterial = station.VisualMaterial;
                     constructorWorldModules.Add(marker);
+                    var crossObject = station.CreatePixelVisual("Suppressed module cross",Color.white,Vector2.one,4);
+                    crossObject.transform.SetParent(station.RuntimeRoot,false);
+                    var cross = crossObject.GetComponent<SpriteRenderer>();
+                    cross.sprite = SegmentedModulePresentation.SuppressionCross(); cross.sharedMaterial = station.VisualMaterial;
+                    cross.enabled = false; constructorWorldModuleCrosses.Add(cross);
                 }
                 var icon = OrbitalRewardIconResolver.Resolve(module.Kind);
                 var node = constructorWorldModules[moduleIndex++];
@@ -498,12 +504,16 @@ namespace Subject42.Combat.OrbitalStation
                 bool active = station.State.SegmentedModuleTargets(module).Any();
                 node.color = icon.ImageTint * new Color(1f, 1f, 1f, active ? 1f : .65f);
                 node.enabled = !station.InputOwner.IsConstructing;
-                float from = OrbitalRunState.SegmentedMountAngle(ring.State.Order, module.MountIndex);
+                var disabled = constructorWorldModuleCrosses[moduleIndex - 1];
+                disabled.transform.position = node.transform.position;
+                disabled.transform.localScale = Vector3.one * SegmentedModulePresentation.WorldSize * 1.12f;
+                disabled.enabled = node.enabled && station.OrbitModulesSuppressed;
+                float from = ring.Mounts[module.MountIndex].LocalPhase;
                 foreach (var target in station.State.SegmentedModuleTargets(module))
                 {
                     // Cross-level effects remain visible in the constructor, without combat HUD spokes.
                     if (target.StableRingId != ring.RingId) continue;
-                    float to = OrbitalRunState.SegmentedMountAngle(ring.State.Order, target.MountIndex);
+                    float to = ring.Mounts[target.MountIndex].LocalPhase;
                     float arc = Mathf.DeltaAngle(from, to);
                     int steps = Mathf.Max(2, Mathf.CeilToInt(Mathf.Abs(arc) * Mathf.Deg2Rad * ring.Radius / pixel));
                     var rotation = Quaternion.Euler(0f, 0f, ring.Phase);
@@ -545,12 +555,14 @@ namespace Subject42.Combat.OrbitalStation
                     line.transform.localRotation = rotation;
                     line.positionCount = constructorArcPoints.Count;
                     for (int p = 0; p < constructorArcPoints.Count; p++) line.SetPosition(p, constructorArcPoints[p]);
-                    line.startColor = line.endColor = SegmentedModulePresentation.LinkColor;
+                    line.startColor = line.endColor = station.OrbitModulesSuppressed
+                        ? new Color(.2f,.32f,.36f,.2f) : SegmentedModulePresentation.LinkColor;
                     line.enabled = true;
                 }
             }
             for (int i = lineIndex; i < constructorWorldLines.Count; i++) constructorWorldLines[i].enabled = false;
             for (int i = moduleIndex; i < constructorWorldModules.Count; i++) constructorWorldModules[i].enabled = false;
+            for (int i = moduleIndex; i < constructorWorldModuleCrosses.Count; i++) constructorWorldModuleCrosses[i].enabled = false;
         }
 
         private static Vector2 PixelArcPoint(float degrees, float radius, float pixel)
@@ -568,6 +580,8 @@ namespace Subject42.Combat.OrbitalStation
             constructorWorldLines.Clear();
             foreach (var node in constructorWorldModules) if (node != null) Destroy(node.gameObject);
             constructorWorldModules.Clear();
+            foreach (var cross in constructorWorldModuleCrosses) if (cross != null) Destroy(cross.gameObject);
+            constructorWorldModuleCrosses.Clear();
             if (constructorCanvas != null) constructorCanvas.gameObject.SetActive(false);
         }
     }

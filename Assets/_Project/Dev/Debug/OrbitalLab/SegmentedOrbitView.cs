@@ -105,8 +105,9 @@ public sealed class SegmentedOrbitView : IDisposable
             line.enabled = preview || edge.Module != Link.None;
             if (!line.enabled) continue;
             bool chosen = lab.Paused && Build.SelectedLink && Build.Selected == edge.Id;
-            Color color = chosen ? Amber : edge.IsActive || preview ? ConnectionColor : Color.gray;
-            color.a = chosen ? 1f : preview ? .3f : edge.IsActive ? .65f : .22f;
+            bool effective = edge.IsActive && !lab.WeaponModules.EffectsSuppressed;
+            Color color = chosen ? Amber : effective || preview ? ConnectionColor : Color.gray;
+            color.a = chosen ? 1f : preview ? .3f : effective ? .65f : .22f;
             line.startColor = line.endColor = color;
             line.widthMultiplier = chosen ? .055f : lab.Paused ? .025f : .02f;
             for (int j = 0; j < 9; j++) line.SetPosition(j,ConnectionPoint(edge,j / 8f));
@@ -127,6 +128,7 @@ public sealed class SegmentedOrbitView : IDisposable
     }
     void DrawConstruction()
     {
+        if (lab.AnomalyExperiment != null && lab.AnomalyExperiment.BlocksPointer) return;
         if (!lab.Paused || camera == null || !Build.Bound) return;
         Build.Hovered = -1; Build.HoveredLink = false;
         DrawLinkMarkers(true);
@@ -216,12 +218,16 @@ public sealed class SegmentedOrbitView : IDisposable
             GUILayout.BeginArea(new Rect(14,12,panel.width - 28,panel.height - 22));
             GUILayout.Label("SEGMENTED ORBIT",title);
             GUILayout.Label("Связи рядом и через пустой слот",small);
-            Row(() => Btn("▶ В БОЙ · Tab / P",lab.StartSegmentedCombat,true), () => Btn("Свободный режим",() => lab.SetSegmentedOrbit(false)));
+            if (lab.AnomalyExperiment != null && lab.AnomalyExperiment.Active)
+                Btn("▶ В БОЙ · Tab / P",lab.StartSegmentedCombat,true);
+            else Row(() => Btn("▶ В БОЙ · Tab / P",lab.StartSegmentedCombat,true), () => Btn("Свободный режим",() => lab.SetSegmentedOrbit(false)));
+            GUI.enabled = lab.AnomalyExperiment == null || !lab.AnomalyExperiment.Active;
             GUILayout.BeginHorizontal();
             Btn("V1 Rotating",() => Build.SetMotion(Motion.Rotating),Build.Movement == Motion.Rotating);
             Btn("V2 Fixed",() => Build.SetMotion(Motion.Fixed),Build.Movement == Motion.Fixed);
             Btn("V3 Manual",() => Build.SetMotion(Motion.Manual),Build.Movement == Motion.Manual);
             GUILayout.EndHorizontal();
+            GUI.enabled = true;
             GUILayout.BeginHorizontal();
             Btn("СБОРКА",() => tab = 0,tab == 0); Btn("БОЙ / ПРЕСЕТЫ",() => tab = 1,tab == 1); Btn("НАСТРОЙКИ",() => tab = 2,tab == 2);
             GUILayout.EndHorizontal();

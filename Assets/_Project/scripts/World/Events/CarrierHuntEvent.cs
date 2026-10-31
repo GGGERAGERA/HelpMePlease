@@ -129,7 +129,8 @@ public sealed class CarrierHuntEvent : WorldEvent
         }
 
         movement = health.GetComponent<EnemyMovement>();
-        return movement != null && movement.isActiveAndEnabled;
+        return movement != null && movement.isActiveAndEnabled &&
+            !(movement is EnemyChaseMovement { IsProductionTacticalEnemy: true });
     }
 
     private bool AssignCarrier(EnemyHealth selected)

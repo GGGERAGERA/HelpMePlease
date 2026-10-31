@@ -235,6 +235,7 @@ namespace Subject42.Combat.OrbitalStation
                     return;
                 }
                 initialized = true;
+                if (UsesSegmentedOrbit) LevelAnomalyController.Instance?.UseSegmentedOrbitAnomalies();
                 authoredView.CenterShift.Bind(this);
                 runStateManager.RegisterSceneCleanup(Teardown);
                 enabled = true;
@@ -325,6 +326,7 @@ namespace Subject42.Combat.OrbitalStation
             authoredView.CenterShift.Refresh();
             if (HasPendingCustomRings) { ReleaseBulletTime(); return; }
             UpdateRightMouse(Time.unscaledDeltaTime);
+            TickOrbitAnomaly(Time.deltaTime);
             if (UsesSegmentedOrbit)
                 TickManualRotation(Time.deltaTime, Input.GetKey(KeyCode.Q), Input.GetKey(KeyCode.E),
                     Application.isFocused && Owner.CanControl && !IsRunEnded && Time.timeScale > 0f &&
@@ -469,6 +471,8 @@ namespace Subject42.Combat.OrbitalStation
             float capacity = 100f, float speed = 90f, float drain = 25f, float recovery = 12f)
         {
             if (!allowed || deltaTime <= 0f) return;
+            speed *= OrbitRotationSpeedFactor;
+            drain *= OrbitRotationDrainFactor;
             State.RotationEnergy = Mathf.Clamp(State.RotationEnergy, 0f, capacity);
             if (!counterClockwise && !clockwise)
             {
@@ -816,6 +820,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Teardown()
         {
+            ResetOrbitAnomaly(); orbitAnomalyRandom = null;
             runStateManager?.UnregisterSceneCleanup(Teardown);
             ReleaseBulletTime();
             bulletTime.Reset();
@@ -1355,6 +1360,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void OnDisable()
         {
+            ResetOrbitAnomaly();
             ReleaseBulletTime();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             LabInputSuspended?.Invoke();

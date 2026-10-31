@@ -32,7 +32,8 @@ public sealed class BunkerAmbientBarks : MonoBehaviour
     [Header("Timing (seconds of unobstructed bunker time)")]
     [SerializeField] private Vector2 randomCooldown = new(60f, 120f);
     [SerializeField, Min(0f)] private float roomCooldown = 90f;
-    [SerializeField, Range(3f, 4f)] private float duration = 3.6f;
+    [SerializeField, Range(90f, 100f)] private float wordsPerMinute = 95f;
+    [SerializeField, Min(.5f)] private float holdAfterSpeech = 1.5f;
     [SerializeField, Range(.05f, .5f)] private float fade = .2f;
 
     [Header("Editable lines: Room has priority over Event, then Random")]
@@ -44,6 +45,8 @@ public sealed class BunkerAmbientBarks : MonoBehaviour
     private float quietTime;
     private float randomRemaining;
     private float elapsed;
+    private float revealDuration;
+    private float speechDuration;
     private BunkerBarkCategory activeCategory;
     private Transform speaker;
 
@@ -90,8 +93,12 @@ public sealed class BunkerAmbientBarks : MonoBehaviour
         if (IsSpeaking)
         {
             elapsed += Time.deltaTime;
-            if (speaker == null || !speaker.gameObject.activeInHierarchy || elapsed >= duration) Hide();
-            else view.Present(speaker, Mathf.Min(Mathf.Clamp01(elapsed / fade), Mathf.Clamp01((duration - elapsed) / fade)));
+            if (speaker == null || !speaker.gameObject.activeInHierarchy || elapsed >= speechDuration) Hide();
+            else
+            {
+                view.Reveal(Mathf.Clamp01((elapsed - fade) / revealDuration));
+                view.Present(speaker, Mathf.Min(Mathf.Clamp01(elapsed / fade), Mathf.Clamp01((speechDuration - elapsed) / fade)));
+            }
         }
         if (!IsSpeaking && randomRemaining <= 0f)
         {
@@ -142,6 +149,16 @@ public sealed class BunkerAmbientBarks : MonoBehaviour
         speaker = eventSpeaker != null ? eventSpeaker : player;
         activeCategory = category;
         elapsed = 0f;
+        int words = 0;
+        bool insideWord = false;
+        foreach (char character in text)
+        {
+            bool isWord = !char.IsWhiteSpace(character);
+            if (isWord && !insideWord) words++;
+            insideWord = isWord;
+        }
+        revealDuration = Mathf.Max(1, words) * 60f / wordsPerMinute;
+        speechDuration = fade + revealDuration + holdAfterSpeech + fade;
         IsSpeaking = true;
         view.SetText(text);
         view.Present(speaker, 0f);
@@ -157,7 +174,8 @@ public sealed class BunkerAmbientBarks : MonoBehaviour
     {
         randomCooldown.x = Mathf.Clamp(randomCooldown.x, 60f, 120f);
         randomCooldown.y = Mathf.Clamp(randomCooldown.y, randomCooldown.x, 120f);
-        duration = Mathf.Clamp(duration, 3f, 4f);
+        wordsPerMinute = Mathf.Clamp(wordsPerMinute, 90f, 100f);
+        holdAfterSpeech = Mathf.Max(.5f, holdAfterSpeech);
         fade = Mathf.Clamp(fade, .05f, .5f);
     }
 #endif

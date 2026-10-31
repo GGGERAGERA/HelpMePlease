@@ -51,7 +51,8 @@ public sealed class EnemyOrbitalLabTelemetry : IDisposable
         adapter.LabProjectileSpawned += Spawned; adapter.LabProjectileContact += Contact; adapter.LabProjectileEnded += Ended;
         player.DebugDamageApplied += PlayerHit;
     }
-    internal string Configuration() => lab.Station == null ? "" : string.Join(";", lab.Station.Modules.Select(g =>
+    internal string Configuration() => lab.AnomalyExperiment != null && lab.AnomalyExperiment.Active
+        ? lab.AnomalyExperiment.ConfigurationSignature() : lab.Station == null ? "" : string.Join(";", lab.Station.Modules.Select(g =>
         $"{g.StableModuleId}:{g.CurrentMount?.Ring.RingId}:{g.CurrentMount?.LocalPhase}:" +
         string.Join(",", Enumerable.Range(0, lab.WeaponModules.SlotCount(g.StableModuleId)).Select(s => lab.WeaponModules.GetModule(g.StableModuleId, s))) +
         ":extra=" + lab.WeaponModules.ExtraShotAngle(g.StableModuleId)?.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +

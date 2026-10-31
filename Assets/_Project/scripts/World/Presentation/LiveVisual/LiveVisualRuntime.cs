@@ -14,6 +14,10 @@ namespace Subject42.Visuals
     [DefaultExecutionOrder(32000)]
     public sealed class LiveVisualRuntime : MonoBehaviour
     {
+        private static readonly Unity.Profiling.ProfilerMarker RegisterProfile = new("LiveVisual.RegisterHierarchy");
+        private static readonly Unity.Profiling.ProfilerMarker ApplyProfile = new("LiveVisual.ApplyHierarchy");
+        private static readonly Unity.Profiling.ProfilerMarker CaptureProfile = new("LiveVisual.CaptureConfiguredHierarchy");
+        private static readonly Unity.Profiling.ProfilerMarker RebuildProfile = new("LiveVisual.Rebuild");
         public static LiveVisualRuntime Instance { get; private set; }
         public VisualTuningPreset Preset { get; private set; }
         public VisualProfile Original { get; private set; } = new();
@@ -24,7 +28,8 @@ namespace Subject42.Visuals
         public int OriginalMatchedCount { get; private set; }
         public int OriginalUnmatchedCount { get; private set; }
         public event Action Changed;
-        private readonly HashSet<int> registered = new();
+        private readonly Dictionary<int, VisualTarget> registered = new();
+        private readonly List<Component> configuredHierarchy = new();
         private readonly Dictionary<GameObject, string> sources = new();
         private readonly Dictionary<string, string> sourceNames = new(StringComparer.Ordinal);
         private readonly Dictionary<string, Dictionary<string, float>> rules = new(StringComparer.Ordinal);
@@ -87,6 +92,7 @@ namespace Subject42.Visuals
         private void EnemySpawned(EnemyHealth enemy) => pendingEnemies.Add(enemy);
         public static void RegisterHierarchy(GameObject root, GameObject sourcePrefab = null)
         {
+            using var profilerScope = RegisterProfile.Auto();
             if (Instance == null || root == null) return;
             var runtime = Instance;
             string source = null;
@@ -108,6 +114,7 @@ namespace Subject42.Visuals
         }
         public static void ApplyHierarchy(GameObject root)
         {
+            using var profilerScope = ApplyProfile.Auto();
             var runtime = Instance;
             if (runtime == null || root == null) return;
             if (runtime.refreshPending) { runtime.refreshPending = false; runtime.Rebuild(); }
@@ -117,11 +124,15 @@ namespace Subject42.Visuals
         }
         public static void CaptureConfiguredHierarchy(GameObject root)
         {
+            using var profilerScope = CaptureProfile.Auto();
             var runtime = Instance;
             if (runtime == null || root == null) return;
-            foreach (var target in runtime.Targets)
+            // Pool activation only recaptures this object's authored/configured values.
+            // Scanning every scene target here multiplied the cost by the whole rocket wave.
+            root.GetComponentsInChildren(true, runtime.configuredHierarchy);
+            foreach (var component in runtime.configuredHierarchy)
             {
-                if (!target.IsAlive || target.Component == null || !target.Component.transform.IsChildOf(root.transform)) continue;
+                if (component == null || !runtime.registered.TryGetValue(component.GetInstanceID(), out var target) || !target.IsAlive) continue;
                 foreach (var property in target.Properties)
                     if (property.Id is "particles.size" or "particles.lifetime" or "particles.speed" or "particles.emission" or "trail.width")
                         property.CaptureConfiguredCurrent();
@@ -156,7 +167,7 @@ namespace Subject42.Visuals
         {
             foreach (var component in root.GetComponentsInChildren<Component>(true))
             {
-                if (component == null || registered.Contains(component.GetInstanceID()) ||
+                if (component == null || registered.ContainsKey(component.GetInstanceID()) ||
                     component is not Renderer && component is not Light2D && component is not Light &&
                     component is not ParticleSystem && component is not Camera && component is not Volume) continue;
                 // uGUI Image/TMP UI use CanvasRenderer and are not supported targets here.
@@ -203,10 +214,11 @@ namespace Subject42.Visuals
                     component.gameObject.name + " · " + component.GetType().Name, component);
                 VisualComponentAdapters.Populate(target, Preset, Original);
                 if (target.Properties.Count == 0) continue;
-                Targets.Add(target); registered.Add(component.GetInstanceID());
+                Targets.Add(target); registered.Add(component.GetInstanceID(), target);
                 target.SetComparison?.Invoke(Mode);
+                // Already registered pooled effects do not invalidate the entire scene profile.
+                refreshPending = true;
             }
-            refreshPending = true;
         }
         private static string GroupFor(Component component)
         {
@@ -264,6 +276,7 @@ namespace Subject42.Visuals
         }
         private void Rebuild()
         {
+            using var profilerScope = RebuildProfile.Auto();
             restoreSavedRingValues?.Invoke();
             applySavedRingValues = restoreSavedRingValues = null;
             rules.Clear(); applied.Clear();

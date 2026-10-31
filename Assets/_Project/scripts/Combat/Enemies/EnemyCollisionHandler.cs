@@ -46,7 +46,9 @@ public class EnemyCollisionHandler : MonoBehaviour
 
     private bool CanAttemptDamage()
     {
-        return Time.time >= lastDamageTime + damageCooldown;
+        var chase = movement as EnemyChaseMovement;
+        return (chase == null || chase.CanDealContactDamage) &&
+            Time.time >= lastDamageTime + damageCooldown * (chase != null ? chase.AttackRecoveryMultiplier : 1f);
     }
 
     private void TryDamagePlayer(PlayerHealth playerHealth)
@@ -54,7 +56,7 @@ public class EnemyCollisionHandler : MonoBehaviour
         if (playerHealth == null)
             return;
 
-        if (Time.time < lastDamageTime + damageCooldown)
+        if (!CanAttemptDamage())
             return;
 
         Vector2 hitDirection = playerHealth.transform.position - transform.position;

@@ -324,7 +324,7 @@ public partial class EnemySpawner
             { if (selected == null && candidate.GetComponent<EnemyShooterMovement>() != null) selected = candidate; return; }
             var chase = candidate.GetComponent<EnemyChaseMovement>();
             var identity = candidate.GetComponent<EnemyIdentity>();
-            if (chase == null || candidate.GetComponent<EnemyHealth>().IsBoss ||
+            if (chase == null || chase.IsProductionTacticalEnemy || candidate.GetComponent<EnemyHealth>().IsBoss ||
                 (identity != null && !string.IsNullOrEmpty(identity.EnemyId) &&
                  identity.EnemyId.StartsWith("Elite_", System.StringComparison.OrdinalIgnoreCase))) return;
             if (selected == null || type == AssaultEventType.Encirclement &&

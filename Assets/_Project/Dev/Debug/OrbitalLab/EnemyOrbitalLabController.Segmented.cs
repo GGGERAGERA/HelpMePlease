@@ -6,6 +6,14 @@ using UnityEngine;
 
 public sealed partial class EnemyOrbitalLabController
 {
+    [HideInInspector] public WorldSystemsLabOrbitExperiment AnomalyExperiment;
+    public float AnomalyRotationSpeed => AnomalyExperiment != null ? AnomalyExperiment.RotationSpeedFactor : 1f;
+    public float AnomalyRotationDrain => AnomalyExperiment != null ? AnomalyExperiment.RotationDrainFactor : 1f;
+    public void RestartAttachedBuild()
+    {
+        if (ScenePlayer == null) return;
+        ResetBuild(() => { RestoreLabBuild(); ClearSandboxArena(); SetPlayerInvincible(true); SetPaused(true); SandboxReady = true; });
+    }
     [Header("Segmented Orbit — lab inventory and geometry")]
     [Range(1,36)] public int SegmentedSegmentBudget = 12;
     [Min(0)] public int SegmentedPistols = 4, SegmentedShotguns = 1, SegmentedSnipers = 1, SegmentedSaws;

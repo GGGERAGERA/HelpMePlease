@@ -40,6 +40,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool BeginConstructor()
         {
             if (!CanOpenConstructor) return false;
+            station.ResetOrbitAnomaly();
             constructorOwnsPause = !IsChoosingReward;
             if (constructorOwnsPause)
             {
@@ -163,6 +164,7 @@ namespace Subject42.Combat.OrbitalStation
         }
         public void PrepareForExternalPause()
         {
+            station?.ResetOrbitAnomaly();
             if (IsConstructing) station.Interaction.CloseConstructor();
             ReleaseBulletTime();
             station?.GetComponent<OrbitalRelocationController>()?.CancelDrag("external pause");

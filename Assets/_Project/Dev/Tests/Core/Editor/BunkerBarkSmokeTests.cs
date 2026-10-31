@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
+using TMPro;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -26,11 +27,13 @@ public sealed class BunkerBarkSmokeTests
             string request = Output + "/run-tests.request";
             if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating ||
                 EditorApplication.isPlayingOrWillChangePlaymode || SessionState.GetBool(AnyRun, false)) return;
+            bool layoutOnly = File.ReadAllText(request).Trim() == "layout-only";
             File.Delete(request);
             SessionState.SetBool(Running, true);
             SessionState.SetBool(AnyRun, true);
             ScriptableObject.CreateInstance<TestRunnerApi>().Execute(new ExecutionSettings(new Filter
-            { testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode, testNames = new[] { nameof(BunkerBarkSmokeTests) } }));
+            { testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode,
+                testNames = new[] { layoutOnly ? nameof(BunkerBarkSmokeTests) + "." + nameof(MainMenuHasAuthoredBarksAndRealRoomTriggers) : nameof(BunkerBarkSmokeTests) } }));
         };
     }
 
@@ -46,7 +49,12 @@ public sealed class BunkerBarkSmokeTests
         foreach (string property in new[] { "player", "view", "panels" })
             Assert.That(data.FindProperty(property).objectReferenceValue, Is.Not.Null, property);
         Assert.That(data.FindProperty("lines").arraySize, Is.InRange(10, 15));
-        Assert.That(data.FindProperty("duration").floatValue, Is.EqualTo(3.6f));
+        Assert.That(data.FindProperty("wordsPerMinute"), Is.Not.Null, "Speech pace must be editable in Inspector.");
+        Assert.That(data.FindProperty("wordsPerMinute").floatValue, Is.EqualTo(95f));
+        var authoredView = (BunkerBarkView)data.FindProperty("view").objectReferenceValue;
+        var viewData = new SerializedObject(authoredView);
+        Assert.That(viewData.FindProperty("headGap").floatValue, Is.GreaterThanOrEqualTo(24f));
+        Assert.That(((TMP_Text)viewData.FindProperty("label").objectReferenceValue).font.name, Is.EqualTo("Subject42 Menu Pixel"));
         Assert.That(data.FindProperty("blockingInterfaces").arraySize, Is.GreaterThanOrEqualTo(2));
         var zones = components.OfType<BunkerBarkRoomTrigger>().Select(t => t.GetComponent<BoxCollider2D>()).ToArray();
         foreach (var zone in zones) Assert.That(zone.isTrigger, Is.True);
@@ -81,6 +89,7 @@ public sealed class BunkerBarkSmokeTests
         Assert.That(view, Is.Not.Null, "Scene view component");
         Assert.That(view.gameObject.activeInHierarchy, Is.True, "Bark canvas must be active");
         var group = view.GetComponentInChildren<CanvasGroup>();
+        var label = view.GetComponentInChildren<TMP_Text>();
         Assert.That(group, Is.Not.Null, "Pixel bubble CanvasGroup");
         Assert.That(barks.Player, Is.Not.Null, "Controlled player");
         var movement = barks.Player.GetComponent<CharacterMovement2D>();
@@ -106,6 +115,8 @@ public sealed class BunkerBarkSmokeTests
         Assert.That(barks.TryPlayEvent("story_reflection"), Is.False, "Room has priority.");
         Assert.That(barks.TryEnterRoom("chill"), Is.False, "No threshold spam.");
         Assert.That(Read<float>(barks, "randomRemaining"), Is.InRange(59f, 120f));
+        int words = barks.CurrentText.Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Length;
+        Assert.That(Read<float>(barks, "revealDuration"), Is.EqualTo(words * 60f / 95f).Within(.001f));
         Assert.That(movement.isActiveAndEnabled, Is.True);
         Vector2 beforeMove = body.position;
         movement.MovementIntent = () => Vector2.right;
@@ -113,16 +124,32 @@ public sealed class BunkerBarkSmokeTests
         movement.MovementIntent = null;
         Assert.That(Vector2.Distance(beforeMove, body.position), Is.GreaterThan(.05f),
             $"Speech must allow movement: {beforeMove} -> {body.position}, speed={movement.speed}, step={Time.fixedDeltaTime}, simulated={body.simulated}.");
+        yield return new WaitForSeconds(.8f);
+        yield return null; // Speech presentation advances in LateUpdate, after the coroutine resumes.
+        Assert.That(label.maxVisibleCharacters, Is.GreaterThan(0),
+            $"elapsed={Read<float>(barks, "elapsed")}, reveal={Read<float>(barks, "revealDuration")}, cached characters={typeof(BunkerBarkView).GetField("characterCount", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(view)}, TMP characters={label.textInfo.characterCount}, active={label.isActiveAndEnabled}, text={label.text}");
+        Assert.That(label.maxVisibleCharacters, Is.LessThan(label.textInfo.characterCount), "Speech must still be typing slowly, not reveal the whole sentence at once.");
+        var bubble = group.GetComponent<RectTransform>();
+        var corners = new Vector3[4]; bubble.GetWorldCorners(corners);
+        float head = movement.VisualRoot.GetComponentsInChildren<SpriteRenderer>()
+            .Where(s => s.enabled && s.gameObject.activeInHierarchy && !s.forceRenderingOff).Max(s => s.bounds.max.y);
+        Assert.That(corners[0].y, Is.GreaterThan(Camera.main.WorldToScreenPoint(new Vector3(body.position.x, head, 0f)).y + 8f), "Keep the frame and tail clear of the speaker's head.");
         Directory.CreateDirectory(Output);
         yield return null;
         ScreenCapture.CaptureScreenshot(Output + "/room.png");
+        yield return CoreTestSupport.Await(() => label.maxVisibleCharacters >= label.textInfo.characterCount);
+        Assert.That(barks.IsSpeaking, Is.True, "Keep the complete sentence on screen for reading.");
+        Assert.That(label.isTextTruncated, Is.False);
+        ScreenCapture.CaptureScreenshot(Output + "/room-complete.png");
+        yield return new WaitForSecondsRealtime(.15f);
         yield return CoreTestSupport.Await(() => !barks.IsSpeaking);
-        Assert.That(barks.IsSpeaking, Is.False, "3.6 s lifetime includes fades.");
+        Assert.That(barks.IsSpeaking, Is.False, "Finish only after the whole sentence and its reading hold.");
         Assert.That(group.alpha, Is.Zero);
 
         Assert.That(barks.TryPlayEvent("story_reflection"), Is.True);
         yield return CoreTestSupport.Await(() => group.alpha > .95f);
         Assert.That(barks.CurrentText, Is.EqualTo("Ладно. Посмотрим, что дальше."));
+        yield return CoreTestSupport.Await(() => label.maxVisibleCharacters >= label.textInfo.characterCount);
         yield return null;
         ScreenCapture.CaptureScreenshot(Output + "/event.png");
         yield return new WaitForSecondsRealtime(.15f); // Capture is asynchronous; keep this frame unobstructed.
@@ -139,7 +166,7 @@ public sealed class BunkerBarkSmokeTests
         Assert.That(barks.IsSpeaking, Is.False, "No stale speech on closing a menu.");
         Assert.That(barks.TryPlayEvent("story_reflection"), Is.False, "No immediate repeat even after interruption.");
         Assert.That(barks.TrySpeak("Тихо. Кто-то здесь есть.", trigger.transform), Is.True, "Future NPC API.");
-        File.WriteAllText(Output + "/smoke.txt", "PASS: random -> physical room entry with priority; fade/lifetime; event API; menu suppression; repeat guard; NPC speaker; movement enabled.\n");
+        File.WriteAllText(Output + "/smoke.txt", "PASS: physical room/event; 95 words/min slow typewriter and complete-sentence hold; pixel font; head clearance; menu suppression; priority/repeat guards; NPC API; movement enabled.\n");
     }
 
     private static void Set(BunkerAmbientBarks owner, string field, object value) =>

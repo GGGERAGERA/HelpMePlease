@@ -15,6 +15,8 @@ public abstract class OrbitalLabSession : MonoBehaviour
     public CharacterData Character;
     public CameraFollow CameraRig;
     public UpgradeManager Rewards;
+    // WorldSystemsLab borrows its authored player; other labs still own their player lifecycle.
+    [HideInInspector] public PlayerHealth ScenePlayer;
     public OrbitalStationRuntime Station { get; private set; }
     public PlayerHealth Player { get; private set; }
     public bool Ready => !resetting && Station != null && Station.IsInitialized;
@@ -53,6 +55,11 @@ public abstract class OrbitalLabSession : MonoBehaviour
         PanelVisible = true;
         StartCoroutine(RecreateBuild(afterReset));
     }
+    public void CancelAttachedBuildReset()
+    {
+        if (ScenePlayer == null) return;
+        StopAllCoroutines(); resetting = false;
+    }
 
     private IEnumerator RecreateBuild(Action afterReset)
     {
@@ -62,7 +69,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
         BeforeBuildReset();
         if (Rewards != null) { Rewards.CancelPendingRewards(); Rewards.enabled = false; }
         if (Station != null) Station.Teardown();
-        if (Player != null) { Player.gameObject.SetActive(false); Destroy(Player.gameObject); }
+        if (Player != null && ScenePlayer == null) { Player.gameObject.SetActive(false); Destroy(Player.gameObject); }
         Station = null; Player = null;
         ClearLooseObjects();
         Time.timeScale = 1f;
@@ -77,14 +84,17 @@ public abstract class OrbitalLabSession : MonoBehaviour
             yield break;
         }
         BeginLabRun(manager);
-        var player = Instantiate(Character.ProductionPrefab, transform);
-        player.name = "Player (production)";
-        player.transform.position = Vector3.zero;
+        var player = ScenePlayer != null ? ScenePlayer.gameObject : Instantiate(Character.ProductionPrefab, transform);
+        if (ScenePlayer == null)
+        {
+            player.name = "Player (production)";
+            player.transform.position = Vector3.zero;
+        }
         player.SetActive(true);
         // The production player prefab still carries a legacy spawner. Labs never run it.
         foreach (var spawner in player.GetComponentsInChildren<EnemySpawner>(true))
         { spawner.enabled = false; Destroy(spawner); }
-        PlayerLoadoutFactory.ApplyCharacterStats(player, Character);
+        if (ScenePlayer == null) PlayerLoadoutFactory.ApplyCharacterStats(player, Character);
         Player = player.GetComponent<PlayerHealth>();
         Station = OrbitalStationRuntime.Ensure(player, Character);
         Station?.Interaction?.BindCursor(UnityEngine.Object.FindFirstObjectByType<UICrosshairFollowMouse>(), Camera.main);
@@ -110,6 +120,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
 
     protected void ClearLooseObjects()
     {
+        if (ScenePlayer != null) return; // Borrowed world contains zones, props, event owners and UI.
         // Projectiles and hit/death FX instantiate at scene root. Never touch another scene.
         foreach (var root in gameObject.scene.GetRootGameObjects())
             if (!authoredRoots.Contains(root)) { root.SetActive(false); Destroy(root); }

@@ -20,10 +20,12 @@ public static class BunkerBarkAuthoring
         EditorApplication.update += () =>
         {
             string request = Output + "/author.request";
+            bool polish = File.Exists(Output + "/polish.request");
+            if (polish) request = Output + "/polish.request";
             if (!File.Exists(request) || EditorApplication.isCompiling || EditorApplication.isUpdating ||
                 EditorApplication.isPlayingOrWillChangePlaymode || SessionState.GetBool("Subject42.Verification.AnyRunActive", false)) return;
             File.Delete(request);
-            try { Author(); }
+            try { if (polish) Polish(); else Author(); }
             catch (Exception error) { File.WriteAllText(Output + "/author-error.txt", error.ToString()); Debug.LogException(error); }
         };
     }
@@ -126,8 +128,55 @@ public static class BunkerBarkAuthoring
             item.FindPropertyRelative("probability").floatValue = line.probability;
         }
         data.ApplyModifiedPropertiesWithoutUndo();
+        StyleBubble(barks);
         AuthorZones(scene, barks);
         EditorSceneManager.SaveScene(scene);
+    }
+
+    [MenuItem("Tools/Subject42/Polish Bunker Bark Presentation")]
+    public static void Polish()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode ||
+            Enumerable.Range(0, UnityEngine.SceneManagement.SceneManager.sceneCount)
+                .Any(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i).isDirty))
+            throw new InvalidOperationException("Save scene changes before styling bunker barks.");
+        var scene = EditorSceneManager.OpenScene("Assets/_Project/Scenes/MainBuild/MainMenu.unity");
+        var barks = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<BunkerAmbientBarks>(true)).Single();
+        StyleBubble(barks);
+        EditorSceneManager.SaveScene(scene);
+        File.WriteAllText(Output + "/polished.txt", "Clean pixel frame without accent/shadow; opaque fill; sprite-head anchor + 30 px gap; 95 words/min; 1.5 s hold.\n");
+    }
+
+    private static void StyleBubble(BunkerAmbientBarks barks)
+    {
+        var view = (BunkerBarkView)Read(barks, "view");
+        var bubble = (RectTransform)Read(view, "bubble");
+        var label = (TMP_Text)Read(view, "label");
+        bubble.sizeDelta = new Vector2(300, 76);
+        foreach (var image in bubble.GetComponentsInChildren<Image>(true)) Object.DestroyImmediate(image.gameObject);
+        Color border = new Color32(82, 113, 104, 255), fill = new Color32(12, 19, 25, 255);
+        ImageRect("Stepped Border Wide", bubble, new Vector2(300, 68), Vector2.zero, border);
+        ImageRect("Stepped Border Tall", bubble, new Vector2(292, 76), Vector2.zero, border);
+        ImageRect("Inset Wide", bubble, new Vector2(296, 64), Vector2.zero, fill);
+        ImageRect("Inset Tall", bubble, new Vector2(288, 72), Vector2.zero, fill);
+        ImageRect("Tail Border", bubble, new Vector2(12, 8), new Vector2(0, -40), border);
+        ImageRect("Tail", bubble, new Vector2(8, 6), new Vector2(0, -39), fill);
+        ImageRect("Tail Tip", bubble, new Vector2(6, 4), new Vector2(0, -46), border);
+        label.font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Project/Fonts/Subject42 Menu Pixel.asset");
+        label.fontSharedMaterial = label.font.material;
+        label.fontSize = 12f;
+        label.lineSpacing = 6f;
+        label.color = new Color32(222, 226, 205, 255);
+        label.rectTransform.sizeDelta = new Vector2(268, 56);
+        label.transform.SetAsLastSibling();
+        var viewData = new SerializedObject(view);
+        viewData.FindProperty("worldOffset").vector3Value = new Vector3(0f, 1.4f, 0f);
+        viewData.FindProperty("headGap").floatValue = 30f;
+        viewData.ApplyModifiedPropertiesWithoutUndo();
+        var timing = new SerializedObject(barks);
+        timing.FindProperty("wordsPerMinute").floatValue = 95f;
+        timing.FindProperty("holdAfterSpeech").floatValue = 1.5f;
+        timing.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void AuthorZones(UnityEngine.SceneManagement.Scene scene, BunkerAmbientBarks barks)

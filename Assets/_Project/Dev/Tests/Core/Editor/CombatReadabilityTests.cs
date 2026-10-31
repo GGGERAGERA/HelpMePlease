@@ -3313,7 +3313,7 @@ public sealed class CombatReadabilityTests
         Step(5f);
         Assert.That(Read<bool>(chase, "flankingApproach"), Is.False, "4–6 m hysteresis.");
         Step(6.1f);
-        Assert.That(Read<bool>(chase, "flankingApproach"), Is.True);
+        Assert.That(Read<bool>(chase, "flankingApproach"), Is.False, "A completed flank stays a direct melee chase.");
         chase.SetAssaultDestination((Vector2)player.transform.position + Vector2.left * 10f + Vector2.up * 8f);
         Assert.That(Quaternion.Angle(visual.localRotation, authored), Is.LessThan(.01f), "Assault resets pose immediately.");
         float previousLateralSpeed = Mathf.Abs(Read<Vector2>(chase, "chaseVelocity").x);

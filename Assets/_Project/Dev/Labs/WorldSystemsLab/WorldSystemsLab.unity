@@ -6262,6 +6262,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2123162232}
   - component: {fileID: 2123162231}
+  - component: {fileID: 2123162233}
   m_Layer: 0
   m_Name: WorldSystemsLabController
   m_TagString: Untagged
@@ -6281,6 +6282,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cb7ea22d2e84a999920d63b93b6c1c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldSystemsLabController
+  orbitExperiment: {fileID: 2123162233}
   player: {fileID: 6127491265986382097}
   cameraRig: {fileID: 961875238}
   gameplayArea: {fileID: 1223048243}
@@ -6370,6 +6372,347 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6440776917617340709, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}
   m_PrefabInstance: {fileID: 1795705966}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &237818276
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 237818278}
+  - component: {fileID: 237818277}
+  m_Layer: 0
+  m_Name: Segmented Orbit (anomaly experiment only)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &237818277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 237818276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2da73f20ee6c4b4c9c8c7dc58b987d8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyOrbitalLabController
+  Character: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
+  CameraRig: {fileID: 961875238}
+  Rewards: {fileID: 0}
+  ScenePlayer: {fileID: 1795705967}
+  AnomalyExperiment: {fileID: 0}
+  SegmentedSegmentBudget: 12
+  SegmentedPistols: 4
+  SegmentedShotguns: 1
+  SegmentedSnipers: 1
+  SegmentedSaws: 0
+  SegmentedLinksPerType: 2
+  SegmentedExtraShotCooldown: 0.5
+  SegmentedSkipStrength: 0.65
+  SegmentedRadii: {x: 2.4, y: 3.6, z: 4.8}
+  SegmentedSpeeds: {x: 42, y: 36, z: 30}
+  ManualRotationCapacity: 100
+  ManualRotationSpeed: 90
+  ManualRotationDrain: 25
+  ManualRotationRecovery: 12
+  SegmentedEnemyDensity: 12
+  EnemyPrefabs:
+  - {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
+  - {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
+  - {fileID: 1432338969431510999, guid: 46ef0098ace1f0e4585348645e131dff, type: 3}
+  - {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
+  - {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+  - {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
+  MaximumCenterOffset: 0
+  CenterMoveSpeed: 6
+  CenterReturnSpeed: 8
+  ShowCenterMarker: 0
+  SteeringSpeedMultiplier: 0.7
+  ShieldBearerPrefab: {fileID: 6885503732443489488, guid: acf7c638f23d24946aad3baa04a194d4, type: 3}
+  ShieldShooterPrefab: {fileID: 1020306714501274726, guid: 7ed2cc874c3aec7499d16d254e83c172, type: 3}
+  BreakableShieldBearerPrefab: {fileID: 5000, guid: 3a296e0c5130de046afe298e668ab92f, type: 3}
+  BreakableShieldShooterPrefab: {fileID: 5000, guid: 184cd0393c4825f43b66ee4da1318b70, type: 3}
+  ShieldBlockedHits: 4
+  PursuerPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
+  PistolProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
+  Pistol:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
+    Category: 0
+    Kind: 0
+    WeaponVisual: {fileID: 874321222499448941, guid: 061397fe35d9a524f9ac8e1c58b25f4a, type: 3}
+    ProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
+    ProjectileVisualScale: 1
+    ProjectileTrailSeconds: -1
+    BypassShields: 0
+    Damage: 8
+    FireInterval: 0.55
+    Range: 8
+    ProjectileSpeed: 13
+    ProjectileRadius: 0.14
+    BurstShots: 1
+    BurstInterval: 0.09
+    Pellets: 1
+    SpreadDegrees: 0
+    AimLeadSeconds: 0.35
+    MaxAimCorrectionDegrees: 12
+    BodyPierces: 1
+    ChargeSeconds: 0
+    Knockback: 0
+    Recoil: 0.06
+    Color: {r: 0.35, g: 1, b: 1, a: 1}
+    ShotSound: 20
+    ContactRadius: 0.65
+    ContactHitInterval: 0.32
+    SpinDegreesPerSecond: 720
+  Needle:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
+    Category: 0
+    Kind: 0
+    WeaponVisual: {fileID: 0}
+    ProjectileVisual: {fileID: 584409076233943832, guid: f4175d4083cef5146abed5022e4a1315, type: 3}
+    ProjectileVisualScale: 1
+    ProjectileTrailSeconds: -1
+    BypassShields: 0
+    Damage: 4
+    FireInterval: 0.6
+    Range: 8
+    ProjectileSpeed: 22
+    ProjectileRadius: 0.04
+    BurstShots: 3
+    BurstInterval: 0.09
+    Pellets: 1
+    SpreadDegrees: 3
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
+    BodyPierces: 1
+    ChargeSeconds: 0
+    Knockback: 0
+    Recoil: 0.06
+    Color: {r: 0.35, g: 1, b: 1, a: 1}
+    ShotSound: 20
+    ContactRadius: 0.65
+    ContactHitInterval: 0.32
+    SpinDegreesPerSecond: 720
+  Shotgun:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
+    Category: 0
+    Kind: 6
+    WeaponVisual: {fileID: 3229308960085762355, guid: 4ff9b587760ccf243ab1a47bcf521cc9, type: 3}
+    ProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
+    ProjectileVisualScale: 1
+    ProjectileTrailSeconds: -1
+    BypassShields: 0
+    Damage: 3.5
+    FireInterval: 1.05
+    Range: 4.5
+    ProjectileSpeed: 10
+    ProjectileRadius: 0.14
+    BurstShots: 1
+    BurstInterval: 0.09
+    Pellets: 7
+    SpreadDegrees: 42
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
+    BodyPierces: 1
+    ChargeSeconds: 0
+    Knockback: 4
+    Recoil: 0.23
+    Color: {r: 0.25, g: 1, b: 0.4, a: 1}
+    ShotSound: 81
+    ContactRadius: 0.65
+    ContactHitInterval: 0.32
+    SpinDegreesPerSecond: 720
+  Spear:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
+    Category: 0
+    Kind: 0
+    WeaponVisual: {fileID: 0}
+    ProjectileVisual: {fileID: 6260666622650131900, guid: 5b8508fcb63f4724d8ea39fc8694fb5a, type: 3}
+    ProjectileVisualScale: 1
+    ProjectileTrailSeconds: -1
+    BypassShields: 0
+    Damage: 22
+    FireInterval: 1.5
+    Range: 10
+    ProjectileSpeed: 18
+    ProjectileRadius: 0.13
+    BurstShots: 1
+    BurstInterval: 0.09
+    Pellets: 1
+    SpreadDegrees: 0
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
+    BodyPierces: 3
+    ChargeSeconds: 0.28
+    Knockback: 0
+    Recoil: 0.16
+    Color: {r: 0.75, g: 0.4, b: 1, a: 1}
+    ShotSound: 82
+    ContactRadius: 0.65
+    ContactHitInterval: 0.32
+    SpinDegreesPerSecond: 720
+  Sniper:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
+    Category: 0
+    Kind: 5
+    WeaponVisual: {fileID: 7056152298501357713, guid: 3216bdf2ebdbff44bae93cf0cbca90d3, type: 3}
+    ProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
+    ProjectileVisualScale: 1
+    ProjectileTrailSeconds: 0.02
+    BypassShields: 1
+    Damage: 32
+    FireInterval: 1.8
+    Range: 12
+    ProjectileSpeed: 120
+    ProjectileRadius: 0.14
+    BurstShots: 1
+    BurstInterval: 0.09
+    Pellets: 1
+    SpreadDegrees: 0
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
+    BodyPierces: 1
+    ChargeSeconds: 0
+    Knockback: 0
+    Recoil: 0.16
+    Color: {r: 1, g: 0.25, b: 0.25, a: 1}
+    ShotSound: 82
+    ContactRadius: 0.65
+    ContactHitInterval: 0.32
+    SpinDegreesPerSecond: 720
+  Saw:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
+    Category: 1
+    Kind: 7
+    WeaponVisual: {fileID: 4188619148358559066, guid: c7cb30b88c9e334419754f856162812a, type: 3}
+    ProjectileVisual: {fileID: 0}
+    ProjectileVisualScale: 1
+    ProjectileTrailSeconds: -1
+    BypassShields: 0
+    Damage: 13
+    FireInterval: 0.6
+    Range: 8
+    ProjectileSpeed: 22
+    ProjectileRadius: 0.04
+    BurstShots: 3
+    BurstInterval: 0.09
+    Pellets: 1
+    SpreadDegrees: 3
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
+    BodyPierces: 1
+    ChargeSeconds: 0
+    Knockback: 0
+    Recoil: 0.06
+    Color: {r: 0.6, g: 0.4, b: 1, a: 1}
+    ShotSound: 80
+    ContactRadius: 0.65
+    ContactHitInterval: 0.32
+    SpinDegreesPerSecond: 720
+  BuildRingCount: 3
+  LabUpgradePanel: {fileID: 0}
+  WeaponSoundInterval: 0.1
+  ShootingShakeMagnitude: 0.018
+  ShootingShakeInterval: 0.25
+  TestShooterPrefab: {fileID: 2513438768801038890, guid: 2817ae7535b24ca78e6c4e07fea3f0aa, type: 3}
+  TestShooterPosition: {x: 7, y: 0}
+  TestShooterHealth: 12
+  Pattern: 0
+  SelectedEnemy: 0
+  ModuleRapidMultiplier: 1.5
+  ModulePierceBonus: 2
+  ModuleMultishotAngle: 6
+--- !u!4 &237818278
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 237818276}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1795705967 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2422717427438589713, guid: 50fd004411bc2bc40bb6a21478296cc8, type: 3}
+  m_PrefabInstance: {fileID: 1795705966}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6301969cbf24ef42b10cfee1088decb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+--- !u!114 &2123162233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2123162230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d85df05a04803e45b64d14b2b2008ae, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldSystemsLabOrbitExperiment
+  world: {fileID: 2123162231}
+  orbit: {fileID: 237818277}
+  zoneAssets:
+  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca002, type: 2}
+  - {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
+  - {fileID: 11400000, guid: f28b42a1000000000000000000000005, type: 2}
+  - {fileID: 11400000, guid: d17a42a1000000000000000000000006, type: 2}
+  - {fileID: 11400000, guid: 4e7a23f4bc9f4e65a021dd9d286ca003, type: 2}
+  BlueRotationMultiplier: 0.5
+  RedEnergyMultiplier: 1.75
+  GlitchInterval: 10
+  GlitchWarning: 1
+  GlitchSeed: 42031
+  LevelDeviation: 12
+  WeaponDeviation: 5
+  LevelPeriod: 6
+  WeaponPeriod: 2.3
+  InterferenceFadeIn: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -6384,7 +6727,7 @@ SceneRoots:
   - {fileID: 2066529817}
   - {fileID: 2123162232}
   - {fileID: 500132358}
-
+  - {fileID: 237818278}
 --- !u!1 &900000000
 GameObject:
   m_ObjectHideFlags: 0

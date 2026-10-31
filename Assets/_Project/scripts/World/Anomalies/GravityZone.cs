@@ -76,6 +76,10 @@ public sealed class GravityZone : LocalAnomalyZone
     private bool effectsCleared;
     private bool despawning;
     private bool orbitMode;
+    public bool IsSpecialOrbitMode => orbitMode;
+    public override LevelMechanicPresentationData Presentation => !orbitMode && Controller != null && Controller.UsesSegmentedOrbitAnomalies
+        ? new("world.anomaly.interference.displayName","world.anomaly.interference.description","world.anomaly.interference.pinnedDescription")
+        : base.Presentation;
     private float orbitForceEnemies;
     private float orbitForcePlayer;
     private float orbitForceProjectiles;
@@ -237,7 +241,7 @@ public sealed class GravityZone : LocalAnomalyZone
         );
         ApplyVisualProperties();
 
-        if (!effectsCleared)
+        if (!effectsCleared && (orbitMode || Controller == null || !Controller.UsesSegmentedOrbitAnomalies))
         {
             ApplyGravity();
             if (orbitMode) MoveOrbitProps();

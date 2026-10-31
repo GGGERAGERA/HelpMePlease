@@ -193,6 +193,8 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
         EnemyHealth enemy = other.GetComponentInParent<EnemyHealth>();
 
+        if (Controller != null && Controller.UsesSegmentedOrbitAnomalies) return;
+
         if (enemy == null || enemy.IsBoss || enemy.IsDead)
             return;
 
@@ -253,6 +255,7 @@ public sealed class ExplosiveZone : LocalAnomalyZone
 
     private void HandleEnemyDied(EnemyHealth enemy)
     {
+        if (Controller != null && Controller.UsesSegmentedOrbitAnomalies) return;
         if (enemy == null || enemy.IsBoss || effectsCleared)
             return;
 

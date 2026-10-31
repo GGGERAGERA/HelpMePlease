@@ -242,6 +242,7 @@ public sealed class SegmentedOrbitConfiguration
     }
     float TotalStrength(int weaponId, Link kind)
     {
+        if (lab.WeaponModules.EffectsSuppressed) return 0f;
         int index = IndexOf(weaponId);
         if (index < 0) return 0;
         ResolveConnections();
@@ -253,6 +254,7 @@ public sealed class SegmentedOrbitConfiguration
     public float RateFactor(int weaponId) => 1f + .2f * TotalStrength(weaponId, Link.FireRate);
     public int Ricochets(int weaponId)
     {
+        if (lab.WeaponModules.EffectsSuppressed) return 0;
         int index = IndexOf(weaponId); if (index < 0) return 0;
         ResolveConnections(); int count = 0;
         foreach (var edge in Links)
@@ -262,6 +264,7 @@ public sealed class SegmentedOrbitConfiguration
     }
     public void OnOrdinaryShot(int weaponId)
     {
+        if (lab.WeaponModules.EffectsSuppressed) return;
         int index = IndexOf(weaponId);
         if (index < 0 || lab.Paused) return;
         ResolveConnections();
@@ -277,6 +280,7 @@ public sealed class SegmentedOrbitConfiguration
     }
     public void SetMotion(Motion motion)
     {
+        if (lab.AnomalyExperiment != null && lab.AnomalyExperiment.Active && motion != Motion.Manual) return;
         if (!Editing) return;
         if (Bound && Movement == Motion.Rotating && motion != Motion.Rotating)
             foreach (var ring in station.Rings) { ring.State.CurrentPhase = station.Rings[0].Phase; ring.Tick(0f); }
@@ -298,7 +302,8 @@ public sealed class SegmentedOrbitConfiguration
     {
         if (!Bound || Movement != Motion.Manual) return;
         station.TickManualRotation(deltaTime, counterClockwise, clockwise, allowed && !lab.Paused,
-            lab.ManualRotationCapacity, lab.ManualRotationSpeed, lab.ManualRotationDrain, lab.ManualRotationRecovery);
+            lab.ManualRotationCapacity, lab.ManualRotationSpeed * lab.AnomalyRotationSpeed,
+            lab.ManualRotationDrain * lab.AnomalyRotationDrain, lab.ManualRotationRecovery);
     }
     public void RefreshRotationCapacity()
     { if (Bound) station.State.RotationEnergy = Mathf.Clamp(RotationEnergy,0f,lab.ManualRotationCapacity); }

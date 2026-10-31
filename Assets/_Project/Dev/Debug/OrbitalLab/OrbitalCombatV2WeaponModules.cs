@@ -31,6 +31,13 @@ public sealed class OrbitalCombatV2WeaponModules
     private OrbitalStationRuntime station;
     public string ActivePreset { get; private set; }
     public int SelectedId { get; private set; }
+    public bool EffectsSuppressed { get; private set; }
+    public void SetEffectsSuppressed(bool value)
+    {
+        if (EffectsSuppressed == value) return;
+        EffectsSuppressed = value;
+        foreach (var pair in weapons) Apply(pair.Key, pair.Value);
+    }
     public string Message { get; private set; } = "На паузе выберите пушку ЛКМ или кнопкой ниже.";
     public bool CanEdit => station != null && lab.Ready && lab.Paused && Time.timeScale <= 0f &&
         station.InputOwner != null && station.InputOwner.IsIdle && station.InputOwner.IsRewardQueueIdle;
@@ -53,7 +60,7 @@ public sealed class OrbitalCombatV2WeaponModules
 
     private EnemyOrbitalLabWeapon Find(int id) => station?.Modules.OfType<EnemyOrbitalLabWeapon>().FirstOrDefault(w => w.StableModuleId == id);
     public bool HasModule(int id, string module) => weapons.TryGetValue(id, out var entry) && entry.Modules.Contains(module);
-    public float? ExtraShotAngle(int id) => HasModule(id, "MULTISHOT") ? Mathf.Clamp(lab.ModuleMultishotAngle, 1f, 30f) : null;
+    public float? ExtraShotAngle(int id) => !EffectsSuppressed && HasModule(id, "MULTISHOT") ? Mathf.Clamp(lab.ModuleMultishotAngle, 1f, 30f) : null;
     public int SlotCount(int id) => weapons.TryGetValue(id, out var entry) ? entry.Slots : 0;
     public string GetModule(int id, int slot) => weapons.TryGetValue(id, out var entry) && slot >= 0 && slot < entry.Slots ? entry.Modules[slot] : "EMPTY";
     public bool Select(int id)
@@ -80,10 +87,10 @@ public sealed class OrbitalCombatV2WeaponModules
     private void Apply(int id, Weapon entry)
     {
         float previous = entry.Runtime.FireInterval;
-        float rapid = entry.Modules.Contains("RAPID") ? Mathf.Clamp(lab.ModuleRapidMultiplier, 1f, 5f) : 1f;
+        float rapid = !EffectsSuppressed && entry.Modules.Contains("RAPID") ? Mathf.Clamp(lab.ModuleRapidMultiplier, 1f, 5f) : 1f;
         entry.Runtime.FireInterval = entry.Baseline.FireInterval / rapid;
         entry.Runtime.BurstInterval = entry.Baseline.BurstInterval / rapid;
-        entry.Runtime.BodyPierces = entry.Baseline.BodyPierces + (entry.Modules.Contains("PIERCE") ? Mathf.Clamp(lab.ModulePierceBonus, 0, 10) : 0);
+        entry.Runtime.BodyPierces = entry.Baseline.BodyPierces + (!EffectsSuppressed && entry.Modules.Contains("PIERCE") ? Mathf.Clamp(lab.ModulePierceBonus, 0, 10) : 0);
         var gun = Find(id);
         if (gun != null && gun.RuntimeCooldown > 0f && previous > 0f) gun.RuntimeCooldown *= entry.Runtime.FireInterval / previous;
     }

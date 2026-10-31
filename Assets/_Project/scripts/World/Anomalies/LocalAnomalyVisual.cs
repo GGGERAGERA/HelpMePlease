@@ -13,11 +13,14 @@ public sealed class LocalAnomalyVisual : MonoBehaviour
     }
 
     public void Show(LocalAnomalyData anomaly)
+        => Show(anomaly,anomaly != null ? anomaly.Presentation : default);
+
+    public void Show(LocalAnomalyData anomaly, LevelMechanicPresentationData presentation)
     {
         if (activeAnomaly == null || anomaly == null)
             return;
 
-        view?.ShowLocalAnomaly(anomaly.Presentation);
+        view?.ShowLocalAnomaly(presentation);
     }
 
     public void Hide()

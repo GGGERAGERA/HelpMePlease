@@ -1027,6 +1027,8 @@ public partial class EnemySpawner : MonoBehaviour
     {
         if (prefab == null)
             return false;
+        if (prefab.GetComponent<EnemyChaseMovement>() is { IsProductionTacticalEnemy: true })
+            return false;
 
         bool shooter = prefab.GetComponent<EnemyShooterMovement>() != null;
         bool bomber = prefab.GetComponent<EnemyBomberMovement>() != null;
@@ -1248,7 +1250,7 @@ public partial class EnemySpawner : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             GameObject selectedPrefab = activePhase != null
-                ? SelectWeightedEnemy(activePhase)
+                ? SelectWeightedEnemyFromPool(activePhase, false)
                 : SelectLegacyEnemy();
 
             if (selectedPrefab == null ||
@@ -1884,17 +1886,22 @@ public partial class EnemySpawner : MonoBehaviour
     }
 
     private GameObject SelectWeightedEnemy(EnemySpawnPhase phase)
+        => SelectWeightedEnemyFromPool(phase, true);
+
+    private GameObject SelectWeightedEnemyFromPool(EnemySpawnPhase phase, bool includeTactical)
     {
         if (phase.enemies == null || phase.enemies.Length == 0)
             return null;
 
         float totalWeight = 0f;
+        bool Eligible(EnemySpawnEntry entry) => CanSpawn(entry) &&
+            (includeTactical || !(entry.enemyPrefab.GetComponent<EnemyChaseMovement>() is { IsProductionTacticalEnemy: true }));
 
         for (int i = 0; i < phase.enemies.Length; i++)
         {
             EnemySpawnEntry entry = phase.enemies[i];
 
-            if (CanSpawn(entry))
+            if (Eligible(entry))
                 totalWeight += EffectiveWeight(entry);
         }
 
@@ -1907,7 +1914,7 @@ public partial class EnemySpawner : MonoBehaviour
         {
             EnemySpawnEntry entry = phase.enemies[i];
 
-            if (!CanSpawn(entry))
+            if (!Eligible(entry))
                 continue;
 
             roll -= EffectiveWeight(entry);

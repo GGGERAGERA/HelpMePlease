@@ -122,13 +122,13 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool StowModule(int index) => InputOwner.CanEditConstructor && State.TryDisconnectSegmented(index);
 
-        public float SegmentedDamageFactor(int id) => 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.Damage);
-        public float SegmentedRateFactor(int id) => 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.FireRate);
-        public int SegmentedRicochets(int id) => State.SegmentedBonusCount(id, SegmentedLinkKind.Ricochet);
+        public float SegmentedDamageFactor(int id) => OrbitModulesSuppressed ? 1f : 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.Damage);
+        public float SegmentedRateFactor(int id) => OrbitModulesSuppressed ? 1f : 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.FireRate);
+        public int SegmentedRicochets(int id) => OrbitModulesSuppressed ? 0 : State.SegmentedBonusCount(id, SegmentedLinkKind.Ricochet);
 
         internal void SegmentedOrdinaryShot(int id)
         {
-            if (!UsesSegmentedOrbit) return;
+            if (!UsesSegmentedOrbit || OrbitModulesSuppressed) return;
             var weapon = modules.FirstOrDefault(gun => gun.StableModuleId == id) as OrbitalProjectileModule;
             if (weapon == null) return;
             foreach (var link in State.ActiveSegmentedLinks())

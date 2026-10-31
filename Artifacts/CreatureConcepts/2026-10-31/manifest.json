@@ -1,0 +1,87 @@
+{
+  "status": "visual_concepts_only",
+  "created_local_date": "2026-10-31",
+  "tool": "image_gen.imagegen (built-in), no CLI",
+  "reference": {
+    "character": "Gera",
+    "character_data": "Assets/_Project/Data/Characters/01_Gera.asset",
+    "active_prefab": "Assets/_Project/prefabs/Characters/Gera.prefab",
+    "source": "Assets/_Project/art/Sprites/Aseprite/newCharacter4/Gera4.png",
+    "measured_png": {
+      "width": 400,
+      "height": 50,
+      "visible_rgba_colors": 15,
+      "alpha_value_count": 4
+    },
+    "frame_size": [
+      50,
+      50
+    ],
+    "frame_count": 8,
+    "ppu": 32,
+    "filter": "Point",
+    "verified_current_references": true
+  },
+  "requested_target": {
+    "roster_columns": 4,
+    "roster_rows": 3,
+    "cell_size": [
+      50,
+      50
+    ],
+    "png_size": [
+      200,
+      150
+    ],
+    "visible_colors_per_creature_max": 16,
+    "alpha_values": [
+      0,
+      255
+    ],
+    "pose": "left-facing three-quarter idle"
+  },
+  "outputs": [
+    {
+      "file": "creature-roster-v01-concept.png",
+      "width": 1448,
+      "height": 1086,
+      "visible_rgba_colors": 253793,
+      "alpha_value_count": 256,
+      "role": "initial detailed roster"
+    },
+    {
+      "file": "creature-roster-v02-concept.png",
+      "width": 1448,
+      "height": 1086,
+      "visible_rgba_colors": 223051,
+      "alpha_value_count": 256,
+      "role": "simplified revision"
+    }
+  ],
+  "roster_reading_order": [
+    "Сумеречный рогатый странник",
+    "Головоногий навигатор океанической луны",
+    "Фарфоровый звёздный автомат",
+    "Обсидиановая саламандра",
+    "Мотыльковый оракул",
+    "Кристаллический кочевник",
+    "Грибной архивариус",
+    "Четырёхрукий жук-монах",
+    "Глубинный скат-гуманоид",
+    "Песчаниковый гомункул",
+    "Пугало с птичьим черепом",
+    "Растительный космонавт"
+  ],
+  "validation": {
+    "visual_review": "12 distinct full-body designs in each sheet, 4 columns by 3 rows; generated images reviewed inline",
+    "native_dimensions": false,
+    "limited_palette": false,
+    "binary_alpha": false,
+    "contains_transparency": true,
+    "production_ready": false,
+    "limitation": "Both generations returned enlarged illustrations rather than native 50x50 sprites. No resizing or palette reduction was used to conceal this.",
+    "gameplay_integration": "none",
+    "animation": "single idle concept per creature; no animation delivered"
+  }
+}
+

@@ -905,32 +905,32 @@ MonoBehaviour:
     ru: "КОНДЕНСАТ"
     en: "CONDENSATION"
   - key: world.anomaly.berserk.displayName
-    ru: "БЕРСЕРК"
-    en: "BERSERK"
+    ru: "ПЕРЕГРУЗКА"
+    en: "OVERLOAD"
   - key: world.anomaly.berserk.description
-    ru: "Враги внутри зоны движутся быстрее."
-    en: "Enemies inside the zone move faster."
+    ru: "Враги внутри зоны быстрее. Поворот Q/E расходует в 1,75 раза больше энергии при обычной скорости."
+    en: "Enemies move faster. Q/E rotation costs 1.75 times more energy at normal speed."
   - key: world.anomaly.berserk.pinnedDescription
-    ru: "Враги внутри зоны движутся быстрее."
-    en: "Enemies inside the zone move faster."
+    ru: "Враги быстрее; расход Q/E ×1,75."
+    en: "Faster enemies; Q/E energy cost ×1.75."
   - key: world.anomaly.explosivezone.displayName
-    ru: "ВЗРЫВНАЯ ЗОНА"
-    en: "EXPLOSIVE ZONE"
+    ru: "ПОДАВЛЕНИЕ"
+    en: "SUPPRESSION"
   - key: world.anomaly.explosivezone.description
-    ru: "Враги, погибшие внутри зоны, взрываются."
-    en: "Enemies killed inside the zone explode."
+    ru: "Модули и бонусы связей временно отключены. Красный крест отмечает подавленный модуль; обычная стрельба продолжается."
+    en: "Modules and link bonuses are temporarily disabled. A red cross marks each suppressed module; ordinary fire continues."
   - key: world.anomaly.explosivezone.pinnedDescription
-    ru: "Враги, погибшие внутри зоны, взрываются."
-    en: "Enemies killed inside the zone explode."
+    ru: "Красные кресты: модули и бонусы связей отключены."
+    en: "Red crosses: modules and link bonuses are disabled."
   - key: world.anomaly.glitch.displayName
     ru: "ГЛИТЧ"
     en: "GLITCH"
   - key: world.anomaly.glitch.description
-    ru: "Зона периодически смещает находящиеся внутри объекты."
-    en: "The zone periodically displaces objects inside."
+    ru: "Раз в 10 секунд оружие меняет крепления внутри своего уровня. Пурпурная вспышка предупреждает за секунду. Выход восстанавливает геометрию."
+    en: "Every 10 seconds, weapons swap mounts within their level. A purple flash warns one second ahead. Leaving restores the geometry."
   - key: world.anomaly.glitch.pinnedDescription
-    ru: "Зона периодически смещает находящиеся внутри объекты."
-    en: "The zone periodically displaces objects inside."
+    ru: "Перестановка пушек раз в 10 с; пурпурное предупреждение за 1 с."
+    en: "Weapons shuffle every 10 s; purple warning 1 s ahead."
   - key: world.anomaly.gravity.displayName
     ru: "ГРАВИТАЦИЯ"
     en: "GRAVITY"
@@ -940,15 +940,24 @@ MonoBehaviour:
   - key: world.anomaly.gravity.pinnedDescription
     ru: "Зона притягивает объекты к центру."
     en: "The zone pulls objects toward its center."
+  - key: world.anomaly.interference.displayName
+    ru: "ИНТЕРФЕРЕНЦИЯ"
+    en: "INTERFERENCE"
+  - key: world.anomaly.interference.description
+    ru: "Уровни плавно отклоняются до ±12°, пушки — дополнительно до ±5°. Направления выстрелов меняются; Q/E продолжает работать."
+    en: "Levels drift smoothly up to ±12°, weapons up to an additional ±5°. Shot directions change; Q/E remains available."
+  - key: world.anomaly.interference.pinnedDescription
+    ru: "Плавное искажение направлений; Q/E работает."
+    en: "Smooth directional distortion; Q/E remains available."
   - key: world.anomaly.stasis.displayName
     ru: "СТАЗИС"
     en: "STASIS"
   - key: world.anomaly.stasis.description
-    ru: "Движение внутри зоны замедлено."
-    en: "Movement inside the zone is slowed."
+    ru: "Игрок и враги замедлены. Скорость поворота Q/E вдвое ниже при обычном расходе энергии."
+    en: "Player and enemies move slower. Q/E rotation is half as fast at normal energy cost."
   - key: world.anomaly.stasis.pinnedDescription
-    ru: "Движение внутри зоны замедлено."
-    en: "Movement inside the zone is slowed."
+    ru: "Движение замедлено; скорость Q/E ×0,5."
+    en: "Slower movement; Q/E rotation speed ×0.5."
   - key: run.message.start.title
     ru: "СЕКТОР АКТИВЕН"
     en: "SECTOR ACTIVE"

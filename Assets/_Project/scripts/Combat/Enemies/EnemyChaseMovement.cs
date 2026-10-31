@@ -4,6 +4,11 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Rigidbody2D))]
 public class EnemyChaseMovement : EnemyMovement
 {
+    public enum ChasePattern { Direct, Flanker, Breacher }
+    [Header("Production behaviour")]
+    [SerializeField] private ChasePattern chasePattern;
+    [SerializeField] private LineRenderer ramTelegraph;
+    public bool IsProductionTacticalEnemy => chasePattern != ChasePattern.Direct;
     [Header("Target")]
     [SerializeField] private string playerTag = "Player";
 
@@ -33,6 +38,7 @@ public class EnemyChaseMovement : EnemyMovement
     private Vector2? assaultDestination;
     private bool flankingExperiment;
     private bool flankingApproach;
+    private float flankingRemaining;
     private float flankingSide = 1f;
     private Transform flankingVisual;
     private Quaternion flankingAuthoredRotation;
@@ -43,6 +49,42 @@ public class EnemyChaseMovement : EnemyMovement
     private RamPhase ramPhase;
     private float ramRemaining;
     private Vector2 ramDirection;
+    // One committed attack in the arena, including its recovery window.
+    private static EnemyChaseMovement ramOwner;
+    private static float ramNextAllowedAt;
+    private readonly Dictionary<Object, float> attackRecoveryModifiers = new();
+    public bool CanDealContactDamage => !committedRamExperiment ||
+        ramPhase == RamPhase.Chasing || ramPhase == RamPhase.Charging;
+    public float AttackRecoveryMultiplier
+    {
+        get
+        {
+            float result = 1f;
+            foreach (var pair in attackRecoveryModifiers)
+                if (pair.Key != null) result *= pair.Value;
+            return Mathf.Clamp(result, .5f, 4f);
+        }
+    }
+
+    // Duration multiplier: >1 lengthens recovery. Replacing/removing a zone
+    // never changes the authored speed, damage or preparation timer.
+    public void SetAttackRecoveryMultiplier(Object source, float multiplier)
+    {
+        if (source == null || float.IsNaN(multiplier) || float.IsInfinity(multiplier)) return;
+        attackRecoveryModifiers[source] = Mathf.Clamp(multiplier, .5f, 4f);
+    }
+
+    public void RemoveAttackRecoveryMultiplier(Object source)
+    {
+        if (!ReferenceEquals(source, null)) attackRecoveryModifiers.Remove(source);
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRamAdmission()
+    {
+        ramOwner = null;
+        ramNextAllowedAt = 0f;
+    }
     public bool IsCommittedRamExperiment => committedRamExperiment;
     public bool CanUseCommittedRam => ResolveSafeVisual() != null;
 
@@ -123,12 +165,30 @@ public class EnemyChaseMovement : EnemyMovement
 
     private void ResetRamCycle()
     {
+        ReleaseRamAdmission();
+        if (ramTelegraph != null) ramTelegraph.enabled = false;
         if (committedRamExperiment && flankingVisual != null)
             flankingVisual.localRotation = flankingAuthoredRotation;
         if (committedRamExperiment) chaseVelocity = Vector2.zero;
         ramPhase = RamPhase.Chasing;
         ramRemaining = 0f;
         ramDirection = Vector2.zero;
+    }
+
+    private void ReleaseRamAdmission()
+    {
+        if (ramOwner != this) return;
+        ramOwner = null;
+        ramNextAllowedAt = Time.time + .35f;
+    }
+
+    private void BeginRamRecovery()
+    {
+        if (ramTelegraph != null) ramTelegraph.enabled = false;
+        ramPhase = RamPhase.Recovering;
+        ramRemaining = 1.2f;
+        chaseVelocity = Vector2.zero;
+        if (flankingVisual != null) flankingVisual.localRotation = flankingAuthoredRotation;
     }
 
     public void ConfigureFlankingExperiment(bool enabled, bool clockwise)
@@ -139,6 +199,7 @@ public class EnemyChaseMovement : EnemyMovement
         if (enabled) ConfigureCommittedRamExperiment(false);
         flankingExperiment = enabled;
         flankingApproach = enabled;
+        flankingRemaining = enabled ? 3f : 0f;
         flankingSide = clockwise ? -1f : 1f;
         if (!enabled) RestoreFlankingPose();
     }
@@ -214,6 +275,14 @@ public class EnemyChaseMovement : EnemyMovement
         FindPlayer();
     }
 
+    private void OnEnable()
+    {
+        if (chasePattern == ChasePattern.Flanker)
+            ConfigureFlankingExperiment(true, (GetInstanceID() & 2) == 0);
+        else if (chasePattern == ChasePattern.Breacher)
+            ConfigureCommittedRamExperiment(true);
+    }
+
     private void FixedUpdate()
     {
         if (Time.timeScale == 0f)
@@ -239,6 +308,7 @@ public class EnemyChaseMovement : EnemyMovement
 
         if (player == null)
         {
+            ResetRamCycle();
             SetMovementSpeed(0f);
             return;
         }
@@ -305,8 +375,8 @@ public class EnemyChaseMovement : EnemyMovement
         Vector2 productionDirection = offset.normalized;
         if (flankingExperiment && !assaultDestination.HasValue)
         {
-            if (sqrDistance <= 4f * 4f) flankingApproach = false;
-            else if (sqrDistance >= 6f * 6f) flankingApproach = true;
+            flankingRemaining = Mathf.Max(0f, flankingRemaining - Time.fixedDeltaTime);
+            if (sqrDistance <= 4f * 4f || flankingRemaining <= 0f) flankingApproach = false;
             if (flankingApproach)
             {
                 Vector2 tangent = new Vector2(-productionDirection.y, productionDirection.x) * flankingSide;
@@ -322,8 +392,10 @@ public class EnemyChaseMovement : EnemyMovement
         bool ramControlsMovement = committedRamExperiment && !assaultDestination.HasValue;
         if (ramControlsMovement)
         {
-            if (ramPhase == RamPhase.Chasing && sqrDistance <= 25f && sqrDistance > .0001f)
+            if (ramPhase == RamPhase.Chasing && sqrDistance <= 25f && sqrDistance > .0001f &&
+                ramOwner == null && Time.time >= ramNextAllowedAt)
             {
+                ramOwner = this;
                 ramDirection = offset.normalized;
                 ramPhase = RamPhase.Preparing;
                 ramRemaining = .65f;
@@ -334,7 +406,8 @@ public class EnemyChaseMovement : EnemyMovement
             }
             else if (ramPhase != RamPhase.Chasing)
             {
-                ramRemaining -= Time.fixedDeltaTime;
+                ramRemaining -= Time.fixedDeltaTime /
+                    (ramPhase == RamPhase.Recovering ? AttackRecoveryMultiplier : 1f);
                 if (ramRemaining <= 0f)
                 {
                     if (ramPhase == RamPhase.Preparing)
@@ -344,9 +417,7 @@ public class EnemyChaseMovement : EnemyMovement
                     }
                     else if (ramPhase == RamPhase.Charging)
                     {
-                        ramPhase = RamPhase.Recovering;
-                        ramRemaining = 1.2f;
-                        flankingVisual.localRotation = flankingAuthoredRotation;
+                        BeginRamRecovery();
                     }
                     else ResetRamCycle();
                 }
@@ -361,6 +432,18 @@ public class EnemyChaseMovement : EnemyMovement
         selectedSpeed *= speedMultiplier *
             anomalySpeedMultiplier *
             worldRuleSpeedMultiplier * threatSpeedMultiplier;
+
+        if (ramTelegraph != null)
+        {
+            ramTelegraph.enabled = ramControlsMovement && ramPhase == RamPhase.Preparing;
+            if (ramTelegraph.enabled)
+            {
+                ramTelegraph.SetPosition(0, transform.position);
+                float chargeDistance = aggroSpeed * 1.75f * .45f * speedMultiplier *
+                    anomalySpeedMultiplier * worldRuleSpeedMultiplier * threatSpeedMultiplier;
+                ramTelegraph.SetPosition(1, transform.position + (Vector3)(ramDirection * chargeDistance));
+            }
+        }
 
         bool retreatControlsMovement = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -458,6 +541,11 @@ public class EnemyChaseMovement : EnemyMovement
 
     public override void StopAfterHit()
     {
+        if (committedRamExperiment && ramPhase != RamPhase.Chasing)
+        {
+            if (ramPhase != RamPhase.Recovering) BeginRamRecovery();
+            return;
+        }
         stopTimer = stopAfterHitDuration;
     }
     private void OnDisable()
@@ -468,6 +556,9 @@ public class EnemyChaseMovement : EnemyMovement
 #endif
         knockbackVelocity = Vector2.zero;
         chaseVelocity = Vector2.zero;
+        stopTimer = 0f;
+        attackRecoveryModifiers.Clear();
+        anomalySpeedMultiplier = 1f;
         SetThreatMovement(1f, 0f);
         assaultDestination = null;
         ConfigureCommittedRamExperiment(false);

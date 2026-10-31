@@ -67,6 +67,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     public bool EnemiesInvincible { get; private set; }
     public int AliveEnemies => enemies.Count(e => e != null && !e.IsDead);
     private readonly List<EnemyHealth> enemies = new();
+    public IReadOnlyList<EnemyHealth> LabEnemies => enemies;
     private readonly List<(int type, Vector2 position)> layout = new();
     private int spawnIndex;
 
@@ -428,6 +429,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     public void SetPaused(bool value)
     {
         if (Paused == value) return;
+        AnomalyExperiment?.RestoreTransientEffects();
         Station?.InputOwner?.PrepareForExternalPause();
         CombatV2?.Suspend();
         Placement?.Cancel();
@@ -870,6 +872,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     }
     protected override void BeforeBuildReset()
     {
+        AnomalyExperiment?.RestoreTransientEffects();
         Segmented?.Unbind(); segmentedView?.RestoreVisuals();
         Telemetry?.Dispose(); tacticalPreset = tacticalConfiguration = null;
         if (changingExperiment) WeaponModules?.BeginLoadout();
@@ -877,7 +880,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         Placement?.Unbind();
         CombatV2?.Dispose(); CombatV2 = null;
         CloseUpgradeChoices();
-        if (Station != null) Station.State.ShootingDamageMultiplier = Station.State.ShootingRateMultiplier = Station.State.ContactDamageMultiplier = Station.State.ContactSizeMultiplier = 1f;
+        if (Station != null && Station.State != null) Station.State.ShootingDamageMultiplier = Station.State.ShootingRateMultiplier = Station.State.ContactDamageMultiplier = Station.State.ContactSizeMultiplier = 1f;
         SetFrozen(false); SetSpeed(1f); SetPlayerInvincible(false); SetEnemiesInvincible(false);
         weaponProfiles.Clear();
         SetPaused(false);
@@ -903,6 +906,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         }
         if (Ready)
         {
+            if (AnomalyExperiment != null && AnomalyExperiment.BlocksPointer) Station.InputOwner.DebugSuppressPlayerInput = true;
             Player.SetIncomingDamageMultiplier(PlayerInvincible ? 0f : 1f);
             UpdateCenterPrototype();
             bool pointerBlocked = PanelVisible && PanelRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y));
