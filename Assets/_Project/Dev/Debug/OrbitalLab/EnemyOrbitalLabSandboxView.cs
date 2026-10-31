@@ -132,8 +132,9 @@ public sealed class EnemyOrbitalLabSandboxView : IDisposable
     void Heading(string value) => GUILayout.Label(value, heading);
     void Enemies()
     {
+        lab.DrawInterceptionControls(heading, small, button);
         Heading("ВЫБЕРИТЕ БОЙ");
-        Label($"На арене: {lab.AliveEnemies} / {EnemyOrbitalLabController.SandboxEnemyLimit}");
+        if (!lab.DensityControl) Label($"На арене: {lab.AliveEnemies} / {EnemyOrbitalLabController.SandboxEnemyLimit}");
         Row(() => Btn("Толпа", () => lab.StartSandboxEncounter(1)), () => Btn("Толпа + стрелки", () => lab.StartSandboxEncounter(2)));
         Row(() => Btn("Щитовые", () => lab.StartSandboxEncounter(3)), () => Btn("Очистить арену", lab.ClearSandboxArena));
         Btn("ПЛОТНЫЙ БОЙ", () => lab.StartSandboxEncounter(4), true);

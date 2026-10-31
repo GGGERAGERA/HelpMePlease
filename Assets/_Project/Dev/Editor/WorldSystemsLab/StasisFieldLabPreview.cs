@@ -99,6 +99,9 @@ public static class StasisFieldLabPreview
     static IEnumerator Preview()
     {
         report="Stasis visual prototype / existing WorldSystemsLab / Play Mode\n";
+        // Entering Play can recompile scripts and rebuild Game View; restore the requested size afterwards.
+        GameView();
+        while(Screen.width!=1600 || Screen.height!=900) yield return .03f;
         var world=Object.FindFirstObjectByType<WorldSystemsLabController>();
         var experiment=world.GetComponent<WorldSystemsLabOrbitExperiment>();
         experiment.Begin(); while(!experiment.Ready)yield return .03f;
@@ -109,7 +112,11 @@ public static class StasisFieldLabPreview
         float walking=lab.Player.GetComponent<CharacterMovement2D>().WalkingSpeed;
         var site=world.SpawnedSites.Single(s=>s.AnomalyZone.AnomalyType==LocalAnomalyType.Stasis);
         var box=(BoxCollider2D)site.AnomalyZone.FocusArea; Vector2 size=box.size, offset=box.offset; bool enabled=box.enabled;
-        Check(site.GetComponent<StasisFieldLabVisual>()!=null,"Art attached to blue site in lab");
+        var presentation=site.GetComponent<StasisFieldLabVisual>();
+        Check(presentation!=null,"Art attached to blue site in lab");
+        var sourceSprites=new SerializedObject(world).FindProperty("stasisDebrisSprites");
+        report+=$"Debris: {presentation.DebrisCount}; serialized sources: {sourceSprites.arraySize}; "+string.Join(",",Enumerable.Range(0,sourceSprites.arraySize).Select(i=>sourceSprites.GetArrayElementAtIndex(i).objectReferenceValue?.name ?? "null"))+"\n";
+        Check(presentation.DebrisCount==8,"Eight existing asset fragments, with visual transforms only");
         var art=site.GetComponentsInChildren<SpriteRenderer>().Single(r=>r.gameObject.name.StartsWith("STASIS /"));
         Check(art.GetComponentsInChildren<Collider2D>().Length==0,"Art has no additional collision geometry");
         report+=$"Original focus size: {size}; offset {offset}; world centre {experiment.ZoneCenter(blue)}\n";
@@ -132,27 +139,40 @@ public static class StasisFieldLabPreview
         Check(box.size==size && box.offset==offset && box.enabled==enabled,"Original zone box, offset and enabled state unchanged");
         Check(site.GetComponentsInChildren<StasisFieldLabVisual>().Length==1 && world.SpawnedSites.All(s=>s==site || s.GetComponent<StasisFieldLabVisual>()==null),"Only blue site receives new presentation");
         lab.ClearSandboxArena();experiment.MoveTo(blue);
-        // A presentation-only overview. The Q/E, collision and movement checks above ran on the usual follow camera.
+        // A close view of the real boundary; keep the weapons large enough to judge readability.
         Vector2 worldSize=Vector2.Scale(size,box.transform.lossyScale);
         float available=(Screen.width-experiment.PanelRect.width-40)/Screen.width;
         float aspect=(float)Screen.width/Screen.height;
-        float zoom=Mathf.Max(worldSize.y*.5f/.92f,worldSize.x*.5f/(aspect*available*.96f));
-        Vector2 centre=experiment.ZoneCenter(blue)+Vector2.right*(zoom*aspect*(1-available));
+        float zoom=Mathf.Min(8f,Mathf.Max(5f,worldSize.y*.5f));
+        Vector2 previewPoint=presentation.PreviewPosition;
+        var playerBody=world.Player.GetComponent<Rigidbody2D>();
+        if(playerBody!=null) {playerBody.position=previewPoint;playerBody.linearVelocity=Vector2.zero;}
+        world.Player.position=new Vector3(previewPoint.x,previewPoint.y,world.Player.position.z);
+        Physics2D.SyncTransforms();
+        Vector2 centre=previewPoint+Vector2.right*(zoom*aspect*(1-available));
         lab.CameraRig.BeginWorldBoundsFocus(world,centre,zoom);
         framingOwner=world; framedCamera=lab.CameraRig;
-        // Existing lab enemies demonstrate foreground readability in the finished view.
-        lab.SetEnemiesInvincible(true);
-        lab.Spawn(5);
-        int enemyIndex=0;
-        foreach(var visibleEnemy in lab.LabEnemies)
-        {
-            float a=(enemyIndex++*72+20)*Mathf.Deg2Rad;
-            visibleEnemy.transform.position=experiment.ZoneCenter(blue)+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*5.5f;
-        }
         experiment.TickEffects(0);
         yield return .15f;
         Check(Screen.width==1600 && Screen.height==900,"Actual Game View is 1600x900");
         Check(!ShaderUtil.GetShaderMessages(Shader.Find("Subject42/Lab/StasisField")).Any(m=>m.severity.ToString()=="Error"),"Stasis shader has no compilation errors");
+        // Observe actual running presentation on both sides of the boundary; no gameplay time changes.
+        yield return 6f;
+        Check(presentation.BoundaryCrossings>=2,"Moving fragments actually cross the original zone boundary");
+        Check(presentation.ObservedEntrySlowdown,"Crossing fragments settle below x0.25 speed inside");
+        Check(presentation.ObservedExitRecovery,"Crossing fragments recover above x0.85 speed outside");
+        Check(art.GetComponentsInChildren<SpriteRenderer>().All(r=>!r.forceRenderingOff),"Floor and fragments stay visible after the debug-art refresh");
+        report+=$"Observed fragment boundary crossings: {presentation.BoundaryCrossings}\n";
+        // Spawn the existing enemies just before capture so their silhouettes remain separate.
+        lab.SetEnemiesInvincible(true); lab.Spawn(5);
+        int enemyIndex=0;
+        foreach(var visibleEnemy in lab.LabEnemies)
+        {
+            float a=(enemyIndex++*72+20)*Mathf.Deg2Rad;
+            visibleEnemy.transform.position=previewPoint+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*6.5f;
+        }
+        experiment.TickEffects(0);
+        yield return .15f;
         ScreenCapture.CaptureScreenshot(Output+"/stasis-gameview-1600x900.png");
         yield return 1.1f;
         ScreenCapture.CaptureScreenshot(Output+"/stasis-animation-1600x900.png");

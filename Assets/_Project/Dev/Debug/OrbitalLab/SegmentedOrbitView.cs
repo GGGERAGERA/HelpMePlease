@@ -384,6 +384,7 @@ public sealed class SegmentedOrbitView : IDisposable
     }
     void Encounter()
     {
+        lab.DrawInterceptionControls(text, small, button);
         Heading("КОНСТРУКЦИИ · ОДИНАКОВЫЙ ЗАПАС");
         foreach (string name in SegmentedOrbitConfiguration.Presets) Btn(name,() => Build.LoadPreset(name),Build.Preset == name);
         Btn("Reset Preset",() => Build.LoadPreset(Build.Preset));
@@ -391,8 +392,11 @@ public sealed class SegmentedOrbitView : IDisposable
         Heading("СОСТАВ ВРАГОВ");
         Row(() => Btn("Обычные",() => lab.StartSandboxEncounter(1)), () => Btn("Со стрелками",() => lab.StartSandboxEncounter(2)));
         Row(() => Btn("Щитоносцы",() => lab.StartSandboxEncounter(3)), () => Btn("Плотная волна",() => lab.StartSandboxEncounter(4)));
-        Label($"Плотность: {lab.SegmentedEnemyDensity} · на арене {lab.AliveEnemies}");
-        lab.SegmentedEnemyDensity = Mathf.RoundToInt(GUILayout.HorizontalSlider(lab.SegmentedEnemyDensity,12,64));
+        if (!lab.HasInterceptionExperiment)
+        {
+            Label($"Плотность: {lab.SegmentedEnemyDensity} · на арене {lab.AliveEnemies}");
+            lab.SegmentedEnemyDensity = Mathf.RoundToInt(GUILayout.HorizontalSlider(lab.SegmentedEnemyDensity,12,64));
+        }
         Row(() => Btn(lab.SandboxSpawning ? "Стоп спавн" : "Продолжить спавн",() => lab.SetSandboxSpawning(!lab.SandboxSpawning)), () => Btn("Очистить арену",lab.ClearSandboxArena));
         Btn("Повторить бой",lab.RepeatSandboxEncounter);
         Heading("ЗАПАС ДЛЯ СРАВНЕНИЯ");

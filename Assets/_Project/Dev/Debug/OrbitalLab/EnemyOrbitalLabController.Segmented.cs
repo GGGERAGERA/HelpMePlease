@@ -85,7 +85,7 @@ public sealed partial class EnemyOrbitalLabController
     public void StartSegmentedCombat()
     {
         if (!Ready || !SegmentedOrbit) return;
-        if (AliveEnemies == 0) StartSandboxEncounter(4);
+        if (AliveEnemies == 0 && !DensityControl) StartSandboxEncounter(4);
         SetPaused(false);
     }
 }

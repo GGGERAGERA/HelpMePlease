@@ -303,6 +303,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     public void StartSandboxEncounter(int kind)
     {
         if (!Ready || kind < 1 || kind > 4) return;
+        DensityControl = false;
         Telemetry.Stop();
         sandboxEncounter = kind; sandboxSequence = 0; sandboxSpawnTimer = 0f;
         DespawnEnemies(false); layout.Clear();
@@ -324,11 +325,13 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         float radius = 5.5f + index % 4 * .6f;
         SpawnAt(type, (Vector2)Player.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
     }
-    public void SetSandboxSpawning(bool active) => SandboxSpawning = active && sandboxEncounter != 0;
+    public void SetSandboxSpawning(bool active)
+    { if (active) DensityControl = false; SandboxSpawning = active && sandboxEncounter != 0; }
     public void ClearSandboxArena()
-    { SandboxSpawning = false; DespawnEnemies(false); Telemetry.Stop(); layout.Clear(); SandboxMessage = "Арена очищена. Сборка сохранена."; }
+    { SandboxSpawning = false; if (HasInterceptionExperiment) TargetEnemyDensity = 0; DespawnEnemies(false); Telemetry.Stop(); layout.Clear(); SandboxMessage = "Арена очищена. Сборка сохранена."; }
     public void RepeatSandboxEncounter()
-    { if (sandboxEncounter != 0) StartSandboxEncounter(sandboxEncounter); else SandboxMessage = "Сначала выберите врагов."; }
+    { if (DensityControl) { int target = TargetEnemyDensity; DespawnEnemies(false); SetTargetEnemyDensity(target); }
+      else if (sandboxEncounter != 0) StartSandboxEncounter(sandboxEncounter); else SandboxMessage = "Сначала выберите врагов."; }
     private void TickSandbox(bool pointerBlocked)
     {
         if (!Paused) Telemetry.Tick(Time.deltaTime);
@@ -785,6 +788,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
             -5 or -6 => BreakableShieldShooterPrefab, -1 => TestShooterPrefab, _ => EnemyPrefabs[type] };
         var instance = Instantiate(prefab, position, Quaternion.identity, transform);
         instance.name = prefab.name + " (Lab)";
+        ConfigureLabEnemyProjectilePool(instance);
         var health = instance.GetComponent<EnemyHealth>();
         if (type == -1) health.SetRuntimeMaxHealth(TestShooterHealth);
         if (instance.TryGetComponent<EnemyDirectionalShield>(out var shield))
@@ -821,6 +825,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
 
     private void DespawnEnemies(bool resetWeapons = true)
     {
+        if (HasInterceptionExperiment) CancelInterception();
         (Station?.Combat as ProductionOrbitalCombatAdapter)?.DebugClearProjectiles();
         Station?.ClearLabFlashes();
         nextShootingShake = 0f;
@@ -872,6 +877,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     }
     protected override void BeforeBuildReset()
     {
+        DensityControl = false; TargetEnemyDensity = 0; densityCredit = 0f;
         AnomalyExperiment?.RestoreTransientEffects();
         Segmented?.Unbind(); segmentedView?.RestoreVisuals();
         Telemetry?.Dispose(); tacticalPreset = tacticalConfiguration = null;
@@ -924,6 +930,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
                 SandboxSelectedWeaponId = Placement.SelectedModuleId; WeaponModules.Select(Placement.SelectedModuleId);
             }
             TickSandbox(pointerBlocked);
+            TickInterceptionExperiment();
         }
         else { ReleaseCenterInput(); CombatV2?.Suspend(); }
         enemies.RemoveAll(e => e == null);
@@ -975,6 +982,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
 
     private void OnDisable()
     {
+        if (HasInterceptionExperiment) CancelInterception();
         Telemetry?.Dispose();
         sandboxView?.RestoreVisuals();
         segmentedView?.RestoreVisuals();
@@ -1002,8 +1010,9 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     {
         if (SegmentedOrbit) segmentedView?.Draw(PanelVisible, PanelRect);
         else sandboxView?.Draw(PanelVisible, PanelRect);
+        DrawInterceptionHud();
     }
     protected override void DrawPanel() { }
-    protected override void OnDestroy() { segmentedView?.Dispose(); sandboxView?.Dispose(); EnemyDebugAiFreeze.SetFrozen(false); base.OnDestroy(); }
+    protected override void OnDestroy() { DisposeInterceptionExperiment(); segmentedView?.Dispose(); sandboxView?.Dispose(); EnemyDebugAiFreeze.SetFrozen(false); base.OnDestroy(); }
 }
 #endif

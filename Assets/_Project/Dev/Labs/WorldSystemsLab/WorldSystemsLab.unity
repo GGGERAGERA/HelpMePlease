@@ -6309,6 +6309,10 @@ MonoBehaviour:
   - {fileID: 590000000000000004, guid: c39b42a1000000000000000000000003, type: 3}
   explorationConfig: {fileID: 11400000, guid: 42a1000000000000000000000000000a, type: 2}
   propScatterProfile: {fileID: 11400000, guid: 685e6efc13ad0b846aca6d1845cbb50b, type: 2}
+  stasisDebrisSprites:
+  - {fileID: 21300000, guid: 8eb066445e44567409a59a7856e6009b, type: 2}
+  - {fileID: 21300000, guid: 6d655e09756712e4eb8d6ee3ee835d16, type: 2}
+  - {fileID: 21300000, guid: 90573e77f3e3e5a44bb9c2279cc6e817, type: 2}
   corridorRocket: {fileID: 11400000, guid: 68e9a19d0afb453ca67a96d1a51a8ee5, type: 2}
   corridorEnemy: {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
   corridorRocketPrefab: {fileID: 6415994172789663665, guid: 703da712b72d21341ae48974468d51ca, type: 3}

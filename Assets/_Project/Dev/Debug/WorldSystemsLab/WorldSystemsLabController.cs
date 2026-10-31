@@ -30,6 +30,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private WorldEvent[] eventPrefabs;
     [SerializeField] private ExplorationSectorConfig explorationConfig;
     [SerializeField] private PropScatterProfile propScatterProfile;
+    [Header("Stasis presentation — lab only")]
+    [SerializeField] private Sprite[] stasisDebrisSprites;
 
     [Header("Corridor V2 prototype only")]
     [SerializeField] private RocketHazardDefinition corridorRocket;
@@ -165,7 +167,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
         spawnedSites.Add(site);
         if (data.AnomalyType == LocalAnomalyType.Stasis)
-            StasisFieldLabVisual.Attach(site);
+            StasisFieldLabVisual.Attach(site, stasisDebrisSprites);
         nextNormalTerritory++;
         notice = $"Normal anomaly: {data.AnomalyType}";
         return true;
@@ -319,7 +321,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             FirstSiteEvent(), events, anomalies, new Vector2(1000, 1000), .5f, explorationConfig.AnomalyTerritoryFill);
         ClearBootstrapEvent(site);
         if (!initialized || site.AnomalyZone == null) { site.RemoveForLayout(); return false; }
-        spawnedSites.Add(site); StasisFieldLabVisual.Attach(site); return true;
+        spawnedSites.Add(site); StasisFieldLabVisual.Attach(site, stasisDebrisSprites); return true;
     }
 
     public bool SpawnPortalPair()
