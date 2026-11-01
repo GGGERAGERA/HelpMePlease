@@ -326,7 +326,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         SpawnAt(type, (Vector2)Player.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
     }
     public void SetSandboxSpawning(bool active)
-    { if (active) DensityControl = false; SandboxSpawning = active && sandboxEncounter != 0; }
+    { if (active) { DensityControl = false; SetAutomaticEnemySpawning(true); } SandboxSpawning = active && sandboxEncounter != 0; }
     public void ClearSandboxArena()
     { SandboxSpawning = false; if (HasInterceptionExperiment) TargetEnemyDensity = 0; DespawnEnemies(false); Telemetry.Stop(); layout.Clear(); SandboxMessage = "Арена очищена. Сборка сохранена."; }
     public void RepeatSandboxEncounter()
@@ -335,7 +335,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     private void TickSandbox(bool pointerBlocked)
     {
         if (!Paused) Telemetry.Tick(Time.deltaTime);
-        if (!Paused && SandboxSpawning)
+        if (!Paused && SandboxSpawning && (!HasInterceptionExperiment || AutomaticEnemySpawning))
         {
             sandboxSpawnTimer -= Time.deltaTime;
             if (sandboxSpawnTimer <= 0f)
@@ -781,17 +781,17 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         Notice = $"Spawned {count} × {EnemyPrefabs[SelectedEnemy].name}";
     }
 
-    private void SpawnAt(int type, Vector2 position)
+    private EnemyHealth SpawnAt(int type, Vector2 position)
     {
         position = new Vector2(Mathf.Clamp(position.x, -28, 28), Mathf.Clamp(position.y, -28, 28));
-        var prefab = type switch { -2 or -4 => BreakableShieldBearerPrefab, -3 => PursuerPrefab,
-            -5 or -6 => BreakableShieldShooterPrefab, -1 => TestShooterPrefab, _ => EnemyPrefabs[type] };
+        var prefab = LabEnemyPrefab(type);
         var instance = Instantiate(prefab, position, Quaternion.identity, transform);
         instance.name = prefab.name + " (Lab)";
         ConfigureLabEnemyProjectilePool(instance);
         var health = instance.GetComponent<EnemyHealth>();
+        ConfigureLabTacticalEnemy(instance, health);
         if (type == -1) health.SetRuntimeMaxHealth(TestShooterHealth);
-        if (instance.TryGetComponent<EnemyDirectionalShield>(out var shield))
+        if (instance.TryGetComponent<EnemyDirectionalShield>(out var shield) && shield.enabled)
         {
             shield.Kind = EnemyDirectionalShield.ShieldKind.Breakable;
             shield.MaximumBlockedHits = Mathf.Max(1, ShieldBlockedHits);
@@ -805,6 +805,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         foreach (var movement in instance.GetComponents<EnemyMovement>()) movement.SetSpeedMultiplier(SpeedMultiplier);
         health.NotifySpawnConfigured();
         enemies.Add(health);
+        return health;
     }
 
     public void SpawnAll()
@@ -839,6 +840,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         foreach (var enemy in enemies)
             if (enemy != null) { enemy.gameObject.SetActive(false); Destroy(enemy.gameObject); }
         enemies.Clear();
+        manualEnemies.Clear();
         ClearLooseObjects();
     }
     public void ClearEnemies() { DespawnEnemies(); spawnIndex = 0; Notice = "Enemies, projectiles and temporary effects cleared / Restart restores layout"; }
@@ -934,6 +936,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
         }
         else { ReleaseCenterInput(); CombatV2?.Suspend(); }
         enemies.RemoveAll(e => e == null);
+        PruneManualEnemies();
     }
 
     private void UpdateCenterPrototype()
@@ -1000,6 +1003,7 @@ public sealed partial class EnemyOrbitalLabController : OrbitalLabSession, IOrbi
     private void OnApplicationPause(bool paused) { if (paused) { CombatV2?.Suspend(); Placement?.Cancel(); } }
     private void LateUpdate()
     {
+        LateTickInterceptionTurrets();
         if (SegmentedOrbit) segmentedView?.Tick(PanelVisible, PanelRect);
         else { WeaponModules?.UpdateSpokes(); sandboxView?.Tick(PanelVisible, PanelRect); }
     }

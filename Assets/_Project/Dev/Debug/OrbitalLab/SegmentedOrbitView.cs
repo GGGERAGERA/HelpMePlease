@@ -22,6 +22,7 @@ public sealed class SegmentedOrbitView : IDisposable
     Vector2 scroll;
     int tab;
     bool showIndividual;
+    bool CleanComparison => lab.HasArtistComparison && lab.ArtistCleanView && tab == 1;
     static readonly Color Cyan = new(.2f,.9f,1f), Amber = new(1f,.72f,.25f);
     static readonly Color ConnectionColor = new(.5f,.72f,.76f);
     static string Marker(Link kind) => kind switch { Link.Damage => "DMG", Link.FireRate => "FR", Link.ExtraShot => "2X", Link.Ricochet => "RIC", _ => "" };
@@ -76,7 +77,7 @@ public sealed class SegmentedOrbitView : IDisposable
             var ring = lab.Station.Rings[level];
             var stock = ring.Mounts[0].Transform.GetComponentInParent<OrbitalRingView>();
             stock.FrontLine.enabled = stock.BackLine.enabled = false;
-            guides[level].enabled = lab.Paused;
+            guides[level].enabled = lab.Paused && !CleanComparison;
             guides[level].startColor = guides[level].endColor = new Color(.3f,.6f,.7f,.16f);
             for (int j = 0; j < 145; j++) guides[level].SetPosition(j, Point(j * 2.5f, ring.Radius));
             for (int position = 0; position < 12; position++)
@@ -94,7 +95,7 @@ public sealed class SegmentedOrbitView : IDisposable
                 for (int j = 0; j < 17; j++) arcs[index].SetPosition(j, Point(angle - 15f + j * 30f / 16f, ring.Radius));
                 var gun = mount.Module;
                 if (gun != null) gun.SetHighlighted(related || target);
-                arrows[index].enabled = lab.Paused && gun != null && cell.Weapon != 3;
+                arrows[index].enabled = lab.Paused && !CleanComparison && gun != null && cell.Weapon != 3;
                 arrows[index].startColor = arrows[index].endColor = related ? Amber : Cyan;
                 Vector3 start = Point(angle, ring.Radius + .36f), end = Point(angle, ring.Radius + .95f);
                 Vector3 axis = (end - start).normalized, side = new(-axis.y,axis.x,0f);
@@ -133,6 +134,7 @@ public sealed class SegmentedOrbitView : IDisposable
     }
     void DrawConstruction()
     {
+        if(CleanComparison) { DrawLinkMarkers(false); lab.DrawArtistComparisonLabels(camera,small); return; }
         if (lab.AnomalyExperiment != null && lab.AnomalyExperiment.BlocksPointer) return;
         if (!lab.Paused || camera == null || !Build.Bound) return;
         Build.Hovered = -1; Build.HoveredLink = false;
@@ -384,6 +386,7 @@ public sealed class SegmentedOrbitView : IDisposable
     }
     void Encounter()
     {
+        lab.DrawManualEnemySpawns(text, small, button);
         lab.DrawInterceptionControls(text, small, button);
         Heading("КОНСТРУКЦИИ · ОДИНАКОВЫЙ ЗАПАС");
         foreach (string name in SegmentedOrbitConfiguration.Presets) Btn(name,() => Build.LoadPreset(name),Build.Preset == name);
@@ -397,7 +400,8 @@ public sealed class SegmentedOrbitView : IDisposable
             Label($"Плотность: {lab.SegmentedEnemyDensity} · на арене {lab.AliveEnemies}");
             lab.SegmentedEnemyDensity = Mathf.RoundToInt(GUILayout.HorizontalSlider(lab.SegmentedEnemyDensity,12,64));
         }
-        Row(() => Btn(lab.SandboxSpawning ? "Стоп спавн" : "Продолжить спавн",() => lab.SetSandboxSpawning(!lab.SandboxSpawning)), () => Btn("Очистить арену",lab.ClearSandboxArena));
+        bool spawning = lab.SandboxSpawning && lab.AutomaticEnemySpawning;
+        Row(() => Btn(spawning ? "Стоп спавн" : "Продолжить спавн",() => lab.SetSandboxSpawning(!spawning)), () => Btn("Очистить арену",lab.ClearSandboxArena));
         Btn("Повторить бой",lab.RepeatSandboxEncounter);
         Heading("ЗАПАС ДЛЯ СРАВНЕНИЯ");
         GUILayout.Label($"Сегменты: {lab.SegmentedSegmentBudget}. Пистолеты: {lab.SegmentedPistols}, дробовики: {lab.SegmentedShotguns}, снайперки: {lab.SegmentedSnipers}, пилы: {lab.SegmentedSaws}. По {lab.SegmentedLinksPerType} связи каждого типа. Лимиты настраиваются на Lab Controller в Inspector.",small);

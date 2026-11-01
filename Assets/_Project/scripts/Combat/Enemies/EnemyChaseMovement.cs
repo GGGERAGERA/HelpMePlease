@@ -7,6 +7,8 @@ public class EnemyChaseMovement : EnemyMovement
     public enum ChasePattern { Direct, Flanker, Breacher }
     [Header("Production behaviour")]
     [SerializeField] private ChasePattern chasePattern;
+    [SerializeField] private bool useLabTacticalMovement;
+    public bool UsesProductionTacticalTuning => useLabTacticalMovement;
     [SerializeField] private LineRenderer ramTelegraph;
     public bool IsProductionTacticalEnemy => chasePattern != ChasePattern.Direct;
     [Header("Target")]
@@ -39,6 +41,7 @@ public class EnemyChaseMovement : EnemyMovement
     private bool flankingExperiment;
     private bool flankingApproach;
     private float flankingRemaining;
+    private float flankingWeight;
     private float flankingSide = 1f;
     private Transform flankingVisual;
     private Quaternion flankingAuthoredRotation;
@@ -49,9 +52,15 @@ public class EnemyChaseMovement : EnemyMovement
     private RamPhase ramPhase;
     private float ramRemaining;
     private Vector2 ramDirection;
-    // One committed attack in the arena, including its recovery window.
-    private static EnemyChaseMovement ramOwner;
-    private static float ramNextAllowedAt;
+    private bool ramNeedsSeparation;
+    private float ramReadyAt;
+    // Legacy opt-in experiments retain their defaults; authored tactical variants use the accepted lab tuning.
+    private float ramSpeedMultiplier = 2.5f;
+    private float ramApproachRange = 5f, ramPrepareSeconds = .65f, ramChargeSeconds = .45f;
+    private float ramRecoverySeconds = 1.2f, ramSeparationRange = 6.5f, ramCooldownSeconds = 2f;
+    private bool exactRamDuration;
+    private Collider2D[] ramWarningColliders;
+    private bool spiralApproach;
     private readonly Dictionary<Object, float> attackRecoveryModifiers = new();
     public bool CanDealContactDamage => !committedRamExperiment ||
         ramPhase == RamPhase.Chasing || ramPhase == RamPhase.Charging;
@@ -79,14 +88,29 @@ public class EnemyChaseMovement : EnemyMovement
         if (!ReferenceEquals(source, null)) attackRecoveryModifiers.Remove(source);
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetRamAdmission()
-    {
-        ramOwner = null;
-        ramNextAllowedAt = 0f;
-    }
     public bool IsCommittedRamExperiment => committedRamExperiment;
     public bool CanUseCommittedRam => ResolveSafeVisual() != null;
+
+    // Shared by accepted production variants and the lab's scene-local spawn path.
+    public Transform ConfigureLabTacticalMovement()
+    {
+        if (chasePattern == ChasePattern.Flanker)
+        {
+            spiralApproach = true;
+            normalSpeed = aggroSpeed = 7f;
+        }
+        else if (chasePattern == ChasePattern.Breacher)
+        {
+            normalSpeed = 4f; aggroSpeed = 4.8f;
+            ramSpeedMultiplier = 5f; // 24 m/s, retaining ordinary external speed modifiers.
+            ramApproachRange = 18f; ramPrepareSeconds = 1f; ramChargeSeconds = 1.2f;
+            ramRecoverySeconds = 1.5f; ramSeparationRange = 18f; ramCooldownSeconds = 3.5f;
+            exactRamDuration = true;
+            ramWarningColliders = GetComponents<Collider2D>();
+            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        }
+        return flankingVisual;
+    }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool woundedRetreatExperiment;
@@ -160,12 +184,13 @@ public class EnemyChaseMovement : EnemyMovement
         if (enabled) ConfigureWoundedRetreatExperiment(false);
 #endif
         ResetRamCycle();
+        ramNeedsSeparation = false;
+        ramReadyAt = 0f;
         committedRamExperiment = enabled && !flankingExperiment && CanUseCommittedRam;
     }
 
     private void ResetRamCycle()
     {
-        ReleaseRamAdmission();
         if (ramTelegraph != null) ramTelegraph.enabled = false;
         if (committedRamExperiment && flankingVisual != null)
             flankingVisual.localRotation = flankingAuthoredRotation;
@@ -175,18 +200,11 @@ public class EnemyChaseMovement : EnemyMovement
         ramDirection = Vector2.zero;
     }
 
-    private void ReleaseRamAdmission()
-    {
-        if (ramOwner != this) return;
-        ramOwner = null;
-        ramNextAllowedAt = Time.time + .35f;
-    }
-
     private void BeginRamRecovery()
     {
         if (ramTelegraph != null) ramTelegraph.enabled = false;
         ramPhase = RamPhase.Recovering;
-        ramRemaining = 1.2f;
+        ramRemaining = ramRecoverySeconds;
         chaseVelocity = Vector2.zero;
         if (flankingVisual != null) flankingVisual.localRotation = flankingAuthoredRotation;
     }
@@ -200,6 +218,7 @@ public class EnemyChaseMovement : EnemyMovement
         flankingExperiment = enabled;
         flankingApproach = enabled;
         flankingRemaining = enabled ? 3f : 0f;
+        flankingWeight = 0f;
         flankingSide = clockwise ? -1f : 1f;
         if (!enabled) RestoreFlankingPose();
     }
@@ -277,6 +296,7 @@ public class EnemyChaseMovement : EnemyMovement
 
     private void OnEnable()
     {
+        if (useLabTacticalMovement) ConfigureLabTacticalMovement();
         if (chasePattern == ChasePattern.Flanker)
             ConfigureFlankingExperiment(true, (GetInstanceID() & 2) == 0);
         else if (chasePattern == ChasePattern.Breacher)
@@ -375,12 +395,22 @@ public class EnemyChaseMovement : EnemyMovement
         Vector2 productionDirection = offset.normalized;
         if (flankingExperiment && !assaultDestination.HasValue)
         {
-            flankingRemaining = Mathf.Max(0f, flankingRemaining - Time.fixedDeltaTime);
-            if (sqrDistance <= 4f * 4f || flankingRemaining <= 0f) flankingApproach = false;
-            if (flankingApproach)
+            if (!spiralApproach)
+            {
+                flankingRemaining = Mathf.Max(0f, flankingRemaining - Time.fixedDeltaTime);
+                if (sqrDistance <= 4f * 4f || flankingRemaining <= 0f) flankingApproach = false;
+            }
+            // Blend out before the ordinary chase takes over; never reverse side
+            // or inspect the player's weapon layout to choose a supposedly weak spot.
+            // A persistent inward+tangent vector forms a shrinking spiral, with a
+            // stable side and a soft contact transition instead of endless circling.
+            float targetWeight = spiralApproach ? Mathf.InverseLerp(.85f, 2.5f, Mathf.Sqrt(sqrDistance)) : flankingApproach
+                ? Mathf.InverseLerp(4f, 5f, Mathf.Sqrt(sqrDistance)) * Mathf.Clamp01(flankingRemaining / .25f) : 0f;
+            flankingWeight = Mathf.MoveTowards(flankingWeight, targetWeight, Time.fixedDeltaTime * 4f);
+            if (flankingWeight > 0f)
             {
                 Vector2 tangent = new Vector2(-productionDirection.y, productionDirection.x) * flankingSide;
-                productionDirection = (productionDirection + tangent * .9f).normalized;
+                productionDirection = (productionDirection + tangent * ((spiralApproach ? 2.4f : .9f) * flankingWeight)).normalized;
             }
         }
         Vector2 direction = assaultDestination.HasValue ? productionDirection :
@@ -392,13 +422,13 @@ public class EnemyChaseMovement : EnemyMovement
         bool ramControlsMovement = committedRamExperiment && !assaultDestination.HasValue;
         if (ramControlsMovement)
         {
-            if (ramPhase == RamPhase.Chasing && sqrDistance <= 25f && sqrDistance > .0001f &&
-                ramOwner == null && Time.time >= ramNextAllowedAt)
+            if (ramNeedsSeparation && sqrDistance >= ramSeparationRange * ramSeparationRange) ramNeedsSeparation = false;
+            if (ramPhase == RamPhase.Chasing && sqrDistance <= ramApproachRange * ramApproachRange && sqrDistance > .0001f &&
+                !ramNeedsSeparation && Time.time >= ramReadyAt)
             {
-                ramOwner = this;
                 ramDirection = offset.normalized;
                 ramPhase = RamPhase.Preparing;
-                ramRemaining = .65f;
+                ramRemaining = ramPrepareSeconds;
                 // Tilt the safe graphic parent toward the committed world line.
                 float localX = transform.InverseTransformDirection(ramDirection).x;
                 flankingVisual.localRotation = flankingAuthoredRotation *
@@ -406,32 +436,45 @@ public class EnemyChaseMovement : EnemyMovement
             }
             else if (ramPhase != RamPhase.Chasing)
             {
-                ramRemaining -= Time.fixedDeltaTime /
-                    (ramPhase == RamPhase.Recovering ? AttackRecoveryMultiplier : 1f);
+                // The long lab charge spends its time with the movement command,
+                // including its first/last fixed step, so it cannot overrun the cue.
+                if (!exactRamDuration || ramPhase != RamPhase.Charging)
+                    ramRemaining -= Time.fixedDeltaTime /
+                        (ramPhase == RamPhase.Recovering ? AttackRecoveryMultiplier : 1f);
                 if (ramRemaining <= 0f)
                 {
                     if (ramPhase == RamPhase.Preparing)
                     {
                         ramPhase = RamPhase.Charging;
-                        ramRemaining = .45f;
+                        ramRemaining = ramChargeSeconds;
                     }
                     else if (ramPhase == RamPhase.Charging)
                     {
                         BeginRamRecovery();
                     }
-                    else ResetRamCycle();
+                    else
+                    {
+                        ResetRamCycle();
+                        ramNeedsSeparation = true;
+                        ramReadyAt = Time.time + ramCooldownSeconds;
+                    }
                 }
             }
             if (ramPhase != RamPhase.Chasing)
             {
                 direction = ramDirection;
-                selectedSpeed = ramPhase == RamPhase.Charging ? aggroSpeed * 1.75f : 0f;
+                selectedSpeed = ramPhase == RamPhase.Charging ? aggroSpeed * ramSpeedMultiplier : 0f;
                 isRunning = ramPhase == RamPhase.Charging;
             }
         }
         selectedSpeed *= speedMultiplier *
             anomalySpeedMultiplier *
             worldRuleSpeedMultiplier * threatSpeedMultiplier;
+        if (exactRamDuration && ramControlsMovement && ramPhase == RamPhase.Charging)
+        {
+            selectedSpeed *= Mathf.Clamp01(ramRemaining / Time.fixedDeltaTime);
+            ramRemaining = Mathf.Max(0f, ramRemaining - Time.fixedDeltaTime);
+        }
 
         if (ramTelegraph != null)
         {
@@ -439,9 +482,36 @@ public class EnemyChaseMovement : EnemyMovement
             if (ramTelegraph.enabled)
             {
                 ramTelegraph.SetPosition(0, transform.position);
-                float chargeDistance = aggroSpeed * 1.75f * .45f * speedMultiplier *
+                float chargeDistance = aggroSpeed * ramSpeedMultiplier * ramChargeSeconds * speedMultiplier *
                     anomalySpeedMultiplier * worldRuleSpeedMultiplier * threatSpeedMultiplier;
                 ramTelegraph.SetPosition(1, transform.position + (Vector3)(ramDirection * chargeDistance));
+                float charge = Mathf.Clamp01(1f - ramRemaining / ramPrepareSeconds);
+                ramTelegraph.startWidth = Mathf.Lerp(.075f, .15f, charge);
+                ramTelegraph.endWidth = Mathf.Lerp(.04f, .08f, charge);
+                if (exactRamDuration && ramWarningColliders != null && ramWarningColliders.Length > 0)
+                {
+                    // Both the trigger and the solid body can deal contact damage.
+                    // Project their union onto the locked path: a conservative full
+                    // swept corridor, including the body's offset and both end caps.
+                    Bounds bounds = new Bounds(transform.position, Vector3.zero);
+                    bool found = false;
+                    foreach (var collider in ramWarningColliders)
+                        if (collider != null && collider.enabled)
+                        { if (!found) { bounds = collider.bounds; found = true; } else bounds.Encapsulate(collider.bounds); }
+                    if (found)
+                    {
+                        Vector2 extents = bounds.extents;
+                        Vector2 perpendicular = new(-ramDirection.y, ramDirection.x);
+                        float halfWidth = Mathf.Abs(perpendicular.x) * extents.x + Mathf.Abs(perpendicular.y) * extents.y;
+                        float cap = Mathf.Abs(ramDirection.x) * extents.x + Mathf.Abs(ramDirection.y) * extents.y;
+                        ramTelegraph.SetPosition(0, bounds.center - (Vector3)(ramDirection * cap));
+                        ramTelegraph.SetPosition(1, bounds.center + (Vector3)(ramDirection * (chargeDistance + cap)));
+                        ramTelegraph.startWidth = ramTelegraph.endWidth = halfWidth * 2f;
+                        // Charge remains readable without shrinking the shown damage area.
+                        ramTelegraph.startColor = new Color(1f, .22f, .16f, Mathf.Lerp(.35f, .9f, charge));
+                        ramTelegraph.endColor = new Color(1f, .65f, .2f, Mathf.Lerp(.3f, .65f, charge));
+                    }
+                }
             }
         }
 
@@ -495,15 +565,16 @@ public class EnemyChaseMovement : EnemyMovement
 
     private void UpdateFlankingPose(Vector2 direction)
     {
-        if (!flankingExperiment || !flankingApproach || assaultDestination.HasValue)
+        if (!flankingExperiment || assaultDestination.HasValue)
         {
             RestoreFlankingPose();
             return;
         }
         if (flankingVisual == null) return;
         // Absolute offset, independent of facing flips and previous frames.
-        flankingVisual.localRotation = flankingAuthoredRotation *
-            Quaternion.Euler(0f, 0f, -12f * Mathf.Clamp(direction.x, -1f, 1f));
+        var target = flankingAuthoredRotation *
+            Quaternion.Euler(0f, 0f, -12f * Mathf.Clamp(direction.x, -1f, 1f) * flankingWeight);
+        flankingVisual.localRotation = Quaternion.Slerp(flankingVisual.localRotation, target, 1f - Mathf.Exp(-12f * Time.fixedDeltaTime));
         flankingPoseApplied = true;
     }
 

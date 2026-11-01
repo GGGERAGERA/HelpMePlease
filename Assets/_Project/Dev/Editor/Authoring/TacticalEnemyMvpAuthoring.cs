@@ -27,19 +27,22 @@ public static class TacticalEnemyMvpAuthoring
     {
         var flanker = Variant("Flanker", false, EnemyChaseMovement.ChasePattern.Flanker);
         var breacher = Variant("Breacher", false, EnemyChaseMovement.ChasePattern.Breacher);
-        var startFlanker = Variant("Flanker", true, EnemyChaseMovement.ChasePattern.Flanker);
-        var startBreacher = Variant("Breacher", true, EnemyChaseMovement.ChasePattern.Breacher);
+        var startFlanker = AssetDatabase.LoadAssetAtPath<GameObject>(Enemies + "p_Enemy_Flanker_Start.prefab");
+        var startBreacher = AssetDatabase.LoadAssetAtPath<GameObject>(Enemies + "p_Enemy_Breacher_Start.prefab");
+        var spiders = new[] { "White", "Dark", "BigGait", "Blue" }.Select(Spider).ToArray();
         foreach (string guid in AssetDatabase.FindAssets("t:EnemySpawnProfile", new[] { "Assets/_Project/Data/Stages/EnemySpawnProfiles" }))
         {
             var profile = AssetDatabase.LoadAssetAtPath<EnemySpawnProfile>(AssetDatabase.GUIDToAssetPath(guid));
-            bool opening = profile.name == "ESP_Level_01";
+            if (!int.TryParse(profile.name.Replace("ESP_Level_", ""), out int sector) || sector < 1 || sector > RunRoute.TotalSectors) continue;
             var serialized = new SerializedObject(profile);
             var phases = serialized.FindProperty("phases");
             for (int i = 0; i < phases.arraySize; i++)
             {
                 var entries = phases.GetArrayElementAtIndex(i).FindPropertyRelative("enemies");
-                Add(entries, opening ? startFlanker : flanker, 8f, 2);
-                Add(entries, opening ? startBreacher : breacher, 5f, 1);
+                Remove(entries, startFlanker); Remove(entries, startBreacher);
+                if (sector >= 2) Add(entries, flanker, 6f, 0, 2); else Remove(entries, flanker);
+                if (sector >= 3) Add(entries, breacher, 4f, 0, 3); else Remove(entries, breacher);
+                SplitChaserWeight(entries, spiders);
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(profile);
@@ -57,6 +60,8 @@ public static class TacticalEnemyMvpAuthoring
             instance.name = Path.GetFileNameWithoutExtension(path);
             var movement = new SerializedObject(instance.GetComponent<EnemyChaseMovement>());
             movement.FindProperty("chasePattern").enumValueIndex = (int)pattern;
+            movement.FindProperty("useLabTacticalMovement").boolValue = true;
+            instance.GetComponent<EnemyHealth>().maxHealth = pattern == EnemyChaseMovement.ChasePattern.Flanker ? 16f : 32f;
             if (pattern == EnemyChaseMovement.ChasePattern.Breacher)
             {
                 var cue = new GameObject("Ram direction telegraph").AddComponent<LineRenderer>();
@@ -74,6 +79,16 @@ public static class TacticalEnemyMvpAuthoring
                 movement.FindProperty("ramTelegraph").objectReferenceValue = cue;
             }
             movement.ApplyModifiedPropertiesWithoutUndo();
+            var visual = (Transform)movement.FindProperty("visualRoot").objectReferenceValue;
+            while (visual.parent != instance.transform) visual = visual.parent;
+            bool isFlanker = pattern == EnemyChaseMovement.ChasePattern.Flanker;
+            visual.localScale = Vector3.Scale(visual.localScale, isFlanker ? new Vector3(.85f, 1.15f, 1f) : new Vector3(1.35f, 1.25f, 1f));
+            foreach (var sprite in visual.GetComponentsInChildren<SpriteRenderer>(true))
+                sprite.color = isFlanker ? new Color(.88f, .42f, 1f, sprite.color.a) : new Color(1f, .4f, .24f, sprite.color.a);
+            var timer = instance.AddComponent<EnemyTacticalTimedShield>();
+            timer.SpawnChance = isFlanker ? .20f : .25f;
+            timer.ShieldTemplate = AssetDatabase.LoadAssetAtPath<GameObject>(Enemies + "BreakableShieldBearer.prefab").GetComponent<EnemyDirectionalShield>();
+            timer.Initialize(timer.ShieldTemplate, 3f); // Bake disabled shield parts; runtime never restarts the actor.
             var identity = new SerializedObject(instance.GetComponent<EnemyIdentity>());
             identity.FindProperty("enemyId").stringValue = id;
             identity.ApplyModifiedPropertiesWithoutUndo();
@@ -82,7 +97,12 @@ public static class TacticalEnemyMvpAuthoring
         finally { Object.DestroyImmediate(instance); }
     }
 
-    private static void Add(SerializedProperty entries, GameObject prefab, float weight, int cap)
+    private static void Remove(SerializedProperty entries, GameObject prefab)
+    {
+        for (int i = entries.arraySize - 1; i >= 0; i--)
+            if (entries.GetArrayElementAtIndex(i).FindPropertyRelative("enemyPrefab").objectReferenceValue == prefab) entries.DeleteArrayElementAtIndex(i);
+    }
+    private static void Add(SerializedProperty entries, GameObject prefab, float weight, int cap, int minimumSector)
     {
         SerializedProperty entry = null;
         for (int i = 0; i < entries.arraySize; i++)
@@ -98,8 +118,48 @@ public static class TacticalEnemyMvpAuthoring
         entry.FindPropertyRelative("enemyPrefab").objectReferenceValue = prefab;
         entry.FindPropertyRelative("weight").floatValue = weight;
         entry.FindPropertyRelative("maxAliveOfType").intValue = cap;
-        entry.FindPropertyRelative("useExactAliveLimit").boolValue = true;
-        entry.FindPropertyRelative("minimumRunLevel").intValue = 1;
+        entry.FindPropertyRelative("useExactAliveLimit").boolValue = cap > 0;
+        entry.FindPropertyRelative("minimumRunLevel").intValue = minimumSector;
+    }
+
+    private static GameObject Spider(string kind)
+    {
+        string target = Enemies + "p_Enemy_Spider" + kind + ".prefab";
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(target) == null)
+            AssetDatabase.CopyAsset("Assets/_Project/Dev/Labs/OrbitalLab/ArtistComparison/LabSpider" + kind + ".prefab", target);
+        return AssetDatabase.LoadAssetAtPath<GameObject>(target);
+    }
+
+    private static void SplitChaserWeight(SerializedProperty entries, GameObject[] spiders)
+    {
+        SerializedProperty original = null;
+        float total = 0f;
+        for (int i = 0; i < entries.arraySize; i++)
+        {
+            var entry = entries.GetArrayElementAtIndex(i);
+            var prefab = entry.FindPropertyRelative("enemyPrefab").objectReferenceValue as GameObject;
+            if (prefab != null && (prefab.name.StartsWith("p_Enemy_classic") || spiders.Contains(prefab)))
+            {
+                total += entry.FindPropertyRelative("weight").floatValue;
+                if (prefab.name.StartsWith("p_Enemy_classic")) original = entry.Copy();
+            }
+        }
+        if (original == null) return;
+        float share = total / 5f;
+        int cap = original.FindPropertyRelative("maxAliveOfType").intValue;
+        bool exact = original.FindPropertyRelative("useExactAliveLimit").boolValue;
+        int minimum = original.FindPropertyRelative("minimumRunLevel").intValue;
+        original.FindPropertyRelative("weight").floatValue = share;
+        foreach (var spider in spiders)
+        {
+            Add(entries, spider, share, cap, minimum);
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var entry = entries.GetArrayElementAtIndex(i);
+                if (entry.FindPropertyRelative("enemyPrefab").objectReferenceValue == spider)
+                    entry.FindPropertyRelative("useExactAliveLimit").boolValue = exact;
+            }
+        }
     }
 }
 #endif

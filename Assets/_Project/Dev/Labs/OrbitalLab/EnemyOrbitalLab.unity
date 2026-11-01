@@ -877,7 +877,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dfbc23b97ff0d5f4187724c34123749e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradePanelView
 --- !u!224 &1404583190 stripped
 RectTransform:
@@ -933,7 +933,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -950,7 +950,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -1018,6 +1018,89 @@ MonoBehaviour:
   Character: {fileID: 11400000, guid: 6aad8e558b07e8243b3b79a85aefa335, type: 2}
   CameraRig: {fileID: 1190010011}
   Rewards: {fileID: 0}
+  ScenePlayer: {fileID: 0}
+  ArtistComparisonEnabled: 1
+  ArtistSpiderPrefabs:
+  - {fileID: 271443408238426894, guid: 6e357dd2e12dc6543af9eeb525a063e7, type: 3}
+  - {fileID: 481729627446576498, guid: 8d2439a23897bb74a9c01b1e3495d94b, type: 3}
+  - {fileID: 919981803637764755, guid: 23cbf40f9025d3148bf463b6990e9eab, type: 3}
+  - {fileID: 5016059592784206368, guid: b2fafcc0ab3bef7408a911c6b34a6eb7, type: 3}
+  - {fileID: 8074722678228422782, guid: 4896bb707206116448950de0ae031152, type: 3}
+  ArtistCleanView: 1
+  ArtistTurrets:
+  - Name: "\u0422\u0435\u043A\u0443\u0449\u0438\u0439 \u041F\u0435\u0440\u0435\u0445\u0432\u0430\u0442"
+    Source: EnemyOrbitalLabLaserTurret.cs
+    Visual: {fileID: 0}
+    CombatPrefab: {fileID: 0}
+    LaserVisual: {fileID: 0}
+  - Name: "Turret3 \xB7 \u0433\u043E\u0442\u043E\u0432\u044B\u0439 prefab"
+    Source: 'p_EnemyTurret1.prefab
+
+      Turret3.png'
+    Visual: {fileID: 7332674889250032917, guid: f88a42cdc1cebdb40b38870ec61302ef, type: 3}
+    CombatPrefab: {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
+    LaserVisual: {fileID: 4709738423303360202, guid: db788b2853d3c2c40b78517c64924938, type: 3}
+  - Name: "MiniTurret4 \xB7 \u0433\u043E\u0442\u043E\u0432\u044B\u0439 prefab"
+    Source: 'p_EnemyTurret2.prefab
+
+      MiniTurret1.png'
+    Visual: {fileID: 7933843712282236682, guid: 0ee1c42d3676409408e42959fa123db0, type: 3}
+    CombatPrefab: {fileID: 1334349216365075605, guid: 0ddb73a39a57acb48b4f4ece45b664f1, type: 3}
+    LaserVisual: {fileID: 7761347817512894199, guid: 30a3b77a9f4aecf4abedcb07e534eb9e, type: 3}
+  - Name: "MiniTurret1 \xB7 \u0431\u0435\u043B\u0430\u044F"
+    Source: 'newEnemyes1/
+
+      MiniTurret1.aseprite'
+    Visual: {fileID: 1363180586361670566, guid: 4aea3be5cc8a8a54586918a7995784c0, type: 3}
+    CombatPrefab: {fileID: 1559940490272786650, guid: b6c340c6879fd714dbcca0e1d8238382, type: 3}
+    LaserVisual: {fileID: 6057466127367639967, guid: 5b26d11b201df854f81dd2351ca1f362, type: 3}
+  - Name: "Turret1 \xB7 \u0441\u043B\u043E\u0438 / \u0430\u043D\u0438\u043C\u0430\u0446\u0438\u044F"
+    Source: Aseprite/Turret1.aseprite
+    Visual: {fileID: 6840076768688708745, guid: b6261f38c4012834fb76cad7868931e8, type: 3}
+    CombatPrefab: {fileID: 0}
+    LaserVisual: {fileID: 0}
+  - Name: "Turret2 \xB7 \u0441\u0442\u0430\u0440\u044B\u0439 \u043A\u0440\u0430\u0441\u043D\u044B\u0439"
+    Source: 'Sprites/Turret2.png
+
+      Turret2_20'
+    Visual: {fileID: 1005580897705431533, guid: 2759143f795010844aa87f88aa50ba2e, type: 3}
+    CombatPrefab: {fileID: 0}
+    LaserVisual: {fileID: 0}
+  - Name: "Turret1 \xB7 \u0441\u0442\u0430\u0440\u044B\u0439 \u0441\u0435\u0440\u044B\u0439"
+    Source: 'Sprites/Turret1.png
+
+      Turret1_10'
+    Visual: {fileID: 8465822104171405089, guid: ba1c2dac3a516d54596d704711c3b49f, type: 3}
+    CombatPrefab: {fileID: 0}
+    LaserVisual: {fileID: 0}
+  - Name: "MiniTurret1 \xB7 \u0441\u0442\u0430\u0440\u044B\u0435 \u0434\u0435\u0442\u0430\u043B\u0438"
+    Source: "MiniTurret1.png @bbc17af8\n\u0410\u0442\u043B\u0430\u0441 \u0434\u0435\u0442\u0430\u043B\u0435\u0439,
+      \u0431\u0435\u0437 prefab"
+    Visual: {fileID: 2926386159938303415, guid: 526ab9e450b9c5047aa29a34ef8b0b6e, type: 3}
+    CombatPrefab: {fileID: 0}
+    LaserVisual: {fileID: 0}
+  LaserTurretArtistIndex: -1
+  RandomEnemyTypes: 1
+  DensitySpawnRate: 25
+  AutomaticInterceptions: 1
+  InterceptionMinimumInterval: 9
+  InterceptionMaximumInterval: 16
+  AnomalyExperiment: {fileID: 0}
+  SegmentedSegmentBudget: 12
+  SegmentedPistols: 4
+  SegmentedShotguns: 1
+  SegmentedSnipers: 1
+  SegmentedSaws: 0
+  SegmentedLinksPerType: 2
+  SegmentedExtraShotCooldown: 0.5
+  SegmentedSkipStrength: 0.65
+  SegmentedRadii: {x: 2.4, y: 3.6, z: 4.8}
+  SegmentedSpeeds: {x: 42, y: 36, z: 30}
+  ManualRotationCapacity: 100
+  ManualRotationSpeed: 90
+  ManualRotationDrain: 25
+  ManualRotationRecovery: 12
+  SegmentedEnemyDensity: 48
   EnemyPrefabs:
   - {fileID: 3350373065324294653, guid: 74d98ca6a4a3cc94daabdf7b81bb7f13, type: 3}
   - {fileID: 1334349216365075605, guid: 9a2217687199c7b41894a7ab9673f951, type: 3}
@@ -1025,6 +1108,8 @@ MonoBehaviour:
   - {fileID: 2513438768801038890, guid: c234c537ed1fdfe489feaf994e3dbca7, type: 3}
   - {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
   - {fileID: 1432338969431510999, guid: bbeab41e755732443b4201b8641136c9, type: 3}
+  - {fileID: 7821586422439862423, guid: 326afad193fa87641ba4865b7fab1529, type: 3}
+  - {fileID: 6036874466036541359, guid: a90b92d6d8918f942a5a99f5b9ac0b9b, type: 3}
   MaximumCenterOffset: 6
   CenterMoveSpeed: 6
   CenterReturnSpeed: 8
@@ -1038,7 +1123,14 @@ MonoBehaviour:
   PursuerPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
   PistolProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
   Pistol:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
     Category: 0
+    Kind: 0
     WeaponVisual: {fileID: 874321222499448941, guid: 061397fe35d9a524f9ac8e1c58b25f4a, type: 3}
     ProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
     ProjectileVisualScale: 1
@@ -1053,6 +1145,8 @@ MonoBehaviour:
     BurstInterval: 0.09
     Pellets: 1
     SpreadDegrees: 0
+    AimLeadSeconds: 0.35
+    MaxAimCorrectionDegrees: 12
     BodyPierces: 1
     ChargeSeconds: 0
     Knockback: 0
@@ -1063,7 +1157,14 @@ MonoBehaviour:
     ContactHitInterval: 0.32
     SpinDegreesPerSecond: 720
   Needle:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
     Category: 0
+    Kind: 0
     WeaponVisual: {fileID: 0}
     ProjectileVisual: {fileID: 584409076233943832, guid: f4175d4083cef5146abed5022e4a1315, type: 3}
     ProjectileVisualScale: 1
@@ -1078,6 +1179,8 @@ MonoBehaviour:
     BurstInterval: 0.09
     Pellets: 1
     SpreadDegrees: 3
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
     BodyPierces: 1
     ChargeSeconds: 0
     Knockback: 0
@@ -1088,7 +1191,14 @@ MonoBehaviour:
     ContactHitInterval: 0.32
     SpinDegreesPerSecond: 720
   Shotgun:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
     Category: 0
+    Kind: 6
     WeaponVisual: {fileID: 3229308960085762355, guid: 4ff9b587760ccf243ab1a47bcf521cc9, type: 3}
     ProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
     ProjectileVisualScale: 1
@@ -1103,6 +1213,8 @@ MonoBehaviour:
     BurstInterval: 0.09
     Pellets: 7
     SpreadDegrees: 42
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
     BodyPierces: 1
     ChargeSeconds: 0
     Knockback: 4
@@ -1113,7 +1225,14 @@ MonoBehaviour:
     ContactHitInterval: 0.32
     SpinDegreesPerSecond: 720
   Spear:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
     Category: 0
+    Kind: 0
     WeaponVisual: {fileID: 0}
     ProjectileVisual: {fileID: 6260666622650131900, guid: 5b8508fcb63f4724d8ea39fc8694fb5a, type: 3}
     ProjectileVisualScale: 1
@@ -1128,6 +1247,8 @@ MonoBehaviour:
     BurstInterval: 0.09
     Pellets: 1
     SpreadDegrees: 0
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
     BodyPierces: 3
     ChargeSeconds: 0.28
     Knockback: 0
@@ -1138,7 +1259,14 @@ MonoBehaviour:
     ContactHitInterval: 0.32
     SpinDegreesPerSecond: 720
   Sniper:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
     Category: 0
+    Kind: 5
     WeaponVisual: {fileID: 7056152298501357713, guid: 3216bdf2ebdbff44bae93cf0cbca90d3, type: 3}
     ProjectileVisual: {fileID: 5000, guid: 2dcd05dc20a6443ca8c86af9ee4679df, type: 3}
     ProjectileVisualScale: 1
@@ -1153,6 +1281,8 @@ MonoBehaviour:
     BurstInterval: 0.09
     Pellets: 1
     SpreadDegrees: 0
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
     BodyPierces: 1
     ChargeSeconds: 0
     Knockback: 0
@@ -1163,7 +1293,14 @@ MonoBehaviour:
     ContactHitInterval: 0.32
     SpinDegreesPerSecond: 720
   Saw:
+    Presentation:
+      Color: {r: 0.1, g: 0.95, b: 1, a: 1}
+      BodySize: {x: 0.24, y: 0.16}
+      TrailSeconds: 0.045
+      TrailWidth: 0.035
+      TrailOpacity: 0.3
     Category: 1
+    Kind: 7
     WeaponVisual: {fileID: 4188619148358559066, guid: c7cb30b88c9e334419754f856162812a, type: 3}
     ProjectileVisual: {fileID: 0}
     ProjectileVisualScale: 1
@@ -1178,6 +1315,8 @@ MonoBehaviour:
     BurstInterval: 0.09
     Pellets: 1
     SpreadDegrees: 3
+    AimLeadSeconds: 0
+    MaxAimCorrectionDegrees: 0
     BodyPierces: 1
     ChargeSeconds: 0
     Knockback: 0
@@ -1197,6 +1336,9 @@ MonoBehaviour:
   TestShooterHealth: 12
   Pattern: 0
   SelectedEnemy: 0
+  ModuleRapidMultiplier: 1.5
+  ModulePierceBonus: 2
+  ModuleMultishotAngle: 6
 --- !u!4 &1501457688
 Transform:
   m_ObjectHideFlags: 0

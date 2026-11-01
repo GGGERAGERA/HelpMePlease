@@ -23,6 +23,7 @@ public sealed partial class EnemyOrbitalLabController
     { InterceptionVariant.Single => "Одиночный", InterceptionVariant.Sequential => "Последовательный", _ => "Перекрёстный" } : "Обычный бой";
     readonly System.Random incidentRandom = new();
     readonly List<int> densityTypes = new(), densityBag = new();
+    int densityRemainderSequence;
     readonly List<EnemyOrbitalLabLaserTurret> laserTurrets = new();
     readonly Dictionary<GameObject, SimplePrefabPool> labEnemyProjectilePools = new();
     float densityCredit, nextIncident = 10f, sequentialDelay, laserDamageReadyAt;
@@ -58,6 +59,17 @@ public sealed partial class EnemyOrbitalLabController
         Add(-3, PursuerPrefab); Add(-4, BreakableShieldBearerPrefab);
         Add(-6, BreakableShieldShooterPrefab); Add(-1, TestShooterPrefab);
         densityBag.AddRange(densityTypes);
+        // A shuffled twenty-spawn batch: 10% flankers, 5% breachers; the other
+        // connected types rotate through the remaining 85%. No production caps.
+        int flanker = densityTypes.FindIndex(t => LabEnemyPrefab(t).name.Contains("Flanker"));
+        int breacher = densityTypes.FindIndex(t => LabEnemyPrefab(t).name.Contains("Breacher"));
+        if (flanker >= 0 && breacher >= 0 && densityTypes.Count > 2)
+        {
+            int flankType = densityTypes[flanker], breachType = densityTypes[breacher];
+            var ordinary = densityTypes.FindAll(t => t != flankType && t != breachType);
+            densityBag.Clear(); densityBag.Add(flankType); densityBag.Add(flankType); densityBag.Add(breachType);
+            for (int i = 0; i < 17; i++) densityBag.Add(ordinary[densityRemainderSequence++ % ordinary.Count]);
+        }
         // Shuffle bags guarantee variety, including rare lab actors, rather than relying on luck.
         for (int i = densityBag.Count - 1; i > 0; i--)
         { int j = incidentRandom.Next(i + 1); (densityBag[i], densityBag[j]) = (densityBag[j], densityBag[i]); }
@@ -107,12 +119,12 @@ public sealed partial class EnemyOrbitalLabController
     {
         if (!HasInterceptionExperiment || !Ready || Paused || Player.IsDead) return;
         float dt = Time.deltaTime;
-        if (DensityControl)
+        if (DensityControl && AutomaticEnemySpawning)
         {
             int alive = AliveEnemies;
             // Retire excess actors gradually when lowering the target; this is not a kill/reward.
             for (int i = enemies.Count - 1, retired = 0; i >= 0 && alive > TargetEnemyDensity && retired < 2; i--)
-                if (enemies[i] != null && !enemies[i].IsDead)
+                if (enemies[i] != null && !enemies[i].IsDead && !manualEnemies.ContainsKey(enemies[i]))
                 { var enemy = enemies[i]; enemies.RemoveAt(i); enemy.gameObject.SetActive(false); Destroy(enemy.gameObject); alive--; retired++; }
             densityCredit = alive < TargetEnemyDensity ? Mathf.Min(2f, densityCredit + dt * Mathf.Clamp(DensitySpawnRate, 1f, 60f)) : 0f;
             while (densityCredit >= 1f && alive < TargetEnemyDensity)
@@ -122,7 +134,6 @@ public sealed partial class EnemyOrbitalLabController
         {
             var turret = laserTurrets[i];
             if (turret == null) { laserTurrets.RemoveAt(i); continue; }
-            turret.Tick(dt);
         }
         if (sequentialPending)
         {
@@ -160,7 +171,8 @@ public sealed partial class EnemyOrbitalLabController
         float slope = (float)incidentRandom.NextDouble() * 2f - 1f;
         SpawnLaserTurret(firstFromLeft, slope, -.35f);
         if (variant == InterceptionVariant.Sequential)
-        { sequentialPending = true; sequentialDelay = 3.2f; }
+        { sequentialPending = true; sequentialDelay = EnemyOrbitalLabLaserTurret.EnterSeconds + EnemyOrbitalLabLaserTurret.ChargeSeconds +
+            EnemyOrbitalLabLaserTurret.FireSeconds + EnemyOrbitalLabLaserTurret.RetractSeconds + .25f; }
         else if (variant == InterceptionVariant.Dual)
             SpawnLaserTurret(!firstFromLeft, -slope + (slope >= 0 ? -1.5f : 1.5f), 2.1f * (incidentRandom.Next(2) == 0 ? -1 : 1));
         if (!FindSafeEscape())
@@ -171,13 +183,13 @@ public sealed partial class EnemyOrbitalLabController
     void SpawnLaserTurret(bool left, float verticalOffset, float aimOffset)
     {
         var camera = CameraRig.ControlledCamera;
-        Vector2 edge = camera.ViewportToWorldPoint(new Vector3(left ? .035f : .965f, .5f, -camera.transform.position.z));
+        Vector2 edge = camera.ViewportToWorldPoint(new Vector3(left ? 0f : 1f, .5f, -camera.transform.position.z));
+        edge.x += left ? 1f : -1f;
         Vector2 player = Player.transform.position;
         edge.y = Mathf.Clamp(player.y + verticalOffset * 2f, camera.ViewportToWorldPoint(new Vector3(0, .12f, -camera.transform.position.z)).y,
             camera.ViewportToWorldPoint(new Vector3(0, .88f, -camera.transform.position.z)).y);
-        edge.x = Mathf.Clamp(edge.x, -27.5f, 27.5f); edge.y = Mathf.Clamp(edge.y, -27.5f, 27.5f);
         // A player hugging an edge must not get a turret directly on top of them.
-        if (Vector2.Distance(edge, player) < 2f) edge.y = Mathf.Clamp(edge.y + (edge.y < player.y ? -3f : 3f), -27.5f, 27.5f);
+        if (Vector2.Distance(edge, player) < 2f) edge.y += edge.y < player.y ? -3f : 3f;
         var go = new GameObject("Протокол Перехват · " + (left ? "L" : "R"));
         go.transform.SetParent(transform); go.transform.position = edge;
         int enemyLayer = LayerMask.NameToLayer("Enemy");
@@ -195,7 +207,7 @@ public sealed partial class EnemyOrbitalLabController
             if (Mathf.Abs(Vector2.Dot(first, direction)) > Mathf.Cos(12f * Mathf.Deg2Rad))
                 direction = Quaternion.Euler(0, 0, incidentRandom.Next(2) == 0 ? 18 : -18) * -first;
         }
-        turret.Initialize(this, direction, LaserTurretSprite());
+        turret.Initialize(this, direction, LaserTurretSprite(), left, edge);
         laserTurrets.Add(turret); health.NotifySpawnConfigured();
     }
 
@@ -212,7 +224,7 @@ public sealed partial class EnemyOrbitalLabController
                 Vector3 view = camera.WorldToViewportPoint(point);
                 if (view.x < .06f || view.x > .94f || view.y < .08f || view.y > .92f) continue;
                 bool clear = true;
-                foreach (var turret in laserTurrets) if (turret != null && turret.DistanceToBeam(point) < 1.1f) { clear = false; break; }
+                foreach (var turret in laserTurrets) if (turret != null && turret.DistanceToPlannedBeam(point) < 1.1f) { clear = false; break; }
                 if (clear) { safeEscape = point; return true; }
             }
         return false;
@@ -222,6 +234,11 @@ public sealed partial class EnemyOrbitalLabController
     {
         foreach (var turret in laserTurrets) if (turret != null) { turret.Cancel(); Destroy(turret.gameObject); }
         laserTurrets.Clear(); sequentialPending = false; InterceptionActive = false; ScheduleNextIncident();
+    }
+    void LateTickInterceptionTurrets()
+    {
+        if (!HasInterceptionExperiment || !Ready || Paused || Player.IsDead) return;
+        foreach (var turret in laserTurrets) if (turret != null) turret.Tick(Time.deltaTime);
     }
     internal void RecordLaserShot() => LaserShots++;
     internal void RecordTurretDestroyed() => LaserTurretsDestroyed++;
@@ -270,7 +287,7 @@ public sealed partial class EnemyOrbitalLabController
         if (!HasInterceptionExperiment) return;
         if (incidentToggleStyle == null) incidentToggleStyle = new GUIStyle(GUI.skin.toggle) { fontSize = 13, wordWrap = true };
         GUILayout.Space(8); GUILayout.Label("ПЛОТНОСТЬ ВРАГОВ", label);
-        GUILayout.Label($"Живые: {AliveEnemies}/{TargetEnemyDensity}" + (DensityControl ? "" : " · сценарий"), small);
+        GUILayout.Label($"Цель: {TargetEnemyDensity} · всего живых: {AliveEnemies}" + (DensityControl ? "" : " · сценарий"), small);
         int density = Mathf.RoundToInt(GUILayout.HorizontalSlider(TargetEnemyDensity, 0, 150));
         if (density != TargetEnemyDensity) SetTargetEnemyDensity(density);
         GUILayout.BeginHorizontal();
@@ -278,6 +295,7 @@ public sealed partial class EnemyOrbitalLabController
             if (GUILayout.Button(preset.ToString(), button, GUILayout.Height(30))) SetTargetEnemyDensity(preset);
         GUILayout.EndHorizontal();
         RandomEnemyTypes = GUILayout.Toggle(RandomEnemyTypes, "Случайные типы", incidentToggleStyle);
+        if (RandomEnemyTypes) GUILayout.Label("Смесь: ~10% Обходчиков · ~5% Проломщиков", small);
         if (!RandomEnemyTypes && EnemyPrefabs != null && EnemyPrefabs.Length > 0)
         {
             SelectedEnemy = Mathf.Clamp(SelectedEnemy, 0, EnemyPrefabs.Length - 1);
@@ -306,7 +324,8 @@ public sealed partial class EnemyOrbitalLabController
         float left = PanelVisible ? PanelRect.xMax + 28 : 18;
         var style = incidentHudStyle ??= new GUIStyle(GUI.skin.box) { fontSize = 16, alignment = TextAnchor.MiddleLeft, padding = new RectOffset(12, 8, 3, 3) };
         style.normal.textColor = InterceptionActive ? new Color(1f, .4f, .35f) : Color.white;
-        GUI.Box(new Rect(left, Screen.height - 58, 480, 42), $"{AliveEnemies}/{TargetEnemyDensity}  ·  {InterceptionLabel}" + (InterceptionActive ? "  ·  Уничтожь или уклонись" : ""), style);
+        string population = ManualAliveEnemies > 0 ? $"{AliveEnemies} живых" : $"{AliveEnemies}/{TargetEnemyDensity}";
+        GUI.Box(new Rect(left, Screen.height - 58, 480, 42), $"{population}  ·  {InterceptionLabel}" + (InterceptionActive ? "  ·  Уничтожь или уклонись" : ""), style);
     }
 }
 #endif
