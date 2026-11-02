@@ -402,7 +402,6 @@ public static class Subject42ProjectValidator
             UpgradeManager upgradeManager =
                 RequireSingle<UpgradeManager>(scene, report);
             RequireSingle<RunStatsManager>(scene, report);
-            RequireSingle<KillManager>(scene, report);
             RunBossSpawner bossSpawner = RequireSingle<RunBossSpawner>(scene, report);
             RunFlowController flow = RequireSingle<RunFlowController>(scene, report);
             if (flow != null)
@@ -568,10 +567,6 @@ public static class Subject42ProjectValidator
             report);
         ValidateUniqueIds<UnlockableContentData>(
             data => data.id,
-            true,
-            report);
-        ValidateUniqueIds<WorldLootRewardDefinition>(
-            data => data.RewardId,
             true,
             report);
 

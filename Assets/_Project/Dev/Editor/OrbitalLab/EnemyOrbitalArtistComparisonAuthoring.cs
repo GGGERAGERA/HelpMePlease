@@ -126,7 +126,7 @@ public static class EnemyOrbitalArtistComparisonAuthoring
             var animator=art.GetComponentInChildren<Animator>(true);
             if(clipName!=null)
             {
-                string path=Folder+"/"+name+".controller";
+                string path="Assets/_Project/art/animations/Enemy/Spider/"+name+".controller";
                 var controller=AssetDatabase.LoadAssetAtPath<AnimatorController>(path) ?? AnimatorController.CreateAnimatorControllerAtPath(path);
                 var machine=controller.layers[0].stateMachine;
                 var state=machine.states.Length>0 ? machine.states[0].state : machine.AddState("Walk");

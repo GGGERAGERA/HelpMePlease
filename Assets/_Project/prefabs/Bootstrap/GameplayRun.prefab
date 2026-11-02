@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1909448206988704317}
   - component: {fileID: 4725577002678166123}
-  - component: {fileID: 5490751617684134568}
   - component: {fileID: 3242268261055518272}
   - component: {fileID: 5356876793088033655}
   m_Layer: 0
@@ -51,18 +50,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 340d862b2bcac784a892211c949d067c, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::RunStatsManager
---- !u!114 &5490751617684134568
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2395315760145320158}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fadccabbb26fd2c49947f058b1f81d42, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::KillManager
 --- !u!114 &3242268261055518272
 MonoBehaviour:
   m_ObjectHideFlags: 0

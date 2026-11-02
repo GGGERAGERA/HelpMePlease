@@ -1,9 +1,11 @@
 #if UNITY_EDITOR
 using System.Collections;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Subject42.Combat.OrbitalStation;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -31,6 +33,7 @@ public sealed class Subject42RewardProgressionTests
     [UnityTest]
     public IEnumerator WorldLootChestReelGrantsExactlyTheStoppedReward()
     {
+        BunkerDebugTools.SetGameView1600();
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         var manager = UpgradeManager.Instance;
         UpgradeData committed = null;
@@ -51,6 +54,9 @@ public sealed class Subject42RewardProgressionTests
         Assert.That(reel, Is.Not.Null);
         var stop = reel.GetComponentsInChildren<Button>(true).Single();
         yield return CoreTestSupport.Await(() => stop.isActiveAndEnabled && stop.interactable);
+        Directory.CreateDirectory("Artifacts/GeneratedQA/FirstCleanup");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/FirstCleanup/chest-reel.png");
+        yield return null;
         stop.onClick.Invoke();
         yield return CoreTestSupport.Await(() => WorldLootRewardReel.LastStoppedUpgrade != null);
         var stopped = WorldLootRewardReel.LastStoppedUpgrade as OrbitalRewardData;
@@ -62,6 +68,58 @@ public sealed class Subject42RewardProgressionTests
         RewardScenarioAssertions.AssertGranted(stopped, revision,
             stopped.BodyUpgrade != null ? bodyLevels[stopped.BodyUpgrade] : 0);
         Assert.That(WorldLootRewardReel.IsActive, Is.False);
+    }
+
+    [UnityTest]
+    public IEnumerator EnemyDeathsUpdateHudAndWeightedRewardsExactlyOnce()
+    {
+        BunkerDebugTools.SetGameView1600();
+        Object.FindFirstObjectByType<EnemySpawner>().StopSpawning();
+        foreach (var enemy in EnemyHealth.ActiveInstances.ToArray())
+            Object.Destroy(enemy.gameObject);
+        yield return null;
+
+        var stats = RunStatsManager.Instance;
+        var run = RunStateManager.Instance;
+        int sceneKills = stats.Kills;
+        int totalKills = run.GetCurrentRunKills();
+        float rewardUnits = stats.KillRewardUnits;
+
+        // Outside the local anomaly: only the explicit golden multiplier applies.
+        var ordinaryObject = new GameObject("Ordinary kill regression");
+        ordinaryObject.transform.position = new Vector3(10000f, 10000f);
+        ordinaryObject.AddComponent<EnemyIdentity>();
+        var ordinary = ordinaryObject.AddComponent<EnemyHealth>();
+        ordinary.TakeDamage(float.MaxValue, Vector2.zero);
+        ordinary.TakeDamage(float.MaxValue, Vector2.zero);
+
+        var goldenObject = new GameObject("Golden kill regression");
+        goldenObject.transform.position = ordinaryObject.transform.position;
+        goldenObject.AddComponent<EnemyIdentity>();
+        var golden = goldenObject.AddComponent<EnemyHealth>();
+        goldenObject.AddComponent<GoldenEnemyModifier>().Apply(1f, 3f);
+        golden.TakeDamage(float.MaxValue, Vector2.zero);
+        golden.TakeDamage(float.MaxValue, Vector2.zero);
+
+        Assert.That(stats.Kills, Is.EqualTo(sceneKills + 2));
+        Assert.That(stats.KillRewardUnits, Is.EqualTo(rewardUnits + 4f).Within(0.001f));
+        Assert.That(run.GetCurrentRunKills(), Is.EqualTo(totalKills + 2));
+
+        var hud = Object.FindFirstObjectByType<HUDManager>();
+        var counter = (HudIconNumber)new SerializedObject(hud)
+            .FindProperty("killsCounter").objectReferenceValue;
+        var label = counter.GetComponentInChildren<TMP_Text>(true);
+        yield return CoreTestSupport.Await(() => label.text == (totalKills + 2).ToString());
+        Assert.That(label.isActiveAndEnabled, Is.True);
+        Assert.That(label.canvas.isActiveAndEnabled, Is.True);
+        Directory.CreateDirectory("Artifacts/GeneratedQA/FirstCleanup");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/FirstCleanup/kill-counter.png");
+        yield return null;
+
+        run.CommitCurrentSceneStats();
+        run.CommitCurrentSceneStats();
+        Assert.That(run.GetCurrentRunKills(), Is.EqualTo(totalKills + 2),
+            "Committing the same scene twice must not duplicate kills.");
     }
 
 }

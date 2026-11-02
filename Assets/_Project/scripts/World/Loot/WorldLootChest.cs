@@ -27,11 +27,6 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
     [SerializeField, Min(0f)] private float claimedDestroyDelay = 0.15f;
     [SerializeField] private bool retainOpenedAfterClaim;
 
-    // Retained serialized references for legacy content; production uses the gateway pool.
-    [Header("Legacy Reward Pool")]
-    [SerializeField] private WorldLootRewardDefinition[] rewardPool;
-    [SerializeField] private bool useNormalUpgradePool;
-
     private Collider2D interactionCollider;
     private Coroutine openingRoutine;
     private ChestState state;
@@ -42,7 +37,6 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
         !WorldLootRewardReel.IsActive;
     public ChestState State => state;
     public override KeyCode InteractionKey => KeyCode.F;
-    public IReadOnlyList<WorldLootRewardDefinition> RewardPool => rewardPool;
     public static IReadOnlyList<WorldLootChest> ActiveInstances => activeInstances;
 
     private void OnEnable()
@@ -86,15 +80,6 @@ public sealed class WorldLootChest : Interactable, ITacticalMapMarkerProvider
         }
 
         OpenRewardReel();
-    }
-
-    public void ConfigureRewardPool(
-        WorldLootRewardDefinition[] definitions)
-    {
-        if (state != ChestState.Closed)
-            return;
-
-        rewardPool = definitions;
     }
 
     private IEnumerator WaitForOpening()

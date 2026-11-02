@@ -338,8 +338,8 @@ public class HUDManager : MonoBehaviour
                 timerText.SetText("{0}:{1:00}", seconds / 60, seconds % 60);
             }
         }
-        // Read after gameplay Update: KillManager notifies before run stats are committed.
-        SetKills(0);
+        RunStateManager runState = RunStateManager.Instance;
+        killsCounter.SetValue(runState != null ? runState.GetCurrentRunKills() : 0);
     }
 
     public void SetHealth(float currentHealth, float maxHealth)
@@ -353,12 +353,6 @@ public class HUDManager : MonoBehaviour
         if (lastThreatTier == tier) return;
         lastThreatTier = tier;
         threatSegments.SetValue((int)tier);
-    }
-
-    public void SetKills(int kills)
-    {
-        RunStateManager runState = RunStateManager.Instance;
-        killsCounter.SetValue(runState != null ? runState.GetCurrentRunKills() : 0);
     }
 
     public void SetCurrentRunCurrency(int amount) => goldCounter.SetValue(amount);

@@ -10,9 +10,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
 {
     private sealed class ReelReward
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        public WorldLootRewardDefinition LegacyDefinition;
-#endif
         public UpgradeData Upgrade;
         public string DisplayName;
         public Sprite Icon;
@@ -183,47 +180,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         openingReserved = false;
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    // Retained only for authored-view tests and legacy labs, never production chests.
-    public static bool TryShow(
-        IReadOnlyList<WorldLootRewardDefinition> rewardPool,
-        Vector3 chestWorldPosition,
-        Action<WorldLootRewardDefinition> onClaimed)
-    {
-        if ((instance != null && instance.state != ReelState.Hidden) ||
-            rewardPool == null || rewardPool.Count == 0)
-            return false;
-
-        if (instance == null || !instance.viewValid)
-        {
-            if (!missingReported)
-            {
-                Debug.LogError("[WorldLootRewardReel] Authored reel view is missing or invalid.");
-                missingReported = true;
-            }
-            openingReserved = false;
-            return false;
-        }
-        List<ReelReward> entries = new(rewardPool.Count);
-        for (int i = 0; i < rewardPool.Count; i++)
-        {
-            WorldLootRewardDefinition definition = rewardPool[i];
-            if (definition == null)
-                continue;
-            entries.Add(new ReelReward
-            {
-                LegacyDefinition = definition,
-                DisplayName = definition.DisplayName,
-                Icon = definition.Icon,
-                Weight = definition.Weight
-            });
-        }
-        return instance.ShowInternal(entries, chestWorldPosition,
-            reward => onClaimed?.Invoke(reward.LegacyDefinition),
-            reward => reward.LegacyDefinition.Apply());
-    }
-
-#endif
     public static bool TryShow(
         IReadOnlyList<UpgradeData> rewardPool,
         Vector3 chestWorldPosition,
