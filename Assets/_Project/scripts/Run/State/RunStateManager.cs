@@ -31,7 +31,6 @@ public sealed class RunStateManager : MonoBehaviour
             PlayerRuntimeReference.PlayerHealth is { IsDead: true }) return;
         Expedition?.Observe(GetCurrentRunKills(), GetCurrentRunTime(), completedLevels);
     }
-    public event System.Action EvolutionChanged;
     public static RunStateManager Instance { get; private set; }
     public event System.Action CurrentRewardChanged;
 
@@ -48,7 +47,6 @@ public sealed class RunStateManager : MonoBehaviour
     private readonly List<UpgradeData> pickedUpgrades = new();
     private readonly RunItemSlots itemSlots = new();
     private readonly AnomalyInventory anomalyInventory = new();
-    private readonly EvolutionState evolutionState = new();
 
     private float threatValue;
     private float threatElapsedTime;
@@ -91,10 +89,6 @@ public sealed class RunStateManager : MonoBehaviour
     public IReadOnlyList<UpgradeData> PickedUpgrades => pickedUpgrades;
     public RunItemSlots ItemSlots => itemSlots;
     public AnomalyInventory AnomalyInventory => anomalyInventory;
-    public EvolutionState EvolutionState => evolutionState;
-    public EvolutionDefinition CurrentEvolution =>
-        evolutionState.CurrentEvolution;
-    public bool HasEvolution => evolutionState.HasEvolution;
     public float ThreatValue => threatValue;
     public float ThreatElapsedTime => threatElapsedTime;
 
@@ -339,7 +333,6 @@ public sealed class RunStateManager : MonoBehaviour
         pickedUpgrades.Clear();
         itemSlots.Clear();
         anomalyInventory.Clear();
-        evolutionState.Clear();
         threatValue = CurrentConfig.InitialThreat;
         threatElapsedTime = 0f;
 
@@ -630,23 +623,6 @@ public sealed class RunStateManager : MonoBehaviour
     }
 
 #endif
-
-    public void ResolveCurrentEvolution(
-        IReadOnlyList<EvolutionRecipe> recipes)
-    {
-        ResolveCurrentEvolution(SelectedWeapon, recipes);
-    }
-
-    public void ResolveCurrentEvolution(
-        WeaponData activeWeapon,
-        IReadOnlyList<EvolutionRecipe> recipes)
-    {
-        EvolutionDefinition previous = evolutionState.CurrentEvolution;
-        evolutionState.Refresh(activeWeapon, anomalyInventory, recipes);
-
-        if (previous != evolutionState.CurrentEvolution)
-            EvolutionChanged?.Invoke();
-    }
 
     [ContextMenu("Debug/Clear Item Slots")]
     private void DebugClearItemSlots()
@@ -940,7 +916,6 @@ public sealed class RunStateManager : MonoBehaviour
         CurrentAnomalyStabilizer = null;
         AnomalyModifiers = AnomalyRunModifiers.None;
         anomalyInventory.Clear();
-        evolutionState.Clear();
         threatValue = threatElapsedTime = 0f;
         OrbitalStationState = null;
         CurrentConfig = RunConfig.Default;

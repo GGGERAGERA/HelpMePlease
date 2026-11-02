@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections;
 using System.Linq;
 using TMPro;
@@ -196,3 +197,5 @@ public sealed class BunkerStationUpgradePanel : MonoBehaviour
         BunkerStationProgressionService.Instance?.DebugResetStationLevels();
 #endif
 }
+
+#endif

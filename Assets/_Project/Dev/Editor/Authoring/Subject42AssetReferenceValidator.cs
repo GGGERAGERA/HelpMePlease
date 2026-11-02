@@ -69,14 +69,23 @@ public static class Subject42AssetReferenceValidator
     public static Subject42ValidationReport Validate(string[] roots, Subject42ValidationReport report = null)
     {
         report ??= new Subject42ValidationReport();
+        var devConsumers = new SortedDictionary<string, SortedSet<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (string root in roots)
         {
             if (IsDevPath(root))
                 report.Add(Subject42ValidationSeverity.Error, "DEV_PRODUCTION_ROOT", $"Production root '{root}' is Dev content.");
             foreach (string dependency in AssetDatabase.GetDependencies(root, true))
                 if (IsDevPath(dependency))
-                    report.Add(Subject42ValidationSeverity.Error, "DEV_DEPENDENCY", $"'{root}' -> '{dependency}'.");
+                {
+                    if (!devConsumers.TryGetValue(dependency, out var consumers))
+                        devConsumers.Add(dependency, consumers = new SortedSet<string>(StringComparer.Ordinal));
+                    consumers.Add(root);
+                }
         }
+        foreach (var dependency in devConsumers)
+            report.Add(Subject42ValidationSeverity.Error, "DEV_DEPENDENCY",
+                $"'{dependency.Key}' is Dev content referenced by {dependency.Value.Count} production roots: " +
+                string.Join(", ", dependency.Value.Select(root => $"'{root}'")) + ".");
 
         var fileIds = new Dictionary<string, HashSet<long>>(StringComparer.OrdinalIgnoreCase);
         foreach (string path in GetInspectionPaths(roots))
@@ -108,10 +117,22 @@ public static class Subject42AssetReferenceValidator
         if (!text.StartsWith("%YAML", StringComparison.Ordinal)) return; // Binary assets use SerializedObject below.
         HashSet<long> localIds = ParseFileIds(text);
         string[] lines = text.Split('\n');
+        bool prefabInstance = false;
+        bool strippedObject = false;
         for (int index = 0; index < lines.Length; index++)
         {
             string line = lines[index];
-            bool script = line.TrimStart().StartsWith("m_Script:", StringComparison.Ordinal);
+            if (line.StartsWith("--- !u!", StringComparison.Ordinal))
+            {
+                prefabInstance = line.StartsWith("--- !u!1001 ", StringComparison.Ordinal);
+                strippedObject = line.TrimEnd().EndsWith(" stripped", StringComparison.Ordinal);
+            }
+            string trimmed = line.TrimStart();
+            bool script = trimmed.StartsWith("m_Script:", StringComparison.Ordinal);
+            string roleCode = prefabInstance && trimmed.StartsWith("- target:", StringComparison.Ordinal)
+                ? "ORPHAN_PREFAB_OVERRIDE"
+                : strippedObject && trimmed.StartsWith("m_CorrespondingSourceObject:", StringComparison.Ordinal)
+                    ? "MISSING_PREFAB_SOURCE" : null;
             // Unity embeds package-version editor metadata in materials. It is not a runtime script.
             if (script && Path.GetExtension(path).Equals(".mat", StringComparison.OrdinalIgnoreCase)) continue;
             foreach (Match reference in Reference.Matches(line))
@@ -127,7 +148,7 @@ public static class Subject42AssetReferenceValidator
                 if (!guidMatch.Success)
                 {
                     if (!localIds.Contains(id))
-                        report.Add(Subject42ValidationSeverity.Error, "BROKEN_LOCAL_FILE_ID",
+                        report.Add(Subject42ValidationSeverity.Error, roleCode ?? "BROKEN_LOCAL_FILE_ID",
                             location + $": unresolved local fileID {id}.");
                     continue;
                 }
@@ -140,12 +161,12 @@ public static class Subject42AssetReferenceValidator
                 if (string.IsNullOrEmpty(targetPath) ||
                     (targetPath.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) && !File.Exists(targetPath)))
                 {
-                    report.Add(Subject42ValidationSeverity.Error, script ? "BROKEN_SCRIPT_GUID" : "BROKEN_ASSET_GUID",
+                    report.Add(Subject42ValidationSeverity.Error, roleCode ?? (script ? "BROKEN_SCRIPT_GUID" : "BROKEN_ASSET_GUID"),
                         location + $": unresolved GUID {guid}, fileID {id}.");
                     continue;
                 }
                 if (!GetFileIds(targetPath, cache).Contains(id))
-                    report.Add(Subject42ValidationSeverity.Error, "BROKEN_FILE_ID",
+                    report.Add(Subject42ValidationSeverity.Error, roleCode ?? "BROKEN_FILE_ID",
                         location + $": unresolved fileID {id} in '{targetPath}' (GUID {guid}).");
             }
         }

@@ -31,7 +31,6 @@ public sealed partial class ProductionSceneComposition : MonoBehaviour
     [SerializeField] private OrbitalPresentationConfig orbital;
     [SerializeField] private VisualTuningPreset visualPreset;
     [SerializeField] private AnomalyItemData[] anomalyItems;
-    [SerializeField] private EvolutionRecipe[] evolutionRecipes;
     [SerializeField] private CurrencyManager currency;
     [SerializeField] private RunSelectionManager selection;
     [SerializeField] private MetaProgressionManager metaProgression;
@@ -67,7 +66,6 @@ public sealed partial class ProductionSceneComposition : MonoBehaviour
         VisualTuningPresetStorage.Configure(visualPreset);
         Subject42.Visuals.LiveVisualRuntime.Attach(this, visualPreset);
         AnomalyItemCatalog.Configure(anomalyItems);
-        EvolutionRecipeCatalog.Configure(evolutionRecipes);
 
         if (LocalizationService.Instance == null)
         {

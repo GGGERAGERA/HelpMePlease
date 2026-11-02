@@ -5,10 +5,8 @@ public sealed class RunSelectionManager : MonoBehaviour
     public static RunSelectionManager Instance { get; private set; }
 
     public event System.Action<CharacterData> CharacterSelected;
-    public event System.Action<WeaponData> WeaponSelected;
 
     public CharacterData SelectedCharacter { get; private set; }
-    public WeaponData SelectedWeapon { get; private set; }
     public AnomalyStabilizerData SelectedAnomalyStabilizer { get; private set; }
 
     public bool IsReady => SelectedCharacter != null;
@@ -42,16 +40,6 @@ public sealed class RunSelectionManager : MonoBehaviour
         Debug.Log($"[RunSelectionManager] Character selected: {character?.name}");
     }
 
-    public void SelectWeapon(WeaponData weapon)
-    {
-        if (weapon == null)
-            return;
-
-        SelectedWeapon = weapon;
-        WeaponSelected?.Invoke(weapon);
-        Debug.Log($"[RunSelectionManager] Weapon selected: {weapon?.name}");
-    }
-
     public void SelectAnomalyStabilizer(AnomalyStabilizerData stabilizer)
     {
         SelectedAnomalyStabilizer = stabilizer;
@@ -63,12 +51,5 @@ public sealed class RunSelectionManager : MonoBehaviour
         AnomalyStabilizerData selected = SelectedAnomalyStabilizer;
         SelectedAnomalyStabilizer = null;
         return selected;
-    }
-
-    public void ClearRunSelection()
-    {
-        SelectedCharacter = null;
-        SelectedWeapon = null;
-        SelectedAnomalyStabilizer = null;
     }
 }

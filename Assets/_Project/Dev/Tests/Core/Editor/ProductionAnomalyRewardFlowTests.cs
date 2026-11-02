@@ -203,16 +203,26 @@ public sealed class ProductionAnomalyRewardFlowTests
     [UnityTest]
     public IEnumerator SpecialAnomalyGrantsOneRingAfterBothEvents()
     {
+        // UnitySetUp enters Play Mode; create captured locals after its domain reload.
+        yield return VerifySpecialAnomalyRingReward();
+    }
+
+    private static IEnumerator VerifySpecialAnomalyRingReward()
+    {
         yield return CoreTestSupport.Await(() => ProductionAnomalySite.ActiveSites.Any(value => value != null && value.IsSpecial));
         var site = ProductionAnomalySite.ActiveSites.Single(value => value != null && value.IsSpecial);
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         Assert.That(station, Is.Not.Null, "Production station must survive site selection.");
         Assert.That(station.State, Is.Not.Null, "Production station must retain run state.");
-        int rings = station.State.Rings.Count;
+        Assert.That(station.State.UsesSegmentedOrbit, Is.True);
+        int unlockedLevels = station.State.UnlockedSegmentedLevels;
+        var ringIds = station.State.Rings.Select(value => value.StableRingId).ToArray();
+        var nextLevel = station.State.Rings.Single(value => value.Order == unlockedLevels);
+        Assert.That(station.State.IsRingActive(nextLevel), Is.False);
         yield return CompleteSiteEvent(site);
         Assert.That(site.CompletedMainEvents, Is.EqualTo(1));
         Assert.That(site.IsCompleted, Is.False);
-        Assert.That(station.State.Rings.Count, Is.EqualTo(rings));
+        Assert.That(station.State.UnlockedSegmentedLevels, Is.EqualTo(unlockedLevels));
         yield return ResolveNonRingSelection(station);
         yield return CoreTestSupport.Await(() => Object.FindFirstObjectByType<WorldEventSpawner>()
             .SpawnedEvents.Any(value => value != null && site.ContainsWorldPosition(value.transform.position)));
@@ -220,7 +230,11 @@ public sealed class ProductionAnomalyRewardFlowTests
         yield return ResolveNonRingSelection(station);
         Assert.That(site.CompletedMainEvents, Is.EqualTo(2));
         Assert.That(site.IsCompleted, Is.True);
-        Assert.That(station.State.Rings.Count, Is.EqualTo(rings + 1));
+        Assert.That(station.State.UnlockedSegmentedLevels, Is.EqualTo(unlockedLevels + 1));
+        Assert.That(station.State.Rings.Count, Is.EqualTo(OrbitalRunState.SegmentedLevels));
+        Assert.That(station.State.Rings.Select(value => value.StableRingId), Is.EqualTo(ringIds));
+        Assert.That(station.State.IsRingActive(nextLevel), Is.True);
+        Assert.That(station.Rings.Single(value => value.RingId == nextLevel.StableRingId).IsActive, Is.True);
         Assert.That(station.State.Validate(out string error), Is.True, error);
     }
 

@@ -205,6 +205,81 @@ public sealed class EnemyProductionTransferSmoke
             adapter.DebugClearProjectiles();
         }
     }
+    [UnityTest, Timeout(30000)]
+    public IEnumerator ProductionSpiderSpritesAnimateThroughTheirAuthoredControllers()
+    {
+        // UnitySetUp enters Play Mode; create scenario locals after its domain reload.
+        yield return ObserveProductionSpiderSprites();
+    }
+
+    private static IEnumerator ObserveProductionSpiderSprites()
+    {
+        BunkerDebugTools.SetGameView1600();
+        var spawner = Object.FindFirstObjectByType<EnemySpawner>();
+        var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
+        var player = PlayerRuntimeReference.CachedPlayer;
+        spawner.StopSpawning();
+        foreach (var enemy in EnemyHealth.ActiveInstances.ToArray()) Object.Destroy(enemy.gameObject);
+        yield return null;
+        bool stationEnabled = station.enabled;
+        bool frozen = EnemyDebugAiFreeze.IsFrozen;
+        station.enabled = false;
+        EnemyDebugAiFreeze.SetFrozen(false);
+        player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
+        try
+        {
+            string[] variants = { "Dark", "Blue", "BigGait" };
+            var animators = new Animator[variants.Length];
+            var renderers = new SpriteRenderer[variants.Length];
+            var observed = new HashSet<Sprite>[variants.Length];
+            for (int index = 0; index < variants.Length; index++)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/_Project/prefabs/Enemies/p_Enemy_Spider" + variants[index] + ".prefab");
+                var enemy = spawner.SpawnDebugEnemyAt(prefab,
+                    player.transform.position + new Vector3((index - 1) * 2f, 3f, 0f));
+                animators[index] = enemy.GetComponentInChildren<Animator>();
+                renderers[index] = enemy.GetComponentInChildren<EnemyWhiteFlash>().TargetRenderer;
+                observed[index] = new HashSet<Sprite>();
+            }
+            yield return null;
+            var initialTimes = animators.Select(animator => animator.GetCurrentAnimatorStateInfo(0).normalizedTime).ToArray();
+            for (int index = 0; index < variants.Length; index++)
+            {
+                Assert.That(renderers[index].enabled && renderers[index].gameObject.activeInHierarchy &&
+                    renderers[index].sprite != null, Is.True, variants[index]);
+                Vector3 viewport = Camera.main.WorldToViewportPoint(renderers[index].bounds.center);
+                Assert.That(viewport.x, Is.InRange(0.05f, 0.95f));
+                Assert.That(viewport.y, Is.InRange(0.05f, 0.95f));
+                Assert.That(viewport.z, Is.GreaterThan(0f));
+                observed[index].Add(renderers[index].sprite);
+            }
+            const string output = "Artifacts/GeneratedQA/Boundary94Repair";
+            System.IO.Directory.CreateDirectory(output);
+            ScreenCapture.CaptureScreenshot(output + "/spiders-first.png");
+            float deadline = Time.realtimeSinceStartup + 2f;
+            while (Time.realtimeSinceStartup < deadline && observed.Any(frames => frames.Count < 2))
+            {
+                yield return null;
+                for (int index = 0; index < variants.Length; index++) observed[index].Add(renderers[index].sprite);
+            }
+            for (int index = 0; index < variants.Length; index++)
+            {
+                Assert.That(observed[index].Count, Is.GreaterThanOrEqualTo(2), variants[index] + " sprite frames");
+                Assert.That(observed[index].All(sprite => sprite != null), Is.True, variants[index] + " valid sprite frames");
+                Assert.That(animators[index].GetCurrentAnimatorStateInfo(0).normalizedTime,
+                    Is.GreaterThan(initialTimes[index]), variants[index] + " animation time");
+            }
+            ScreenCapture.CaptureScreenshot(output + "/spiders-second.png");
+            yield return null;
+        }
+        finally
+        {
+            if (station != null) station.enabled = stationEnabled;
+            EnemyDebugAiFreeze.SetFrozen(frozen);
+        }
+    }
+
     static IEnumerator Observe(float seconds)
     { float until = Time.time + seconds; while (Time.time < until) yield return null; }
 }

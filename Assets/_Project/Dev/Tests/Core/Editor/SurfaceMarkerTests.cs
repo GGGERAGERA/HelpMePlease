@@ -79,6 +79,39 @@ public sealed class SurfaceMarkerTests
         Assert.That(new SurfaceMapService(Map,storage).Content.GetMissionState("npc-signal"),Is.EqualTo(SurfaceMissionState.Completed));
         Assert.That(service.GetStatus("D2"),Is.EqualTo(SurfaceSectorStatus.Locked),"Mission assignment does not bypass frontier progression");
     }
+    [Test] public void LegacyMissionSnapshotsKeepProgressAndUseCurrentContentAfterRoundTrip()
+    {
+        var storage = new Storage();
+        string key = Map.Id + ":content";
+        storage.values[key] = @"{""missions"":[
+            {""missionId"":""legacy-completed"",""targetSectorId"":""D2"",""contentId"":""signal-mission"",
+             ""missionState"":1,""markerState"":2,""requiredEventId"":""obsolete"",""requiredEventTag"":""old-tag"",
+             ""rewardExperience"":99,""rewardGold"":99},
+            {""missionId"":""legacy-active"",""targetSectorId"":""D2"",""contentId"":""signal-mission"",
+             ""missionState"":0,""markerState"":1,""requiredEventId"":""obsolete"",""requiredEventTag"":""old-tag"",
+             ""rewardExperience"":99,""rewardGold"":99}]}";
+        var service = new SurfaceContentService(Map, storage);
+        Assert.That(service.GetMissionState("legacy-completed"), Is.EqualTo(SurfaceMissionState.Completed));
+        Assert.That(service.TryGetMarker("D2", out var marker), Is.True);
+        Assert.That(marker.State, Is.EqualTo(SurfaceMarkerState.Revealed));
+        var config = service.Resolve(Map.Find("D2").BuildRunConfig(Map.Id));
+        Assert.That(config.Gold, Is.EqualTo(1.15f).Within(.001f), "Persisted definition snapshots cannot override current rewards.");
+        Assert.That(config.Content.GuaranteedEvents.Count, Is.EqualTo(1));
+        Assert.That(config.Content.GuaranteedEvents[0], Is.TypeOf<OrbitalRelayEvent>());
+        Assert.That(service.AssignMission("round-trip", "D1", MissionContent), Is.True);
+        var saved = JsonUtility.FromJson<SurfaceContentState>(storage.values[key]);
+        var completed = saved.missions.Find(value => value.missionId == "legacy-completed");
+        Assert.That(completed.targetSectorId, Is.EqualTo("D2"));
+        Assert.That(completed.contentId, Is.EqualTo("signal-mission"));
+        Assert.That(completed.missionState, Is.EqualTo(SurfaceMissionState.Completed));
+        Assert.That(completed.markerState, Is.EqualTo(SurfaceMarkerState.Completed));
+        var reloaded = new SurfaceContentService(Map, storage);
+        Assert.That(reloaded.GetMissionState("legacy-completed"), Is.EqualTo(SurfaceMissionState.Completed));
+        Assert.That(reloaded.GetMissionState("legacy-active"), Is.EqualTo(SurfaceMissionState.Active));
+        Assert.That(reloaded.TryGetMarker("D2", out marker), Is.True);
+        Assert.That(marker.State, Is.EqualTo(SurfaceMarkerState.Revealed));
+    }
+
     [Test] public void NavigationPansAndZoomsWithinLimits()
     {
         var root = new GameObject("Viewport",typeof(RectTransform),typeof(SurfaceMapNavigation));

@@ -241,6 +241,8 @@ public sealed class BunkerDebugSmokeTests
         Assert.That(Object.FindFirstObjectByType<BunkerCursorInteractor>().enabled, Is.True);
         Assert.That(EventSystem.current.GetComponents<BaseInputModule>().Any(module => module.isActiveAndEnabled), Is.True);
 
+        yield return VerifyAffectedDoorVariants(debug, gates);
+
         Assert.That((bool)Invoke(debug, "RestoreTestStart"), Is.True);
         yield return CoreTestSupport.Await(() => debug != null && !Busy(debug) && ProductionSceneComposition.Active is { IsReady: true });
         Assert.That(CurrencyManager.Instance.TotalGold, Is.EqualTo(nativeGold));
@@ -267,6 +269,65 @@ public sealed class BunkerDebugSmokeTests
         Assert.That(UnityEngine.PlayerPrefs.GetInt("TOTAL_GOLD", 0), Is.EqualTo(nativeGold));
         Assert.That(UnityEngine.PlayerPrefs.GetInt("TOTAL_CORES", 0), Is.EqualTo(nativeCores));
         Assert.That((bool)Invoke(debug, "SetGold", 999), Is.False, "Ordinary profile is read only from debug.");
+    }
+    private static IEnumerator VerifyAffectedDoorVariants(Component debug, BunkerGateVisual[] gates)
+    {
+        // Runtime instances no longer carry an Editor prefab connection. Use the
+        // three authored MainMenu identities whose obsolete overrides were removed.
+        string[] affectedNames = { "Door_Arcade_Locked", "Door_Chill_Locked", "Door_Trophies_Locked" };
+        var affected = affectedNames.Select(name => gates.Single(gate => gate.name == name)).ToArray();
+        var body = PlayerRuntimeReference.CachedPlayer.GetComponent<Rigidbody2D>();
+        Vector2 originalPosition = body.position;
+        var constraints = body.constraints;
+        body.constraints = RigidbodyConstraints2D.FreezeAll;
+        Directory.CreateDirectory("Artifacts/GeneratedQA/Boundary94Repair");
+        try
+        {
+            for (int index = 0; index < affected.Length; index++)
+            {
+                var gate = affected[index];
+                try
+                {
+                    Assert.That((bool)Invoke(debug, "SetGateLocked", gate, false), Is.True);
+                    Assert.That((bool)Invoke(debug, "SetGateOpen", gate, false), Is.True);
+                    var closed = (GameObject)new SerializedObject(gate).FindProperty("closedDoor").objectReferenceValue;
+                    var solids = closed.GetComponentsInChildren<Collider2D>(true).Where(collider => !collider.isTrigger).ToArray();
+                    Assert.That(solids, Is.Not.Empty);
+                    Assert.That(solids.Any(collider => collider.enabled && collider.gameObject.activeInHierarchy), Is.True);
+                    Vector3 center = solids[0].bounds.center;
+                    body.position = (Vector2)center + Vector2.down * 2.5f;
+                    body.transform.position = body.position;
+                    Physics2D.SyncTransforms();
+                    yield return CoreTestSupport.Await(() =>
+                    {
+                        Vector3 viewport = Camera.main.WorldToViewportPoint(center);
+                        return viewport.z > 0f && viewport.x > .05f && viewport.x < .95f && viewport.y > .05f && viewport.y < .95f;
+                    });
+                    yield return new WaitForSecondsRealtime(.2f);
+                    Assert.That(gate.IsOpen, Is.False);
+                    ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/Boundary94Repair/door-" + index + "-closed.png");
+                    yield return null;
+                    Assert.That((bool)Invoke(debug, "SetGateOpen", gate, true), Is.True);
+                    yield return new WaitForSecondsRealtime(.2f);
+                    Assert.That(gate.IsOpen, Is.True);
+                    Assert.That(solids.Any(collider => collider.enabled && collider.gameObject.activeInHierarchy), Is.False);
+                    ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/Boundary94Repair/door-" + index + "-open.png");
+                    yield return null;
+                }
+                finally
+                {
+                    Invoke(debug, "ResetGate", gate);
+                    Assert.That(gate.DebugHasOverride, Is.False);
+                }
+            }
+        }
+        finally
+        {
+            body.position = originalPosition;
+            body.transform.position = originalPosition;
+            body.constraints = constraints;
+            Physics2D.SyncTransforms();
+        }
     }
 }
 #endif

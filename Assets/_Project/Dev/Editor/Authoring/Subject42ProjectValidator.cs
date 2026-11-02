@@ -431,8 +431,6 @@ public static class Subject42ProjectValidator
                 RequireSerializedObject(
                     characterSpawner, "defaultCharacter", report);
                 RequireSerializedObject(
-                    characterSpawner, "defaultWeapon", report);
-                RequireSerializedObject(
                     characterSpawner, "metaUpgradeApplier", report);
                 RequireSerializedObject(
                     characterSpawner, "upgradeApplier", report);
@@ -554,10 +552,6 @@ public static class Subject42ProjectValidator
             true,
             report);
         ValidateUniqueIds<AnomalyItemData>(
-            data => data.Id,
-            true,
-            report);
-        ValidateUniqueIds<EvolutionDefinition>(
             data => data.Id,
             true,
             report);

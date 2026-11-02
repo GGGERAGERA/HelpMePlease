@@ -7,10 +7,6 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     [SerializeField] private BunkerStationType stationType;
     [SerializeField] private string interactionText = "hud.interact";
 
-    [Header("Progression")]
-    [SerializeField] private bool progressionEnabled;
-    [SerializeField] private BunkerStationId progressionStationId;
-
     [Header("Start Run")]
     [SerializeField] private Transform runTransitionTarget;
 
@@ -86,11 +82,6 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
                 Panels?.OpenAnomalyStabilizers();
                 break;
         }
-
-        // Character progression is presented inside the existing selection frame.
-        // Other stations continue using the reusable floating panel.
-        if (progressionEnabled && progressionStationId != BunkerStationId.Character)
-            Panels?.ShowStationProgression(progressionStationId);
     }
 
     public void SetInteractionEnabled(bool enabled)

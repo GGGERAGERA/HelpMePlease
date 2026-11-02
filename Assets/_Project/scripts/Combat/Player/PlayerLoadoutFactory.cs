@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Builds the character/weapon parts shared by scene-specific player spawners.
+/// Applies character statistics shared by scene-specific player spawners.
 /// It owns no state and never persists scene objects.
 /// </summary>
 public static class PlayerLoadoutFactory
@@ -68,59 +68,5 @@ public static class PlayerLoadoutFactory
         float metaMultiplier = 1f +
             meta.MoveSpeedLevel * MetaMoveSpeedPercentPerLevel;
         return Mathf.Max(0f, baseMoveSpeed) * metaMultiplier;
-    }
-
-    public static BaseWeapon SpawnWeapon(
-        GameObject player,
-        WeaponData weaponData,
-        CharacterCombatType combatType,
-        string weaponPointName)
-    {
-        if (player == null || weaponData == null)
-            return null;
-
-        if (weaponData.weaponPrefab == null)
-        {
-            Debug.LogWarning(
-                $"[PlayerLoadoutFactory] Weapon prefab is missing on " +
-                $"{weaponData.name}.");
-            return null;
-        }
-
-        Transform weaponPoint = string.IsNullOrWhiteSpace(weaponPointName)
-            ? null
-            : player.transform.Find(weaponPointName);
-        weaponPoint ??= player.transform;
-
-        GameObject weapon = Object.Instantiate(
-            weaponData.weaponPrefab,
-            weaponPoint.position,
-            weaponPoint.rotation,
-            player.transform);
-
-        BaseWeapon baseWeapon = weapon.GetComponent<BaseWeapon>();
-        if (baseWeapon == null)
-        {
-            Debug.LogWarning(
-                "[PlayerLoadoutFactory] Spawned weapon has no BaseWeapon " +
-                "component.",
-                weapon);
-            Object.Destroy(weapon);
-            return null;
-        }
-
-        baseWeapon.Initialize(weaponData);
-        baseWeapon.SetControlModeOverride(GetWeaponControlMode(combatType));
-        return baseWeapon;
-    }
-
-    private static WeaponControlMode GetWeaponControlMode(
-        CharacterCombatType combatType)
-    {
-        return combatType switch
-        {
-            CharacterCombatType.AutoFire => WeaponControlMode.AutoAim,
-            _ => WeaponControlMode.AutoAim
-        };
     }
 }

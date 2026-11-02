@@ -130,6 +130,84 @@ public sealed class AnomalyFocusAlignmentTests
         }
     }
 
+    [UnityTest, Timeout(90000)]
+    public IEnumerator SandboxBasePowersKeepMovementDamageAndReactivation()
+    {
+        BunkerDebugTools.SetGameView1600();
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return VerifySandboxBasePowers();
+    }
+
+    private static IEnumerator VerifySandboxBasePowers()
+    {
+        yield return CoreTestSupport.LoadBunker();
+        RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>(
+            "Assets/_Project/Data/Characters/01_Gera.asset"));
+        var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
+        starter.StartRun(starter.transform);
+        yield return CoreTestSupport.Await(() => UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MVP" &&
+            PlayerRuntimeReference.CachedPlayer != null &&
+            ProductionSceneComposition.Active is { IsReady: true } && !SceneTransitionOverlay.IsTransitioning);
+        var player = PlayerRuntimeReference.CachedPlayer;
+        var spawner = Object.FindFirstObjectByType<EnemySpawner>();
+        spawner.StopSpawning();
+        player.GetComponent<PlayerHealth>().DebugInvulnerable = true;
+        player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
+        player.GetComponentInChildren<Subject42.Combat.OrbitalStation.OrbitalStationRuntime>().enabled = false;
+        foreach (var existing in EnemyHealth.ActiveInstances.ToArray()) Object.Destroy(existing.gameObject);
+        foreach (var site in ProductionAnomalySite.ActiveSites.ToArray()) site.DisposeSite();
+        yield return null;
+        const string folder = "Artifacts/GeneratedQA/RemainingCleanup";
+        Directory.CreateDirectory(folder);
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/Enemies/p_Enemy_classic.prefab");
+        foreach (var power in new[] { AnomalyPowerType.GravityOrb, AnomalyPowerType.ArcNode, AnomalyPowerType.RedBeam })
+        {
+            var enemy = spawner.SpawnDebugEnemyAt(prefab, player.transform.position + Vector3.right * 3f).GetComponent<EnemyHealth>();
+            enemy.GetComponent<EnemyMovement>().enabled = false;
+            enemy.GetComponent<EnemyCollisionHandler>().enabled = false;
+            var body = enemy.GetComponent<Rigidbody2D>();
+            body.constraints = RigidbodyConstraints2D.FreezeAll;
+            foreach (int level in new[] { 1, 3 })
+            {
+                enemy.SetRuntimeMaxHealth(10000f);
+                AnomalyPowerRuntime.EnsurePower(player, power, level);
+                var runtime = player.GetComponents<MonoBehaviour>().Single(value => value is IAnomalyPowerRuntime item && item.Type == power);
+                string visualName = power == AnomalyPowerType.GravityOrb ? "Gravity Construct Orb" :
+                    power == AnomalyPowerType.ArcNode ? "Arc Construct" : "Beam Construct";
+                var visual = player.transform.Find(visualName);
+                Assert.That(visual, Is.Not.Null);
+                Assert.That(visual.gameObject.activeInHierarchy && runtime.enabled, Is.True);
+                Vector3 start = visual.position;
+                float deadline = Time.realtimeSinceStartup + 3f;
+                while (Time.realtimeSinceStartup < deadline &&
+                    (enemy.CurrentHealth >= 10000f || Vector3.Distance(start, visual.position) < .05f))
+                {
+                    if (power == AnomalyPowerType.GravityOrb)
+                    {
+                        body.position = visual.position;
+                        body.transform.position = body.position;
+                        Physics2D.SyncTransforms();
+                    }
+                    yield return null;
+                }
+                Assert.That(enemy.CurrentHealth, Is.LessThan(10000f), power + " level " + level + " base damage");
+                Assert.That(Vector3.Distance(start, visual.position), Is.GreaterThan(.05f), power + " movement");
+                if (level == 3)
+                {
+                    ScreenCapture.CaptureScreenshot(folder + "/" + power + "-first.png");
+                    yield return WaitRealtime(.2f);
+                    ScreenCapture.CaptureScreenshot(folder + "/" + power + "-second.png");
+                    yield return null;
+                }
+                Assert.That(AnomalyPowerRuntime.DeactivatePower(player, power), Is.True);
+                Assert.That(runtime.enabled || visual.gameObject.activeInHierarchy, Is.False);
+            }
+            Object.Destroy(enemy.gameObject);
+            yield return null;
+        }
+    }
+
     private static IEnumerator WaitRealtime(float seconds)
     {
         float until = Time.realtimeSinceStartup + seconds;

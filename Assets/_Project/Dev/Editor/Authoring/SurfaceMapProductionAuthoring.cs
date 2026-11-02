@@ -50,10 +50,8 @@ public static class SurfaceMapProductionAuthoring
     {
         Directory.CreateDirectory(Data); Directory.CreateDirectory(Prefabs); AssetDatabase.Refresh();
         var setup = EditorSceneManager.GetSceneManagerSetup();
-        Scene reference = default;
         try
         {
-            reference = EditorSceneManager.OpenScene("Assets/_Project/Dev/Labs/BunkerSimple/OLD/MainMenu.unity", OpenSceneMode.Additive);
             var bunker = SceneManager.GetSceneByPath(BunkerPath);
             if (!bunker.IsValid() || !bunker.isLoaded) bunker = EditorSceneManager.OpenScene(BunkerPath, OpenSceneMode.Additive);
             SceneManager.SetActiveScene(bunker);
@@ -73,7 +71,7 @@ public static class SurfaceMapProductionAuthoring
 
             var canvas = Read<SelectionPanelController>(panels, "selectionPanelController").GetComponentInParent<Canvas>();
             if (canvas == null) canvas = All<Canvas>(bunker).First(c => c.renderMode == RenderMode.ScreenSpaceOverlay);
-            var font = All<TMP_Text>(reference).First(t => t.font != null).font;
+            var font = canvas.GetComponentsInChildren<TMP_Text>(true).First(t => t.font != null).font;
             string mapPrefab = Prefabs + "PF_SurfaceMap.prefab";
             if (AssetDatabase.LoadAssetAtPath<GameObject>(mapPrefab) == null) BuildMapPrefab(mapPrefab, font);
             var view = All<SurfaceMapView>(bunker).SingleOrDefault();
@@ -82,23 +80,12 @@ public static class SurfaceMapProductionAuthoring
 
             var notifications = All<BunkerNotificationManager>(bunker).SingleOrDefault();
             string notificationsPrefab = Prefabs + "PF_BunkerNotifications.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(notificationsPrefab) == null)
-                PrefabUtility.SaveAsPrefabAsset(One<BunkerNotificationManager>(reference).gameObject, notificationsPrefab);
             if (notifications == null) notifications = ((GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(notificationsPrefab), canvas.transform)).GetComponent<BunkerNotificationManager>();
 
             var events = All<BunkerEventManager>(bunker).SingleOrDefault();
             if (events == null)
             {
                 string path = Prefabs + "PF_BunkerEvents.prefab";
-                if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
-                {
-                    var original = One<BunkerEventManager>(reference);
-                    var root = new GameObject("BunkerEvents", typeof(RectTransform));
-                    var imageRoot = Object.Instantiate(Read<GameObject>(original, "fullscreenRoot"), root.transform);
-                    var component = root.AddComponent<BunkerEventManager>();
-                    Set(component, "fullscreenRoot", imageRoot); Set(component, "fullscreenImage", imageRoot.GetComponentInChildren<Image>(true));
-                    PrefabUtility.SaveAsPrefabAsset(root, path); Object.DestroyImmediate(root);
-                }
                 events = ((GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(path), canvas.transform)).GetComponent<BunkerEventManager>();
                 var rect = events.GetComponent<RectTransform>(); rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
             }
@@ -115,16 +102,9 @@ public static class SurfaceMapProductionAuthoring
             EnsureStation(bunker, BunkerStationType.Upgrade, "Assets/_Project/prefabs/Bunker/_newItems/p_bunkerUpgrade1.prefab", new Vector3(-5f, -3f));
             EnsureStation(bunker, BunkerStationType.AnomalyStabilizer, "Assets/_Project/prefabs/Bunker/p_AnomalyTable1 Variant 1.prefab", new Vector3(5f, -3f));
             string escapePrefab = "Assets/_Project/prefabs/Bunker/PF_EscapeProtocolStation.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(escapePrefab) == null)
-            {
-                var originalStation = All<BunkerStation>(reference).First(s => Read<BunkerStationType>(s,"stationType") == BunkerStationType.EscapeProtocol);
-                var clone = Object.Instantiate(originalStation.gameObject);
-                foreach (var station in clone.GetComponentsInChildren<BunkerStation>(true)) Set(station,"panelManager",panels);
-                PrefabUtility.SaveAsPrefabAsset(clone,escapePrefab); Object.DestroyImmediate(clone);
-            }
             EnsureStation(bunker, BunkerStationType.EscapeProtocol, escapePrefab, new Vector3(0f, -4f));
             EnsureOrbitalSlot(bunker, panels, canvas.transform);
-            EnsureSummary(bunker, reference, canvas, font);
+            EnsureSummary(bunker);
             ProductionSceneCompositionAuthoring.EnsureScene(bunker);
             var football = One<FootballMinigame>(bunker);
             Set(football, "cameraFollow", One<CameraFollow>(bunker));
@@ -139,7 +119,6 @@ public static class SurfaceMapProductionAuthoring
         }
         finally
         {
-            if (reference.IsValid() && reference.isLoaded) EditorSceneManager.CloseScene(reference, true);
             if (setup.Any(s => s.isLoaded && s.isActive)) EditorSceneManager.RestoreSceneManagerSetup(setup);
         }
     }
@@ -209,7 +188,7 @@ public static class SurfaceMapProductionAuthoring
             machine.transform.position = Read<Transform>(One<BunkerPlayerLoadoutController>(scene),"controlledPlayerRoot").position + new Vector3(8,-4);
         }
     }
-    private static void EnsureSummary(Scene scene, Scene reference, Canvas canvas, TMP_FontAsset font)
+    private static void EnsureSummary(Scene scene)
     {
         if (All<BunkerRunSummaryPresenter>(scene).Length > 0) return;
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/UI/SurfaceMap/PF_BunkerRunSummary.prefab");

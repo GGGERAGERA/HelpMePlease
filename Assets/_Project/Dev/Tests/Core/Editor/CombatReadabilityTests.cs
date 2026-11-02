@@ -3755,6 +3755,7 @@ public sealed class CombatReadabilityTests
         bool frozen = EnemyDebugAiFreeze.IsFrozen;
         float scale = Time.timeScale;
         int completed = 0, failed = 0, credited = 0;
+        int eventCapacity = Read<int>(events, "maxActiveEvents");
         WorldEvent cargoEvent = null;
         Vector3 destination = default;
         var rewards = Read<System.Collections.Generic.List<WorldBreakable>>(events, "ownedRewardContainers");
@@ -3778,6 +3779,8 @@ public sealed class CombatReadabilityTests
             Time.timeScale = 1f;
             Assert.That(events.DebugSetEscortCargoExperiment(true, out var eventStatus), Is.True, eventStatus);
             Assert.That(events.EscortCargoExperimentEnabled, Is.True);
+            // Keep naturally spawned events intact while admitting this bounded fixture.
+            events.ConfigureDebugConcurrentEventCapacity(eventCapacity + 1);
             Assert.That(events.DebugSpawnEscortCargo(out eventStatus), Is.True, eventStatus);
             var escort = events.EscortCargoExperimentInstance;
             Assert.That(escort, Is.Not.Null, eventStatus);
@@ -3785,6 +3788,17 @@ public sealed class CombatReadabilityTests
             destination = escort.RewardPosition;
             Assert.That(escort.IsStarted, Is.False, "Creation must not accept the event.");
             var cargo = Read<Transform>(escort, "cargo");
+            var destinationRenderer = Read<Transform>(escort, "destinationVisual").GetComponentInChildren<SpriteRenderer>(true);
+            Assert.That(destinationRenderer.sprite, Is.Not.Null, "Escort destination needs its authored sprite.");
+            MoveEscortPlayer(body, destination + Vector3.down * 2.5f);
+            yield return CoreTestSupport.Await(() =>
+            {
+                Vector3 viewport = Camera.main.WorldToViewportPoint(destinationRenderer.bounds.center);
+                return viewport.z > 0f && viewport.x > .1f && viewport.x < .9f && viewport.y > .1f && viewport.y < .9f;
+            });
+            Assert.That(destinationRenderer.enabled && destinationRenderer.gameObject.activeInHierarchy &&
+                destinationRenderer.color.a > 0f, Is.True);
+            yield return CaptureFlankingGameView("escort-destination", "Boundary94Repair");
             MoveEscortPlayer(body, cargo.position);
             yield return new WaitForFixedUpdate();
             Assert.That(escort.CanInteract, Is.True, "Actual player must be in the authored acceptance trigger.");
@@ -3835,6 +3849,7 @@ public sealed class CombatReadabilityTests
             RunStateManager.ContentEventCompleted -= OnCredit;
             events.DebugClearEscortCargo(out _);
             events.DebugSetEscortCargoExperiment(false, out _);
+            events.ConfigureDebugConcurrentEventCapacity(eventCapacity);
             if (health != null) health.DebugInvulnerable = protection;
             EnemyDebugAiFreeze.SetFrozen(frozen);
             Time.timeScale = scale;
