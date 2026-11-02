@@ -16,7 +16,7 @@ public sealed class BunkerBarkLine
 
 /// <summary>Optional scene-local flavour. Never owns input, progression or time scale.</summary>
 [DisallowMultipleComponent]
-public sealed class BunkerAmbientBarks : MonoBehaviour
+public sealed partial class BunkerAmbientBarks : MonoBehaviour
 {
     public static BunkerAmbientBarks Instance { get; private set; }
 

@@ -25,6 +25,7 @@ public sealed class BunkerStation : MonoBehaviour, IBunkerInteractable
     [SerializeField] private UnityEvent onInteract;
 
     private bool interactionEnabled = true;
+    public bool InteractionEnabled => interactionEnabled;
     public event System.Action AvailabilityChanged;
     private void OnEnable() => AvailabilityChanged?.Invoke();
     private void OnDisable() => AvailabilityChanged?.Invoke();

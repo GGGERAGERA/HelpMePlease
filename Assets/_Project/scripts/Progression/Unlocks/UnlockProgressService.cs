@@ -5,6 +5,7 @@ public sealed class UnlockProgressService : MonoBehaviour
     public static UnlockProgressService Instance { get; private set; }
     
     [SerializeField] private UnlockRegistry registry;
+    public UnlockRegistry Registry => registry;
 
     private const string UnlockKeyPrefix = "Unlock_";
     private const string ProgressKeyPrefix = "UnlockProgress_";

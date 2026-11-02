@@ -25,7 +25,7 @@ public sealed class Phase7SmokeTests
         yield return ExerciseProductionRoute();
     }
 
-    private static IEnumerator ExerciseProductionRoute()
+    public static IEnumerator ExerciseProductionRoute()
     {
         Object.FindFirstObjectByType<StartScreenController>().Begin();
         yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName &&

@@ -7,7 +7,7 @@ using UnityEngine;
 // Each service reference may be a local scene component or a reusable authored prefab.
 [DefaultExecutionOrder(-32700)]
 [DisallowMultipleComponent]
-public sealed class ProductionSceneComposition : MonoBehaviour
+public sealed partial class ProductionSceneComposition : MonoBehaviour
 {
     public enum SceneRole { ServicesOnly, StartScreen, Bunker, Gameplay }
     public static ProductionSceneComposition Active { get; private set; }
@@ -134,13 +134,12 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         while (!SubsystemsReady()) yield return null;
         // Scene activation and Start callbacks finish before the transition reveals it.
         yield return null;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        // Rebind only an explicitly started lab session; ordinary gameplay creates none.
-        if (role == SceneRole.Gameplay || role == SceneRole.Bunker)
-            BotRunSession.Current?.BindScene(characters, RunFlowController.Instance, rewards, gameplayArea);
-#endif
+        BindDevelopmentSession();
         IsReady = true;
     }
+
+    // Optional implementation lives in Dev; the compiler erases this call when absent.
+    partial void BindDevelopmentSession();
 
     private bool SubsystemsReady() => role switch
     {

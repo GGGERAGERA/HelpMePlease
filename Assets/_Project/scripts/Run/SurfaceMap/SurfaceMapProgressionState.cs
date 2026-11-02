@@ -20,10 +20,10 @@ public interface ISurfaceMapStorage
 public sealed class PlayerPrefsSurfaceMapStorage : ISurfaceMapStorage
 {
     public const string KeyPrefix = "META_SURFACE_MAP_";
-    public string Load(string mapId) => UnityEngine.PlayerPrefs.GetString(KeyPrefix + mapId, string.Empty);
+    public string Load(string mapId) => PlayerPrefs.GetString(KeyPrefix + mapId, string.Empty);
     public void Save(string mapId, string json)
     {
-        UnityEngine.PlayerPrefs.SetString(KeyPrefix + mapId, json);
-        UnityEngine.PlayerPrefs.Save();
+        PlayerPrefs.SetString(KeyPrefix + mapId, json);
+        PlayerPrefs.Save();
     }
 }

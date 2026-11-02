@@ -48,6 +48,7 @@ public sealed class BunkerSelectionSourceHub : MonoBehaviour
     }
 
     [SerializeField] private BunkerSelectionCatalog catalog;
+    public BunkerSelectionCatalog Catalog => catalog;
     // The catalog owns content; adapters never copy it into scene/runtime arrays.
     private CharacterData[] characters => catalog != null ? catalog.characters : null;
     private BunkerSelectionCatalog.ModulePresentation[] modules => catalog != null ? catalog.modules : null;
