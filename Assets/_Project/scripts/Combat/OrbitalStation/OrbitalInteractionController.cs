@@ -76,12 +76,18 @@ namespace Subject42.Combat.OrbitalStation
         }
         public bool IsGameplayInputBlocked => IsCustomDrawing || SceneTransitionOverlay.IsTransitioning
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            || DebugSuppressPlayerInput
+            || DebugSuppressPlayerInput || (DevelopmentInputBlocker?.Invoke() ?? false)
+            || Subject42DebugMenu.HubBlocksKeyboardInput || Subject42.Visuals.LiveVisualStudio.BlocksKeyboardInput
 #endif
             ;
-        public bool IsGameplayPointerBlocked => IsGameplayInputBlocked;
+        public bool IsGameplayPointerBlocked => IsGameplayInputBlocked
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            || Subject42DebugMenu.HubBlocksGameplayPointer || Subject42.Visuals.LiveVisualStudio.BlocksGameplayPointer
+#endif
+            ;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public bool DebugSuppressPlayerInput { get; set; }
+        public System.Func<bool> DevelopmentInputBlocker { get; set; }
         public void DebugConsumeExternalUiEscape() => escapeFrame = consumedFrame = Time.frameCount;
 #endif
         private bool Alive => station != null && station.IsInitialized && station.Owner != null && !station.Owner.IsDead;

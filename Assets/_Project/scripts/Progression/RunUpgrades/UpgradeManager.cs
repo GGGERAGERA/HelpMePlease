@@ -423,7 +423,8 @@ public sealed partial class UpgradeManager : MonoBehaviour
         {
             var ring = orbitalRewardProvider?.GetDefinition(OrbitalRewardKind.NewRing);
             if (!TryBeginDirectReward(ring, _ =>
-                    RunMessageService.Instance?.ShowCustom("reward.panel.special", "reward.panel.newRing", 2f)))
+                    RunMessageService.Instance?.ShowCustom("reward.panel.special",
+                        RunStateManager.Instance?.OrbitalStationState?.UsesTelekineticRig==true ? "reward.panel.rigExpansion" : "reward.panel.newRing", 2f)))
                 // Preserve the special-site contract when a ring cannot be granted.
                 ShowUpgradeChoices();
         });

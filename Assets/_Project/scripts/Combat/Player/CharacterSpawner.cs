@@ -52,7 +52,7 @@ public class CharacterSpawner : MonoBehaviour
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
-        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData, segmentedOrbit: true);
+        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData, segmentedOrbit: true, telekineticRig: true);
         Station = orbital;
         rewards?.BindOrbitalStation(orbital);
         if (onboardingPrefab != null && orbital != null && orbital.IsInitialized)
@@ -82,7 +82,7 @@ public class CharacterSpawner : MonoBehaviour
         {
             OrbitalStationRuntime station = SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>(true);
             if (station != null) station.RebuildRuntimeFromState();
-            else station = OrbitalStationRuntime.Ensure(SpawnedPlayer, SpawnedCharacterData, segmentedOrbit: true);
+            else station = OrbitalStationRuntime.Ensure(SpawnedPlayer, SpawnedCharacterData, segmentedOrbit: true, telekineticRig: true);
             Station = station;
             rewards?.BindOrbitalStation(station);
             CharacterSpawned?.Invoke(SpawnedPlayer);

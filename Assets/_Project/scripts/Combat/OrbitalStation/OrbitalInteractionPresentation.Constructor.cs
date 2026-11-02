@@ -108,6 +108,7 @@ namespace Subject42.Combat.OrbitalStation
             if (constructorRewardPanel == null || !station.InputOwner.BeginConstructor()) return false;
             constructorHidReward = constructorRewardPanel.gameObject.activeSelf;
             constructorRewardPanel.SetConstructorCovered(true);
+            if (station.Rig!=null) { station.Rig.SetConstructorVisible(true); return true; }
             constructorPanel.SetActive(true);
             constructorLauncher.gameObject.SetActive(false);
             ResetConstructorDrag();
@@ -117,6 +118,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public void CloseConstructor()
         {
+            station?.Rig?.SetConstructorVisible(false);
             ResetConstructorDrag();
             if (station?.InputOwner != null)
             {
@@ -280,6 +282,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool CancelConstructorSelection()
         {
+            if (station?.Rig!=null) return station.Rig.CancelSelection();
             if (!ConstructorDragging) return false;
             ResetConstructorDrag();
             return true;
@@ -291,6 +294,12 @@ namespace Subject42.Combat.OrbitalStation
         private void UpdateConstructor()
         {
             if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit) return;
+            if (station.Rig!=null)
+            {
+                constructorCanvas.gameObject.SetActive(false);
+                if (station.InputOwner.IsConstructing && !station.InputOwner.CanEditConstructor) CloseConstructor();
+                return;
+            }
             constructorCanvas.gameObject.SetActive(true);
             if (station.InputOwner.IsConstructing && !station.InputOwner.CanEditConstructor) CloseConstructor();
             bool notify = !station.InputOwner.IsChoosingReward && station.InputOwner.CanOpenConstructor &&

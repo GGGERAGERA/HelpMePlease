@@ -1,3 +1,4 @@
+using Subject42.Combat.Telekinetic;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections.Generic;
 using System.Linq;
@@ -7,13 +8,15 @@ using UnityEngine;
 namespace Subject42.DebugLabs.Telekinetic
 {
     [DefaultExecutionOrder(-200)]
-    public sealed partial class TelekineticConstructorLab : MonoBehaviour
+    public sealed partial class TelekineticConstructorLab : MonoBehaviour, ITelekineticStructureOwner
     {
         public const string ScenePath="Assets/_Project/Dev/Labs/TelekineticConstructorLab/TelekineticConstructorLab.unity";
         public GameObject PlayerTemplate, EnemyPrefab;
         public Camera ArenaCamera;
         public GameObject PistolVisual, ShotgunVisual, SawVisual;
         public Material SpriteMaterial;
+        Material ITelekineticStructureOwner.SpriteMaterial => SpriteMaterial;
+        float ITelekineticStructureOwner.CellSpacing => CellSpacing;
         public Sprite ModuleSprite;
         public OrbitalPresentationConfig Presentation;
         public TelekineticStructureView StructureView;

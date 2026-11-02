@@ -1,3 +1,4 @@
+using Subject42.Combat.Telekinetic;
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -16,6 +17,7 @@ public static partial class TelekineticConstructorAuthoring
         var icons=new Sprite[Enum.GetValues(typeof(TelekineticPart)).Length];
         foreach (TelekineticPart kind in Enum.GetValues(typeof(TelekineticPart)))
         {
+            if (kind==TelekineticPart.Sniper) continue;
             if (kind>=TelekineticPart.Pistol && kind<=TelekineticPart.Saw)
             {
                 string name=kind==TelekineticPart.Pistol?"Pistol":kind==TelekineticPart.Shotgun?"Shotgun":"Saw";

@@ -32,7 +32,7 @@ public class HUDManager : MonoBehaviour
         Component[] views = { informationGroup, healthBar, healthSlider, healthText,
             experienceBar, experienceSlider, experienceText, levelText, killsCounter,
             goldCounter, killsText, currencyText, timerText, threatPanel, bulletTimeView,
-            dashCooldownView, routeProgressView, orbitalCursor, interactionPrompt,
+            dashCooldownView, routeProgressView, orbitalCursor, interactionPrompt, constructorHint,
             runMessages != null ? runMessages.View : null, targetTracker, tacticalMap,
             bossHpPanel != null ? bossHpPanel.transform : null, lowHpVignette };
         foreach (var view in views)
@@ -73,6 +73,7 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private RectTransform threatPanel;
     [SerializeField] private HudSegments threatSegments;
     [SerializeField] private BulletTimeHudView bulletTimeView;
+    [SerializeField] private ConstructorHudHint constructorHint;
 
     [Header("Dash")]
     [SerializeField] private DashCooldownView dashCooldownView;
@@ -363,6 +364,7 @@ public class HUDManager : MonoBehaviour
     {
         IsPlayerBound = player != null;
         bulletTimeView.Bind(player);
+        constructorHint?.Bind(player);
         if (boundPlayer != null) { boundPlayer.HealthChanged -= SetHealth; boundPlayer.DamageTaken -= PulsePlayerDamage; }
         boundPlayer = player != null ? player.GetComponent<PlayerHealth>() : null;
         if (boundPlayer != null)

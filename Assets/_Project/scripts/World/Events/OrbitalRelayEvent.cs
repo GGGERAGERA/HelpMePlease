@@ -113,7 +113,7 @@ public sealed class OrbitalRelayEvent : WorldEvent
         player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
         station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>(true) : null;
     }
-    private bool ReadyToStart => state != null && station != null && station.IsInitialized && station.Modules.Count > 0 &&
+    private bool ReadyToStart => state != null && station != null && station.IsInitialized && (station.Rig!=null ? station.Rig.HasWeapon : station.Modules.Count > 0) &&
         owner != null && owner.CanDispatchCompletionReward(this);
     protected override bool CanStartFrom(Vector2 position)
     {
@@ -143,7 +143,8 @@ public sealed class OrbitalRelayEvent : WorldEvent
         bool contact = false;
         if (before.Phase != OrbitalRelayPhase.Transition && IsPlayerInside && station != null && station.IsInitialized && !station.Owner.IsDead && ActiveNode != null &&
             ActiveNode.TryGetContactCircle(out Vector2 center, out float radius))
-            foreach (var module in station.Modules)
+            if (station.Rig!=null) contact=station.Rig.HasBodyContact(center,radius);
+            else foreach (var module in station.Modules)
                 if (module.HasBodyContact(center, radius)) { contact = true; break; }
         state.Tick(Time.deltaTime, contact);
         var after = Snapshot;

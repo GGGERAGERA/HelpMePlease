@@ -1,0 +1,18 @@
+# Constructor hint — standard authored HUD
+
+The user's Tab affordance must follow the existing HUD, appear in Edit Mode, and render beneath the normal UI cursor. Root cause: the hint was emitted only by a spawned rig's OnGUI, outside GameplayHUD's authored Canvas and cursor hierarchy. Adding an IMGUI background did not address that boundary.
+
+- [x] Add a focused failing prefab test: saved active ConstructorHint, standard Image/Button/TMP, same background/font/Canvas as the counters, and cursor above the hint.
+- [x] Author only a compact Tab + existing FRAME icon into GameplayHUD.prefab under its standard information group. Reuse HudIconNumber's existing presentation; bind a small HUD view through HUDManager.BindPlayer, like BulletTimeHudView. Button uses the existing constructor entry and visibility/pause rules. No runtime UI spawning or ExecuteAlways workaround.
+- [x] Remove only the Tab affordance from rig OnGUI. Keep constructor UI, anomaly feedback, mechanics, cursor implementation, rewards and saves unchanged.
+- [x] Verify the saved prefab/Edit Mode references, and one short existing-user-Editor 1600×900 scenario: normal HUD, EventSystem raycast/click, hidden hint while editing, cursor image above the Tab plaque. Open the actual Game View PNGs.
+
+No commits, staging, branch operations, push, unrelated scene authoring or broad tests. New authoring is restricted to this single prefab addition; existing MVP references already use GameplayHUD.prefab. Evidence will be stored in Artifacts/GeneratedQA/ConstructorHudIntegration.
+
+Evidence: `prefab-red.xml` reproduces the original absence of an authored Tab hint. Independent read-only review and the first integration run caught a Unity prefab save renumbering four existing stripped objects (pause controller/rect and timer text/rect), which broke MVP's pause overrides. Their original IDs were restored, and the scoped authoring helper now preserves nested-object IDs and unchanged existing blocks after a save. `references-red.xml` retains that failed run. No MVP or other scene references were rewritten; the final prefab diff is 416 inserted lines, zero removed lines, preserving every original object ID and all original field values.
+
+`results.xml`: 2 executed, 2 passed, 0 failed. The prefab test checks its saved Edit Mode presence and appearance, plus the inherited MVP hint, timer reference, PauseMenuUI characterSpawner override and UpgradeManager pause binding in a preview scene. The short real-Editor Play scenario verifies the standard EventSystem raycast/click, constructor pause/resume, hiding the hint while editing, and the normal Esc-handler pause/resume. No long suite or build was run.
+
+Opened and visually inspected both genuine Unity Game View 1600×900 captures: `combat-1600x900.png` and `cursor-over-tab-1600x900.png`. The latter positions the existing UI cursor over Tab for a rendering check; it confirms the cursor remains above the standard black HUD plaque. Existing cursor code and Canvas sorting order were not modified. Edit Mode presence is verified through the saved prefab/MVP preview hierarchy and active Canvas data, not claimed as a separate native-window screenshot.
+
+Final production scope: one new HUD view, three HUDManager wiring additions, removal of the four IMGUI Tab drawing lines, and the authored HUD child/reference. Other changes are the narrow Editor authoring/capture verification and this record. Combat rules, input ownership, constructor model/UI, rewards, anomalies, save data and world sorting remain as before this correction. The review's pause-reference blocker is covered by the now-green scene-reference and Esc-handler checks; no unresolved blocker remains.

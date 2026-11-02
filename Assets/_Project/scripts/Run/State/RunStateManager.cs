@@ -736,8 +736,8 @@ public sealed class RunStateManager : MonoBehaviour
         summary.SectorNumber = CurrentSector?.SectorNumber ?? CurrentLevel;
         summary.PlayerLevel = ExperienceManager.Instance != null
             ? ExperienceManager.Instance.currentLevel : savedXpLevel;
-        summary.OrbitalRingCount = OrbitalStationState == null ? 0 : OrbitalStationState.UsesSegmentedOrbit ? OrbitalStationState.UnlockedSegmentedLevels : OrbitalStationState.Rings.Count;
-        summary.OrbitalModuleCount = OrbitalStationState?.Modules.Count ?? 0;
+        summary.OrbitalRingCount = OrbitalStationState == null ? 0 : OrbitalStationState.UsesTelekineticRig ? 0 : OrbitalStationState.UsesSegmentedOrbit ? OrbitalStationState.UnlockedSegmentedLevels : OrbitalStationState.Rings.Count;
+        summary.OrbitalModuleCount = OrbitalStationState?.UsesTelekineticRig==true ? OrbitalStationState.Telekinetic.Items.Count : OrbitalStationState?.Modules.Count ?? 0;
         summary.Cores = Expedition?.Snapshot;
         return summary;
     }

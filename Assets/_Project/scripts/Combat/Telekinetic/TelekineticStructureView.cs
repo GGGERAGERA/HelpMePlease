@@ -1,16 +1,15 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Subject42.DebugLabs.Telekinetic
+namespace Subject42.Combat.Telekinetic
 {
     // Presentation only. Geometry is a derived snapshot of Build, never a second placement model.
     // Two batched meshes share the authored sprite material; no per-cell physics or Update components.
     [DisallowMultipleComponent]
     public sealed class TelekineticStructureView : MonoBehaviour
     {
-        [Header("Segmented psi chassis / lab only")]
+        [Header("Segmented psi chassis")]
         [Min(.08f)] public float SegmentPitch=.17f;
         [Range(.1f,.35f)] public float SpineWidth=.21f;
         [Range(0,.4f)] public float PulseStrength=.18f;
@@ -66,12 +65,12 @@ namespace Subject42.DebugLabs.Telekinetic
         private readonly Geometry metal=new(),energy=new();
         private readonly List<Pulse> pulses=new();
         private readonly HashSet<Vector2Int> occupied=new();
-        private TelekineticConstructorLab lab;
+        private ITelekineticStructureOwner lab;
         private GameObject root;
         private Mesh chassisMesh,energyMesh;
         private Color[] animatedColors;
 
-        public void Bind(TelekineticConstructorLab owner,Transform construction)
+        public void Bind(ITelekineticStructureOwner owner,Transform construction)
         {
             lab=owner;
             root=new GameObject("Telekinetic chassis / visual only"); root.transform.SetParent(construction,false);
@@ -120,7 +119,7 @@ namespace Subject42.DebugLabs.Telekinetic
         private void FootprintPlate(TelekineticItem item)
         {
             float half=lab.CellSpacing*.5f,padding=.07f;
-            Color tint=TelekineticConstructorLab.FrameTint(item.Kind);
+            Color tint=TelekineticRig.FrameTint(item.Kind);
             int first=energy.Vertices.Count;
             for (int i=0;i<item.CellCount;i++)
             {
@@ -129,7 +128,7 @@ namespace Subject42.DebugLabs.Telekinetic
                     up=item.Contains(cell+Vector2Int.up),down=item.Contains(cell+Vector2Int.down);
                 Vector2 min=p-new Vector2(half,half)+new Vector2(left?0:padding,down?0:padding);
                 Vector2 max=p+new Vector2(half,half)-new Vector2(right?0:padding,up?0:padding);
-                metal.Quad(new Vector2(min.x,(min.y+max.y)*.5f),new Vector2(max.x,(min.y+max.y)*.5f),max.y-min.y,TelekineticConstructorLab.PlateTint(item.Kind));
+                metal.Quad(new Vector2(min.x,(min.y+max.y)*.5f),new Vector2(max.x,(min.y+max.y)*.5f),max.y-min.y,TelekineticRig.PlateTint(item.Kind));
                 void Border(Vector2 a,Vector2 b)
                 {
                     metal.Quad(a,b,item.IsWeapon?.085f:.045f,tint); Glow(a,b,item.IsWeapon?.023f:.012f,tint);
@@ -186,8 +185,8 @@ namespace Subject42.DebugLabs.Telekinetic
             int degree=0; for (int i=0;i<4;i++) if ((mask&(1<<i))!=0) degree++;
             bool frame=cell.Kind==TelekineticPart.Frame, power=cell.Kind==TelekineticPart.Energy;
             float radius=frame ? (degree>=3?.21f:.15f) : cell.IsWeapon ? .43f : power ? .34f : .3f;
-            Color tint=TelekineticConstructorLab.FrameTint(cell.Kind);
-            metal.Disk(p,radius+.045f,tint); metal.Disk(p,radius,TelekineticConstructorLab.PlateTint(cell.Kind));
+            Color tint=TelekineticRig.FrameTint(cell.Kind);
+            metal.Disk(p,radius+.045f,tint); metal.Disk(p,radius,TelekineticRig.PlateTint(cell.Kind));
             int first=energy.Vertices.Count;
             Ring(energy,p,radius+.02f,.13f,Alpha(tint,cell.IsWeapon?.065f:.015f),16);
             Ring(energy,p,radius+.02f,.06f,Alpha(tint,cell.IsWeapon?.16f:.035f),16);
@@ -262,4 +261,3 @@ namespace Subject42.DebugLabs.Telekinetic
         }
     }
 }
-#endif

@@ -78,6 +78,18 @@ namespace Subject42.Combat.OrbitalStation
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetLabInterceptor() => LabInterceptor = null;
 #endif
+        public event Action<long,int,Vector2> ProjectileSpawned;
+        public event Action<long,float,bool,bool> ProjectileContact;
+        public event Action<long,bool> ProjectileEnded;
+        private long projectileSequence;
+        public void SpawnRigDirectionalProjectile(Vector2 origin,Vector2 direction,OrbitalWeaponSettings settings,
+            ProjectileVolley volley,float damage,int weaponId,int ricochets)
+        {
+            var shot=SpawnWeaponProjectileCore(origin,null,direction,settings,volley,damage,direction);
+            if (shot==null) return;
+            shot.RicochetsRemaining=ricochets; shot.Sequence=++projectileSequence;
+            ProjectileSpawned?.Invoke(shot.Sequence,weaponId,shot.Direction);
+        }
         public bool LabStraightProjectiles { get; set; } = true;
         public sealed class ProjectileVolley
         {
@@ -196,6 +208,7 @@ namespace Subject42.Combat.OrbitalStation
         }
         private sealed class Projectile
         {
+            public long Sequence;
             public bool ChargedLinePresentation;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             public long LabSequence;
@@ -523,6 +536,7 @@ namespace Subject42.Combat.OrbitalStation
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                     if (projectile.LabSequence != 0) LabProjectileContact?.Invoke(projectile.LabSequence, 0f, false, true);
 #endif
+                    if (projectile.Sequence!=0) ProjectileContact?.Invoke(projectile.Sequence,0,false,true);
                     projectile.Volley?.Shields.Add(enemy);
                     Release(projectile); return; // Includes the hit that breaks the shield.
                 }
@@ -534,7 +548,9 @@ namespace Subject42.Combat.OrbitalStation
                 float healthBefore = enemy.CurrentHealth;
                 bool aliveBefore = !enemy.IsDead;
 #endif
+                float rigBefore=enemy.CurrentHealth; bool rigAlive=!enemy.IsDead;
                 ResolveDamage(enemy, projectile.Damage, point, true);
+                if (projectile.Sequence!=0) ProjectileContact?.Invoke(projectile.Sequence,Mathf.Max(0,rigBefore-enemy.CurrentHealth),rigAlive && enemy.IsDead,false);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (projectile.LabSequence != 0)
                     LabProjectileContact?.Invoke(projectile.LabSequence, Mathf.Clamp(healthBefore - enemy.CurrentHealth, 0f, Mathf.Max(0f, healthBefore)), aliveBefore && enemy.IsDead, false);
@@ -617,6 +633,8 @@ namespace Subject42.Combat.OrbitalStation
 
         private void Release(Projectile projectile)
         {
+            if (projectile.Sequence!=0) ProjectileEnded?.Invoke(projectile.Sequence,false);
+            projectile.Sequence=0;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (projectile.LabSequence != 0) LabProjectileEnded?.Invoke(projectile.LabSequence, projectile.LabCancelled);
             projectile.LabSequence = 0; projectile.LabCancelled = false;

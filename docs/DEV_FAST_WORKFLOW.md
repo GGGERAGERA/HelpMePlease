@@ -9,6 +9,7 @@
 | Бункер, станции, ресурсы, миссии, Escape, реплики | `Assets/_Project/Scenes/MainBuild/MainMenu.unity`, Play, **F9** |
 | Обычный запуск, сохранение, возврат | `StartScreen → MainMenu → MVP → MainMenu`; используйте короткий smoke ниже |
 | Production-бой, враги, награды, аномалии | `Assets/_Project/Scenes/MainBuild/MVP.unity` через бункер; прямой development-запуск имеет другие условия допуска прогресса |
+| Telekinetic Rig, footprint-конструктор, новый запас/наградные расширения | Тот же MVP через бункер; адресный `TelekineticProductionTests` в существующем TutorialVerificationRunner. План: [перенос 02.11](superpowers/plans/2026-11-02-telekinetic-production.md) |
 | Segmented Orbit, оружие, щиты, Обходчик/Проломщик/пауки | `Assets/_Project/Dev/Labs/OrbitalLab/EnemyOrbitalLab.unity`; Tools → Subject42 → Dev → OrbitalLab → Play Segmented Orbit |
 | Рисованная/настраиваемая орбита | `Dev/Labs/OrbitalLab/CustomOrbitLab.unity`, `OrbitalConstructorLab.unity` |
 | Relay, Corridor, World Rules, независимые территории | `Assets/_Project/Dev/Labs/WorldSystemsLab/WorldSystemsLab.unity` |

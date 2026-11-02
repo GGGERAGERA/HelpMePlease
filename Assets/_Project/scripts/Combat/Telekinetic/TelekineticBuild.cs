@@ -1,12 +1,11 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Subject42.DebugLabs.Telekinetic
+namespace Subject42.Combat.Telekinetic
 {
-    public enum TelekineticPart { Frame, Pistol, Shotgun, Saw, DMG, FR, Double, RIC, Energy, Pierce, Splash, Chain, Crit, Slow, Shred, Knock, Echo }
+    public enum TelekineticPart { Frame, Pistol, Shotgun, Saw, DMG, FR, Double, RIC, Energy, Pierce, Splash, Chain, Crit, Slow, Shred, Knock, Echo, Sniper }
 
     public readonly struct TelekineticCharge
     {
@@ -15,22 +14,23 @@ namespace Subject42.DebugLabs.Telekinetic
         public TelekineticCharge(TelekineticPart kind,float strength) { Kind=kind; Strength=strength; }
     }
 
+    [Serializable]
     public sealed class TelekineticItem
     {
-        public readonly int Id;
-        public readonly TelekineticPart Kind;
-        public Vector2Int Position { get; internal set; }
-        public int QuarterTurns { get; internal set; }
-        public int Level { get; internal set; } = 1;
+        public int Id;
+        public TelekineticPart Kind;
+        public Vector2Int Position;
+        public int QuarterTurns;
+        public int Level = 1;
         public float Remaining, ShotRemaining;
-        internal float LastCooldown;
+        [SerializeField] internal float LastCooldown;
         public int Activations, Shots;
         // One pending charge per source: repeated pulses refresh rather than bank infinite shots.
         internal readonly Dictionary<int, float> Damage = new(), Rapid = new();
         internal readonly Dictionary<int, int> Extra = new(), Ricochet = new();
         internal readonly Dictionary<int, float> RapidUntil = new();
         internal readonly Dictionary<int,TelekineticCharge> Effects=new();
-        public bool IsWeapon => Kind >= TelekineticPart.Pistol && Kind <= TelekineticPart.Saw;
+        public bool IsWeapon => Kind >= TelekineticPart.Pistol && Kind <= TelekineticPart.Saw || Kind==TelekineticPart.Sniper;
         public bool IsModule => Kind >= TelekineticPart.DMG && Kind <= TelekineticPart.RIC || Kind>=TelekineticPart.Pierce && Kind<=TelekineticPart.Echo;
         public bool CanMerge => IsModule || Kind == TelekineticPart.Energy;
         private static readonly Vector2Int[] Single={new(0,0)}, Bar={new(0,0),new(0,1)},
@@ -60,13 +60,15 @@ namespace Subject42.DebugLabs.Telekinetic
     }
 
     // The only source of placement truth. Failed transactions leave positions, levels and timers intact.
-    public sealed class TelekineticBuild
+    [Serializable]
+    public sealed partial class TelekineticBuild
     {
         public const int Radius = 4;
         public static readonly Vector2Int[] Sides = { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left };
-        private readonly List<TelekineticItem> items = new();
+        [SerializeField] private List<TelekineticItem> items = new();
         public IReadOnlyList<TelekineticItem> Items => items;
-        private int nextId;
+        [SerializeField] private int nextId;
+        public int AvailableRadius = Radius;
         public readonly HashSet<Vector2Int> Disconnected = new();
         public string Message { get; private set; } = "Выберите деталь, затем зелёную клетку.";
         public TelekineticItem At(Vector2Int p)
@@ -88,7 +90,7 @@ namespace Subject42.DebugLabs.Telekinetic
             for (int i=0;i<shape.Count;i++)
             {
                 var p=anchor+TelekineticItem.RotateOffset(shape[i],turns);
-                if (!InBounds(p)) { reason="Вся форма должна быть внутри сетки и не занимать ядро."; return false; }
+                if (!InBounds(p) || Math.Abs(p.x)>AvailableRadius || Math.Abs(p.y)>AvailableRadius) { reason="Вся форма должна быть внутри сетки и не занимать ядро."; return false; }
                 if (At(p)!=null) { reason="Для целого предмета недостаточно свободного места."; return false; }
                 foreach (var side in Sides) if (p+side==Vector2Int.zero || At(p+side)!=null) connected=true;
             }
@@ -157,7 +159,7 @@ namespace Subject42.DebugLabs.Telekinetic
         {
             problem=new HashSet<Vector2Int>(); var occupied=new HashSet<Vector2Int>();
             foreach (var item in items) for (int i=0;i<item.CellCount;i++)
-            { var p=item.Cell(i); if (!InBounds(p) || !occupied.Add(p)) problem.Add(p); }
+            { var p=item.Cell(i); if (!InBounds(p) || Math.Abs(p.x)>AvailableRadius || Math.Abs(p.y)>AvailableRadius || !occupied.Add(p)) problem.Add(p); }
             if (problem.Count>0) { reason="Формы пересекаются, занимают ядро или выходят за границы."; return false; }
             var visited=new HashSet<Vector2Int> { Vector2Int.zero }; var queue=new Queue<Vector2Int>();
             queue.Enqueue(Vector2Int.zero);
@@ -209,4 +211,3 @@ namespace Subject42.DebugLabs.Telekinetic
         }
     }
 }
-#endif

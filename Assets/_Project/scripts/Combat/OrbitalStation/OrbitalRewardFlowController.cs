@@ -70,6 +70,16 @@ namespace Subject42.Combat.OrbitalStation
             hoveredMount = null;
             reservedMount = null;
             firstRingId = 0;
+            if (station.UsesTelekineticRig && (OrbitalRewardProvider.GetRigPart(selected.RewardKind).HasValue || selected.RewardKind==OrbitalRewardKind.RigExpansion))
+            {
+                if (OrbitalRewardProvider.GetRigPart(selected.RewardKind) is Subject42.Combat.Telekinetic.TelekineticPart part)
+                    station.State.Telekinetic.Grant(part);
+                else if (!station.State.Telekinetic.Expand()) { Clear(false); return false; }
+                committed=true; State=OrbitalRewardFlowState.Construction;
+                // Exactly one grant. The constructor closes through the existing reward barrier.
+                if (!station.Interaction.OpenConstructor()) { CompleteReward(); }
+                return true;
+            }
             if (station.UsesSegmentedOrbit && OrbitalRewardProvider.GetModuleKind(selected.RewardKind) is OrbitalModuleKind weapon &&
                 OrbitalRunState.IsSegmentedWeapon(weapon)) return ApplyImmediate();
             if (!selected.RequiresArenaSelection)
@@ -188,7 +198,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             if (IsAwaitingConstructor)
             {
-                CompleteReward();
+                if (!station.InputOwner.IsConstructing) CompleteReward();
                 return;
             }
             if (reward == null || station == null || !station.IsInitialized ||

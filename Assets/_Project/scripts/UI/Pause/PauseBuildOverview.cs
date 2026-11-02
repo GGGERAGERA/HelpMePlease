@@ -125,6 +125,15 @@ public sealed class PauseBuildOverview : MonoBehaviour
         modulesText.text = text.Length == 0 ? localization.Get("pause.noModules") : text.ToString().TrimEnd();
         if (state?.UsesSegmentedOrbit == true)
             modulesText.text += $"\n{localization.Get("pause.weaponLimit")}: {state.Modules.Count}/{state.SegmentedWeaponLimit}";
+        if (state?.UsesTelekineticRig == true)
+        {
+            int size=state.Telekinetic.AvailableRadius*2+1;
+            ringsTitle.text=$"TELEKINETIC RIG / {size} × {size}";
+            ringsText.text=$"{state.Telekinetic.Items.Count} предметов в конструкции\n{state.Telekinetic.Reserve.Count} предметов в запасе\n"+
+                $"Q/E — поворот · ПКМ — центр\nАвтоповорот: {(state.TelekineticAutoRotate?"ВКЛ":"ВЫКЛ")}";
+            modulesText.text=string.Join("\n",state.Telekinetic.Items.GroupBy(item=>item.Kind)
+                .Select(group=>$"{Subject42.Combat.Telekinetic.TelekineticBuild.Label(group.Key)} ×{group.Count()}"));
+        }
         text.Clear();
         if (state != null && !state.UsesSegmentedOrbit)
         {

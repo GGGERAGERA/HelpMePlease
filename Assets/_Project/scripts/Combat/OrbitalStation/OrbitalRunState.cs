@@ -650,6 +650,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool Validate(out string error)
         {
+            if (UsesTelekineticRig && !Telekinetic.ValidateInventory())
+            { error = "invalid telekinetic layout or reserve"; return false; }
             if (!IsFinitePositive(ShootingDamageMultiplier) || !IsFinitePositive(ShootingRateMultiplier) ||
                 !IsFinitePositive(ContactDamageMultiplier) || !IsFinitePositive(ContactSizeMultiplier))
             { error = "invalid category multipliers"; return false; }

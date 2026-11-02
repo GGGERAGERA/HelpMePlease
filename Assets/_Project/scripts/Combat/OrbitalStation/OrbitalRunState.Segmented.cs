@@ -28,12 +28,12 @@ namespace Subject42.Combat.OrbitalStation
         // Bound by the production spawner, never saved into shared laboratory state.
         [NonSerialized] private bool productionWeaponAvailability;
         public bool IsWeaponAvailable(OrbitalModuleKind kind) =>
-            !productionWeaponAvailability || kind != OrbitalModuleKind.Saw;
+            UsesTelekineticRig || !productionWeaponAvailability || kind != OrbitalModuleKind.Saw;
 
         internal void ApplyProductionWeaponAvailability(bool production)
         {
             productionWeaponAvailability = production;
-            if (!production || !UsesSegmentedOrbit) return;
+            if (!production || !UsesSegmentedOrbit || UsesTelekineticRig) return;
             bool stowed = false;
             foreach (var weapon in Modules.Where(gun => gun.ModuleType == OrbitalModuleKind.Saw).ToArray())
             {

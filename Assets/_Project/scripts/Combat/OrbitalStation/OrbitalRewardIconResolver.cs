@@ -50,6 +50,12 @@ namespace Subject42.Combat.OrbitalStation
 
         public static Icon Resolve(OrbitalRewardData reward)
         {
+            if (RunStateManager.Instance?.OrbitalStationState?.UsesTelekineticRig==true && OrbitalRewardProvider.GetRigPart(reward.RewardKind) is Subject42.Combat.Telekinetic.TelekineticPart part)
+            {
+                var prefab=OrbitalPresentationConfig.Active.TelekineticRigPrefab;
+                return new Icon(prefab.Icon(part),Subject42.Combat.Telekinetic.TelekineticRig.PartColor(part),true);
+            }
+            if (reward.RewardKind==OrbitalRewardKind.RigExpansion) return new Icon(OrbitalPresentationConfig.Active.NewMountIcon,Color.cyan);
             if ((reward.RewardKind == OrbitalRewardKind.MaxHealth || reward.RewardKind == OrbitalRewardKind.MoveSpeed) &&
                 reward.BodyUpgrade != null)
                 return new Icon(reward.BodyUpgrade.icon,

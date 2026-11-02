@@ -44,6 +44,7 @@ namespace Subject42.Combat.OrbitalStation
                 // Convert to the same player-relative world axes used by Shift steering.
                 Vector2 origin = (Vector2)transform.position - Offset;
                 Vector2 target = Vector2.ClampMagnitude(world - origin, maximumOffset);
+                if (station.Rig!=null) target=station.Rig.DistortCenter(target);
                 Offset = Vector2.MoveTowards(Offset, target, moveSpeed * deltaTime);
                 movement.SetAnomalySpeedMultiplier(this, steeringSpeedMultiplier);
                 if ((Offset - previous).sqrMagnitude > .000001f) Shifted?.Invoke();

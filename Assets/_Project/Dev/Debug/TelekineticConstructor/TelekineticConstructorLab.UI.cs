@@ -1,3 +1,4 @@
+using Subject42.Combat.Telekinetic;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Linq;
@@ -82,6 +83,7 @@ namespace Subject42.DebugLabs.Telekinetic
             int row=0;
             foreach (TelekineticPart kind in Enum.GetValues(typeof(TelekineticPart)))
             {
+                if (kind==TelekineticPart.Sniper) continue; // Production compatibility; unchanged lab catalogue.
                 var rect=new Rect(44+row%3*106,164+row/3*46,100,40); var previous=GUI.backgroundColor; GUI.backgroundColor=FrameTint(kind);
                 if (GUI.Button(rect,new GUIContent("",TelekineticBuild.Label(kind)+" · "+ShapeLabel(kind)),buttonStyle))
                 { brush=kind; brushTurns=0; selected=null; dragging=null; merging=false; Build.Disconnected.Clear(); notice="Выбрано: "+TelekineticBuild.Label(kind)+". R — повернуть форму, ЛКМ — установить."; }

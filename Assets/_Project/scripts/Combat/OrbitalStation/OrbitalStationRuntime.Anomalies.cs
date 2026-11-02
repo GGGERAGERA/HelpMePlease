@@ -66,6 +66,7 @@ namespace Subject42.Combat.OrbitalStation
         }
         internal void ResetOrbitAnomaly()
         {
+            Rig?.ResetAnomaly();
             // Warning lifetime uses game time; return only our still-owned flashes before Tab freezes it.
             for (int i = flashes.Count - 1; i >= 0; i--)
                 if (orbitWarningLines.TryGetValue(flashes[i].line,out float started) && flashes[i].startedAt == started)

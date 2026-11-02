@@ -30,6 +30,12 @@ public sealed class BulletTimeHudView : MaskableGraphic
         "#...........#", ".#.........#.", ".#.........#.", "..##.....##..", "....#####...."
     };
     private static readonly string[] LeftArrow = { "..#....", ".#.....", "#######", ".#.....", "..#...." };
+    private static readonly string[] Rig =
+    {
+        ".....###.....", ".....###.....", ".....###.....", "......#......",
+        "......#......", "###..###..###", "#############", "###..###..###",
+        "......#......", "......#......", ".....###.....", ".....###.....", ".....###....."
+    };
     private static readonly string[] RightArrow = { "....#..", ".....#.", "#######", ".....#.", "....#.." };
     private static readonly string[] Mouse =
     {
@@ -59,6 +65,7 @@ public sealed class BulletTimeHudView : MaskableGraphic
     {
         station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>() : null;
         centerShift = station != null ? station.GetComponentInChildren<OrbitalCenterShift>() : null;
+        SetVerticesDirty();
     }
 
     private void LateUpdate()
@@ -83,7 +90,7 @@ public sealed class BulletTimeHudView : MaskableGraphic
         float pixel = Mathf.Floor(Mathf.Min(rect.width / 66f, rect.height / 34f));
         if (pixel < 1f) return;
         var origin = new Vector2(rect.center.x - 66f * pixel * .5f, rect.center.y + 34f * pixel * .5f);
-        DrawPixels(mesh, Orbit, 11, 0, origin, pixel);
+        DrawPixels(mesh, station!=null && station.UsesTelekineticRig ? Rig : Orbit, 11, 0, origin, pixel);
         DrawPixels(mesh, LeftArrow, 0, 4, origin, pixel);
         DrawPixels(mesh, RightArrow, 28, 4, origin, pixel);
         DrawPixels(mesh, Mouse, 10, 17, origin, pixel);

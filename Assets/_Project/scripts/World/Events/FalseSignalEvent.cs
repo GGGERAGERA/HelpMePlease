@@ -92,7 +92,7 @@ public sealed class FalseSignalEvent : WorldEvent
         ShowEventMarker(transform, "event.false");
     }
     protected override bool CanStartFrom(Vector2 position) => health != null && !health.IsDead &&
-        station != null && station.IsInitialized && station.Modules.Count > 0 && GetComponent<CircleCollider2D>().OverlapPoint(position);
+        station != null && station.IsInitialized && (station.Rig!=null ? station.Rig.HasWeapon : station.Modules.Count > 0) && GetComponent<CircleCollider2D>().OverlapPoint(position);
     protected override void OnEventStarted()
     {
         GetComponent<CircleCollider2D>().enabled = false;
@@ -134,7 +134,8 @@ public sealed class FalseSignalEvent : WorldEvent
         {
             if (point == null || point.State != FalseSignalPointState.Unchecked) continue;
             point.GetContactCircle(out var center, out float radius);
-            foreach (var module in station.Modules)
+            if (station.Rig!=null) { if (station.Rig.HasBodyContact(center,radius)) point.BeginScan(); }
+            else foreach (var module in station.Modules)
                 if (module.HasBodyContact(center, radius)) { point.BeginScan(); break; }
         }
     }

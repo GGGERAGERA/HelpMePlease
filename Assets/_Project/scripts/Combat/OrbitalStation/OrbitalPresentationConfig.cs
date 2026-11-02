@@ -43,6 +43,7 @@ namespace Subject42.Combat.OrbitalStation
 
         [Header("Authored composition")]
         public GameObject StationPrefab;
+        public Subject42.Combat.Telekinetic.TelekineticRig TelekineticRigPrefab;
         public OrbitalRingView RingPrefab;
         public OrbitalMountView MountPrefab;
         public CustomOrbitDrawing CustomDrawingPrefab;
