@@ -832,6 +832,30 @@ MonoBehaviour:
   - key: sector.choice.title
     ru: "ВЫБЕРИТЕ УСЛОВИЯ СЕКТОРА"
     en: "SELECT SECTOR CONDITIONS"
+  - key: route.map.title
+    ru: "МАРШРУТ  /  УРОВЕНЬ {0:00} ИЗ {1:00}"
+    en: "ROUTE  /  LEVEL {0:00} OF {1:00}"
+  - key: route.node.combat
+    ru: "БОЙ"
+    en: "COMBAT"
+  - key: route.node.unknown
+    ru: "?"
+    en: "?"
+  - key: route.node.minefield
+    ru: "МИННОЕ ПОЛЕ"
+    en: "MINEFIELD"
+  - key: route.node.anomaly
+    ru: "АНОМАЛИЯ"
+    en: "ANOMALY"
+  - key: route.node.golden
+    ru: "ЗОЛОТОЙ"
+    en: "GOLDEN"
+  - key: route.node.rare
+    ru: "РЕДКИЙ"
+    en: "RARE"
+  - key: route.weather.clear
+    ru: "ЯСНО"
+    en: "CLEAR"
   - key: world.rule.darkness.displayName
     ru: "ТЕМНОТА"
     en: "DARKNESS"

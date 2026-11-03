@@ -33,7 +33,7 @@ public static class TacticalEnemyMvpAuthoring
         foreach (string guid in AssetDatabase.FindAssets("t:EnemySpawnProfile", new[] { "Assets/_Project/Data/Stages/EnemySpawnProfiles" }))
         {
             var profile = AssetDatabase.LoadAssetAtPath<EnemySpawnProfile>(AssetDatabase.GUIDToAssetPath(guid));
-            if (!int.TryParse(profile.name.Replace("ESP_Level_", ""), out int sector) || sector < 1 || sector > RunRoute.TotalSectors) continue;
+            if (!int.TryParse(profile.name.Replace("ESP_Level_", ""), out int sector) || sector < 1 || sector > StageProfileData.ProductionTierCount) continue;
             var serialized = new SerializedObject(profile);
             var phases = serialized.FindProperty("phases");
             for (int i = 0; i < phases.arraySize; i++)

@@ -223,13 +223,25 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b6cce96141ae4ca1b732195fcaaa1e22, type: 2}
   - {fileID: 11400000, guid: d8ee0b8363c04ec3d9543b71eccc3044, type: 2}
   - {fileID: 11400000, guid: c016d34b1d8f4fe797a9483ca0d30016, type: 2}
+  nodeTypes:
+  - labelKey: route.node.combat
+    matchingWorldRule: {fileID: 0}
+  - labelKey: route.node.unknown
+    matchingWorldRule: {fileID: 0}
+  - labelKey: route.node.minefield
+    matchingWorldRule: {fileID: 0}
+  - labelKey: route.node.anomaly
+    matchingWorldRule: {fileID: 0}
+  - labelKey: route.node.golden
+    matchingWorldRule: {fileID: 11400000, guid: e9ff1c9474d14fd4ea654c82fddd4155, type: 2}
+  - labelKey: route.node.rare
+    matchingWorldRule: {fileID: 0}
   defaultLocalAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
   stageProfiles:
   - {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}
   - {fileID: 11400000, guid: d9e69161c1eb43b0a2d951ef6b23c802, type: 2}
   - {fileID: 11400000, guid: 5f8bad0d052f482ca5099c4b0f757003, type: 2}
   gameplaySceneName: MVP
-  choicesCount: 3
 --- !u!1001 &6062039162430978730
 PrefabInstance:
   m_ObjectHideFlags: 0

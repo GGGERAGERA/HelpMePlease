@@ -154,7 +154,8 @@ public sealed partial class ProductionSceneComposition : MonoBehaviour
 
     private bool SubsystemsReady() => role switch
     {
-        SceneRole.Gameplay => characters.SpawnedPlayer != null && levelModifiers.IsInitialized &&
+        SceneRole.Gameplay => characters.SpawnedPlayer != null &&
+            (levelModifiers.IsInitialized || levelModifiers.IsAwaitingFirstRoute) &&
             characters.Station is { IsInitialized: true } &&
             hud.IsPlayerBound && cameraFollow.target != null && cameraFollow.ControlledCamera != null,
         SceneRole.Bunker => bunkerLoadout.IsReady && cameraFollow.target != null && cameraFollow.ControlledCamera != null,

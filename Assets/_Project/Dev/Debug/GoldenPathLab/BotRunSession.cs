@@ -165,7 +165,12 @@ public sealed partial class BotRunSession : MonoBehaviour
         if (pendingException != null) { Finish(BotRunOutcome.Error, pendingException); return; }
         if (IsStarting)
         {
-            if (!SceneTransitionOverlay.IsTransitioning && BeginCurrentSector()) return;
+            if (!SceneTransitionOverlay.IsTransitioning)
+            {
+                if (RunStateManager.Instance?.CurrentSector is { SectorNumber: RunRoute.FirstSector, RouteNode: null })
+                    FindFirstObjectByType<LevelChoiceManager>()?.DebugSelectFirstRule();
+                else if (BeginCurrentSector()) return;
+            }
             if (Time.realtimeSinceStartup - requestedAt > 30f)
                 Finish(BotRunOutcome.Error, "Sector initialization exceeded 30 seconds");
             return;

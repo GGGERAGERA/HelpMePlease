@@ -31,7 +31,6 @@ public sealed class RunRouteProgressView : MonoBehaviour
     }
     private void RefreshLanguage(GameLanguage _) => Refresh();
     public void ShowCurrent(int sector, int total) => Show(sector, total);
-    public void ShowNext(int sector, int total) => Show(sector, total);
     public void Hide() => canvasGroup.alpha = 0f;
     private void Show(int sector, int total)
     {
@@ -68,11 +67,12 @@ public sealed class RunRouteProgressView : MonoBehaviour
             objectiveText.alignment = tutorial ? TextAlignmentOptions.Center : objectiveAlignment;
         }
         if (specialIcon != null) specialIcon.SetActive(displayedSpecial);
+        int column = RunRoute.ColumnOf(displayedSector);
         for (int i = 0; i < points.Length; i++)
         {
-            points[i].gameObject.SetActive(!tutorial && i < displayedTotal);
-            points[i].color = i < displayedSector - 1 ? completedColor :
-                i == displayedSector - 1 ? currentColor : futureColor;
+            points[i].gameObject.SetActive(!tutorial && i < RunRoute.SectorsPerLevel);
+            points[i].color = i < column ? completedColor :
+                i == column ? currentColor : futureColor;
         }
     }
 }

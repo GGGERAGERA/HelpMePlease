@@ -24,7 +24,7 @@ public sealed class ExpeditionTaskDefinition : ScriptableObject
     public int RewardCores => rewardCores;
     public bool IsAvailable(RunConfig config) => config != null && !string.IsNullOrEmpty(id) &&
         target > 0 && rewardCores > 0 && Enum.IsDefined(typeof(ExpeditionTaskCondition), condition) &&
-        (condition != ExpeditionTaskCondition.CompletedLocations || target <= RunRoute.ExplorationSectorCount) &&
+        (condition != ExpeditionTaskCondition.CompletedLocations || target <= RunRoute.LevelCount) &&
         (allowedSectors == null || allowedSectors.Length == 0 || Array.IndexOf(allowedSectors, config.SectorId) >= 0);
 
     public int Measure(int kills, float seconds, int locations) => condition switch

@@ -469,7 +469,7 @@ public static class Subject42ProjectValidator
                     choice, "availableWorldRules", 3, report);
                 RequireSerializedObject(
                     choice, "defaultLocalAnomaly", report);
-                RequireSerializedArray(choice, "stageProfiles", RunRoute.TotalSectors, report);
+                RequireSerializedArray(choice, "stageProfiles", StageProfileData.ProductionTierCount, report);
                 RequireSerializedString(choice, "gameplaySceneName", report);
             }
 

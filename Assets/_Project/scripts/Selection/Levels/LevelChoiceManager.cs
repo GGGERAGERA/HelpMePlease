@@ -1,62 +1,22 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using Subject42.Combat.OrbitalStation;
-using Random = GameplayRandom.RuleRandom;
 
 public sealed class LevelChoiceManager : MonoBehaviour
 {
-    [Header("UI")]
     [SerializeField] private LevelChoicePanelView panelView;
-
-    [Header("Available World Rules")]
     [SerializeField] private WorldRuleData[] availableWorldRules;
-
-    [Header("Local Anomaly")]
+    [SerializeField] private RouteSectorType[] nodeTypes;
     [SerializeField] private LocalAnomalyData defaultLocalAnomaly;
-
-    [Header("Stage Profiles")]
     [SerializeField] private StageProfileData[] stageProfiles;
-
-    [Header("Scene")]
     [SerializeField] private string gameplaySceneName = "MVP";
 
-    [Header("Choice Settings")]
-    [SerializeField, Min(1)] private int choicesCount = 3;
+    private CharacterSpawner characters;
+    private IReadOnlyList<RouteNode> choices;
+    private Action startFirstSector;
+    public bool IsChoosing => choices != null;
 
-    private readonly List<WorldRuleData> currentChoices = new();
-    private readonly Dictionary<WorldRuleData, RunSector>
-        currentSectorOptions = new();
-    private bool isChoosing;
-    private bool waitingForUpgradeReward;
-
-    public bool IsChoosing => isChoosing;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public bool DebugSelectFirstRule()
-    {
-        if (!isChoosing || currentChoices.Count == 0) return false;
-        SelectRule(currentChoices[0]);
-        return SceneTransitionOverlay.IsTransitioning;
-    }
-#endif
-
-    private void Awake()
-    {
-        if (panelView == null)
-        {
-            panelView = FindFirstObjectByType<LevelChoicePanelView>(
-                FindObjectsInactive.Include
-            );
-        }
-
-        if (panelView != null)
-            panelView.Hide();
-    }
-
-    public void ShowChoices()
-    {
-        TryShowChoices();
-    }
+    internal void BindScene(CharacterSpawner playerOwner) => characters = playerOwner;
 
     public bool CanLeaveTutorial => SceneTransitionOverlay.CanLoad(gameplaySceneName) &&
         SceneTransitionOverlay.Instance != null;
@@ -64,254 +24,102 @@ public sealed class LevelChoiceManager : MonoBehaviour
     public void LeaveTutorial()
     {
         var run = RunStateManager.Instance;
-        if (run == null || !TutorialController.IsTutorialSector) return;
-        TransitionToSector(run.CreateFirstNormalSector());
+        if (run != null && TutorialController.IsTutorialSector)
+            TransitionToSector(run.CreateFirstNormalSector());
+    }
+
+    internal bool TryShowInitialChoice(Action onSelected)
+    {
+        startFirstSector = onSelected;
+        return Show(RunRoute.FirstSector);
     }
 
     public bool TryShowChoices()
     {
-        RunStateManager activeRun = RunStateManager.Instance;
-        if (activeRun == null || activeRun.IsRunEnded || activeRun.CurrentSector == null ||
-            !RunRoute.HasNextSector(activeRun.CurrentSector.SectorNumber)) return false;
+        var run = RunStateManager.Instance;
+        var sector = run?.CurrentSector;
+        return sector != null && RunRoute.HasNextSector(sector.SectorNumber) &&
+            Show(sector.SectorNumber + 1);
+    }
 
-        if (isChoosing)
-            return false;
+    public void ShowChoices() => TryShowChoices();
 
-        UpgradeManager upgrades = UpgradeManager.Instance;
-        if (upgrades != null && !upgrades.IsRewardQueueIdle)
+    internal bool CanChoose => !SceneTransitionOverlay.IsTransitioning &&
+        characters.Station is { IsInitialized: true } station && station.InputOwner.CanTransition;
+
+    private bool Show(int nextSector)
+    {
+        var run = RunStateManager.Instance;
+        if (IsChoosing || run.IsRunEnded || !CanChoose || !CanLeaveTutorial) return false;
+        if (panelView == null || defaultLocalAnomaly == null || stageProfiles.Length != StageProfileData.ProductionTierCount)
         {
-            if (!waitingForUpgradeReward)
-            {
-                waitingForUpgradeReward = true;
-                upgrades.RunWhenRewardQueueIsIdle(() =>
-                {
-                    waitingForUpgradeReward = false;
-                    TryShowChoices();
-                });
-            }
-            return true;
-        }
-
-        var interaction = FindFirstObjectByType<OrbitalInteractionController>();
-        if (interaction != null && !interaction.CanTransition) return false;
-
-        currentChoices.Clear();
-        currentSectorOptions.Clear();
-
-        RunStateManager runState = RunStateManager.Instance;
-        RunSector currentSector = runState != null
-            ? runState.CurrentSector
-            : null;
-
-        if (currentSector == null)
-        {
-            Debug.LogError(
-                "[LevelChoiceManager] CurrentSector is missing. " +
-                "Sector choice cannot be opened."
-            );
+            Debug.LogError("[LevelChoiceManager] Authored route presentation or sector profiles are missing.", this);
             return false;
         }
 
-        if (defaultLocalAnomaly == null)
+        int level = RunRoute.LevelOf(nextSector);
+        if (run.RouteGraph?.Level != level)
         {
-            Debug.LogError(
-                "[LevelChoiceManager] Default LocalAnomaly is missing. " +
-                "Sector choice cannot be opened."
-            );
-            return false;
+            WorldRuleData initial = nextSector == RunRoute.FirstSector ? run.CurrentSector.WorldRule : null;
+            run.RouteGraph = RunRouteGraph.Generate(level, availableWorldRules, nodeTypes, initial,
+                nextSector == RunRoute.FirstSector && run.CurrentConfig.WorldRule != null);
         }
 
-        int nextSectorNumber = currentSector.SectorNumber + 1;
-        StageProfileData nextStageProfile = GetStageProfile(nextSectorNumber);
-
-        if (nextStageProfile == null)
-        {
-            Debug.LogError(
-                $"[LevelChoiceManager] StageProfile for sector " +
-                $"{nextSectorNumber} was not found."
-            );
-            return false;
-        }
-
-        int desiredChoices = choicesCount;
-        List<WorldRuleData> pool = BuildPool();
-
-        if (pool.Count < desiredChoices)
-        {
-            Debug.LogError(
-                $"[LevelChoiceManager] At least {desiredChoices} unique " +
-                $"World Rules are required, but only {pool.Count} are available."
-            );
-            return false;
-        }
-
-        while (currentChoices.Count < desiredChoices && pool.Count > 0)
-        {
-            int selectedIndex = Random.Range(0, pool.Count);
-            WorldRuleData rule = pool[selectedIndex];
-            pool.RemoveAt(selectedIndex);
-
-            RunSector option = new(
-                nextSectorNumber,
-                nextStageProfile,
-                rule,
-                defaultLocalAnomaly
-            );
-
-            option.ApplyRunConfig(runState.CurrentConfig);
-            currentChoices.Add(rule);
-            currentSectorOptions.Add(rule, option);
-        }
-
-        if (currentChoices.Count != desiredChoices)
-        {
-            Debug.LogError(
-                "[LevelChoiceManager] A complete sector choice could not be built."
-            );
-            currentChoices.Clear();
-            currentSectorOptions.Clear();
-            return false;
-        }
-
-        if (panelView == null)
-        {
-            Debug.LogError("[LevelChoiceManager] PanelView is not assigned.");
-            return false;
-        }
-
-#if UNITY_EDITOR
-        Debug.Log(
-            "[SectorChoice]\n" +
-            $"Current={currentSector.SectorNumber}\n" +
-            $"Next={nextSectorNumber}\n" +
-            $"Rules={GetOptionRuleIds()}\n" +
-            $"StageProfile='{nextStageProfile.name}'\n" +
-            $"LocalAnomaly='{defaultLocalAnomaly.name}'"
-        );
-#endif
-
-        RunMessageService.Instance?.Show(RunMessageType.LevelChoiceOpened);
-        isChoosing = true;
+        var current = RunRoute.ColumnOf(nextSector) == 0 ? null : run.CurrentSector.RouteNode;
+        choices = current == null ? run.RouteGraph.Entries : current.Next;
+        characters.PrepareForSceneTransition();
         Time.timeScale = 0f;
-        panelView.Show(
-            currentChoices,
-            currentSectorOptions,
-            nextSectorNumber,
-            SelectRule
-        );
+        panelView.Show(run.RouteGraph, current, choices, SelectNode);
         return true;
     }
 
-    private List<WorldRuleData> BuildPool()
+    private bool SelectNode(RouteNode node)
     {
-        List<WorldRuleData> pool = new();
-        HashSet<string> ruleIds = new(System.StringComparer.Ordinal);
+        if (!IsChoosing || !CanChoose || !ContainsChoice(node)) return false;
+        var run = RunStateManager.Instance;
+        // Keep the existing first three presets, then reuse the last one.
+        int profileIndex = Mathf.Min(node.SectorNumber, stageProfiles.Length) - 1;
+        var sector = new RunSector(node.SectorNumber, stageProfiles[profileIndex], node.WorldRule,
+            startFirstSector != null ? run.CurrentSector.LocalAnomaly : defaultLocalAnomaly, node);
+        if (startFirstSector == null) return TransitionToSector(sector);
 
-        if (availableWorldRules == null)
-            return pool;
-
-        foreach (WorldRuleData rule in availableWorldRules)
-        {
-            if (rule == null || rule.RuleType == WorldRuleType.None)
-                continue;
-
-            if (!ruleIds.Add(GetRuleId(rule)))
-                continue;
-
-            pool.Add(rule);
-        }
-
-        return pool;
+        Action begin = startFirstSector;
+        startFirstSector = null;
+        choices = null;
+        run.SetCurrentSector(sector);
+        panelView.Hide();
+        begin();
+        Time.timeScale = 1f;
+        return true;
     }
 
-    private StageProfileData GetStageProfile(int sectorNumber)
+    private bool ContainsChoice(RouteNode node)
     {
-        if (stageProfiles == null || sectorNumber < 1)
-            return null;
-
-        StageProfileData match = null;
-
-        for (int i = 0; i < stageProfiles.Length; i++)
-        {
-            StageProfileData profile = stageProfiles[i];
-
-            if (profile == null || profile.SectorNumber != sectorNumber)
-                continue;
-
-            if (match != null)
-            {
-                Debug.LogError(
-                    $"[LevelChoiceManager] More than one StageProfile " +
-                    $"uses sector number {sectorNumber}."
-                );
-                return null;
-            }
-
-            match = profile;
-        }
-
-        return match;
+        foreach (var choice in choices)
+            if (choice == node) return true;
+        return false;
     }
 
-    private static string GetRuleId(WorldRuleData rule)
+    private bool TransitionToSector(RunSector sector)
     {
-        if (rule == null)
-            return "<null>";
-
-        return !string.IsNullOrWhiteSpace(rule.Id)
-            ? rule.Id
-            : rule.RuleType.ToString();
-    }
-
-    private void SelectRule(WorldRuleData rule)
-    {
-        if (rule == null || !isChoosing)
-            return;
-
-        if (!currentSectorOptions.TryGetValue(rule, out RunSector sector) ||
-            sector == null)
-        {
-            Debug.LogError(
-                "[LevelChoiceManager] The selected RunSector option is missing."
-            );
-            return;
-        }
-
-        TransitionToSector(sector);
-    }
-
-    private void TransitionToSector(RunSector sector)
-    {
-        RunSector current = RunStateManager.Instance?.CurrentSector;
+        var runState = RunStateManager.Instance;
+        RunSector current = runState?.CurrentSector;
         if (current == null || !RunRoute.HasNextSector(current.SectorNumber) ||
-            sector == null || sector.SectorNumber != current.SectorNumber + 1) return;
-        var interaction = FindFirstObjectByType<OrbitalInteractionController>();
-        if ((UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle) ||
-            (interaction != null && !interaction.CanTransition)) return;
-        SceneTransitionOverlay.Load(gameplaySceneName, () =>
+            sector.SectorNumber != current.SectorNumber + 1 || !CanChoose) return false;
+
+        return SceneTransitionOverlay.Load(gameplaySceneName, () =>
         {
-            isChoosing = false;
-            Transform player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
-            RunStateManager runState = RunStateManager.EnsureExists();
+            choices = null;
             runState.CommitCurrentSceneStats();
             runState.SaveExperienceState();
-            runState.SavePlayerState(player != null ? player.gameObject : null);
+            runState.SavePlayerState(characters.SpawnedPlayer);
             runState.ReleaseCurrentSector(runState.RunId);
             runState.SetCurrentSector(sector);
-
-            panelView?.Hide();
+            panelView.Hide();
         });
     }
 
-#if UNITY_EDITOR
-    private string GetOptionRuleIds()
-    {
-        List<string> ids = new(currentChoices.Count);
-
-        for (int i = 0; i < currentChoices.Count; i++)
-            ids.Add(GetRuleId(currentChoices[i]));
-
-        return string.Join(",", ids);
-    }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public bool DebugSelectFirstRule() => IsChoosing && panelView.DebugConfirmFirstNode();
 #endif
 }

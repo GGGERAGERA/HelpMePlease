@@ -91,6 +91,7 @@ public sealed class EscapeProtocolFlowTests
         Assert.That(starter, Is.Not.Null);
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset"));
         Assert.That(map.TrySelect("F1"),Is.True);map.TrySelectTask(null);starter.StartSurfaceRun(starter.transform);yield return Ready("MVP");
+        yield return CoreTestSupport.SelectInitialRouteNode();
         var run=RunStateManager.Instance;
         Assert.That(run,Is.Not.Null,"Run service after scene transition");
         Assert.That(run.CurrentConfig,Is.Not.Null,"Run config after scene transition");
@@ -132,13 +133,10 @@ public sealed class EscapeProtocolFlowTests
         {
             int nextSector=run.CurrentSector.SectorNumber+1;
             flow=RunFlowController.Instance;
-            typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.StageProfile.ExitActivationTime);
-            yield return null;Assert.That(flow.IsExitUnlocked,Is.True);Assert.That(flow.HandleExitReached(),Is.True);
+            typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.Duration);
             var choices=Object.FindFirstObjectByType<LevelChoiceManager>();
             yield return CoreTestSupport.Await(()=>choices.IsChoosing);
-            var panel=Object.FindFirstObjectByType<LevelChoicePanelView>();
-            var card=Read<LevelChoiceCardView[]>(panel,"cardViews").First(c=>c.gameObject.activeInHierarchy);
-            Read<Button>(card,"button").onClick.Invoke();Read<Button>(panel,"confirmButton").onClick.Invoke();
+            Assert.That(choices.DebugSelectFirstRule(),Is.True);
             yield return CoreTestSupport.Await(()=>!SceneTransitionOverlay.IsTransitioning&&run.CurrentSector.SectorNumber==nextSector&&
                 Object.FindFirstObjectByType<OrbitalStationRuntime>() is {IsInitialized:true});
             Assert.That(run.CurrentConfig.IsEscapeFinal,Is.True);Assert.That(run.FinalObjectiveSatisfied,Is.True);
@@ -146,8 +144,7 @@ public sealed class EscapeProtocolFlowTests
             Object.FindFirstObjectByType<EnemySpawner>().StopSpawning();
         }
         flow=RunFlowController.Instance;
-        typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.StageProfile.ExitActivationTime);
-        yield return null;Assert.That(flow.IsExitUnlocked,Is.True);Assert.That(flow.HandleExitReached(),Is.True);
+        typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.Duration);
         yield return CoreTestSupport.Await(()=>flow.FinalBoss!=null&&flow.Phase==RunPhase.FinalBossCombat);
         flow.FinalBoss.TakeDamage(flow.FinalBoss.CurrentHealth*2,flow.FinalBoss.transform.position);yield return Ready(RunEndService.BunkerSceneName);
         Assert.That(meta.EscapeProtocolCompleted,Is.True);Assert.That(map.GetStatus("F1"),Is.EqualTo(SurfaceSectorStatus.Completed));

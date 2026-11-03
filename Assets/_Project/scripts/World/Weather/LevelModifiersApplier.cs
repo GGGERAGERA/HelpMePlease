@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public sealed class LevelModifiersApplier : MonoBehaviour
@@ -22,11 +23,13 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     [SerializeField] private ProductionExplorationSectorController exploration;
     private CharacterSpawner characters;
     public bool IsInitialized { get; private set; }
+    internal bool IsAwaitingFirstRoute { get; private set; }
 
     public void BindScene(CharacterSpawner playerOwner, EnemySpawner enemies)
     {
         characters = playerOwner;
         enemySpawner = enemies;
+        runFlowController.LevelChoice.BindScene(playerOwner);
         eventSpawner.BindScene(enemies, gameplayArea);
         worldRuleController.BindEnemySpawner(enemies);
     }
@@ -98,7 +101,28 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     {
         characters.CharacterSpawned -= InitializeForPlayer;
         worldRuleController.BindPlayer(player);
+        var sector = RunStateManager.Instance.CurrentSector;
+        if (sector.SectorNumber == RunRoute.FirstSector && sector.RouteNode == null)
+        {
+            enemySpawner.StopSpawning();
+            IsAwaitingFirstRoute = true;
+            StartCoroutine(PresentFirstRoute());
+            return;
+        }
         ApplySelectedNode();
+    }
+
+    private IEnumerator PresentFirstRoute()
+    {
+        yield return null;
+        var choice = runFlowController.LevelChoice;
+        while (!choice.CanChoose) yield return null;
+        choice.TryShowInitialChoice(() =>
+        {
+            IsAwaitingFirstRoute = false;
+            ApplySelectedNode();
+            if (IsInitialized) enemySpawner.ResumeSpawning();
+        });
     }
 
     private void OnDestroy()
@@ -109,16 +133,13 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     private void ApplySelectedNode()
     {
         RunStateManager runState = RunStateManager.Instance;
-        int currentLevel = runState != null
-            ? Mathf.Max(1, runState.CurrentLevel)
-            : 1;
         RunSector sector = runState != null
             ? runState.CurrentSector
             : null;
 
         if (sector != null)
         {
-            IsInitialized = ApplyCurrentSector(sector, currentLevel);
+            IsInitialized = ApplyCurrentSector(sector);
 
 #if UNITY_EDITOR
             LogSectorRuntime(sector);
@@ -152,13 +173,11 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     }
 #endif
 
-    private bool ApplyCurrentSector(
-        RunSector sector,
-        int currentLevel)
+    private bool ApplyCurrentSector(RunSector sector)
     {
         enemySpawner?.SetSpawnProfile(
             sector.SpawnProfile,
-            currentLevel
+            sector.StageProfile.SectorNumber
         );
         enemySpawner?.SetLevelScaling(
             sector.EnemyHealthMultiplier *

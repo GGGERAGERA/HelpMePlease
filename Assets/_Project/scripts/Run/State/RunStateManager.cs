@@ -39,10 +39,11 @@ public sealed class RunStateManager : MonoBehaviour
     public AnomalyStabilizerData CurrentAnomalyStabilizer { get; private set; }
     public AnomalyRunModifiers AnomalyModifiers { get; private set; } =
         AnomalyRunModifiers.None;
-    public int CurrentLevel { get; private set; } = 1;
+    public int CurrentLevel => RunRoute.LevelOf(CurrentSector?.SectorNumber ?? RunRoute.FirstSector);
     public int CurrentDepthId { get; private set; } = DepthCatalog.SurfaceId;
 
     public RunSector CurrentSector { get; private set; }
+    public RunRouteGraph RouteGraph { get; internal set; }
 
     private readonly List<UpgradeData> pickedUpgrades = new();
     private readonly RunItemSlots itemSlots = new();
@@ -224,14 +225,12 @@ public sealed class RunStateManager : MonoBehaviour
     {
         sector?.ApplyRunConfig(CurrentConfig);
         CurrentSector = sector;
-
-        if (sector != null)
-            CurrentLevel = Mathf.Max(RunRoute.TutorialSector, sector.SectorNumber);
     }
 
     public void ClearCurrentSector()
     {
         CurrentSector = null;
+        RouteGraph = null;
     }
 
     // Strict access: the caller owns diagnostics; absence never starts a run.
@@ -328,7 +327,6 @@ public sealed class RunStateManager : MonoBehaviour
         SelectedWeapon = null;
         CurrentAnomalyStabilizer = anomalyStabilizer;
         AnomalyModifiers = AnomalyRunModifiers.From(anomalyStabilizer);
-        CurrentLevel = 1;
 
         pickedUpgrades.Clear();
         itemSlots.Clear();
@@ -422,12 +420,6 @@ public sealed class RunStateManager : MonoBehaviour
         hasHealthSnapshot = true;
 
         Debug.Log($"[RunState] Saved player health: {savedCurrentHealth}/{savedMaxHealth}");
-    }
-
-    public void AdvanceLevel()
-    {
-        CurrentLevel++;
-        Debug.Log($"[RunState] Advanced to level {CurrentLevel}");
     }
 
     public void ApplyToSpawnedPlayer(GameObject player, UpgradeApplier upgradeApplier)
@@ -896,7 +888,6 @@ public sealed class RunStateManager : MonoBehaviour
             return;
 
         ClearCurrentSector();
-        CurrentLevel = 1;
         SelectedCharacter = null;
         SelectedWeapon = null;
         pickedUpgrades.Clear();

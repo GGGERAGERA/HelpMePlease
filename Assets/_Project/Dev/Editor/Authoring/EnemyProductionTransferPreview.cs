@@ -78,7 +78,7 @@ public static partial class EnemyProductionTransferPreview
             Require(File.ReadAllText(AssetDatabase.GetAssetPath(actor)) == File.ReadAllText(AssetDatabase.GetAssetPath(source)), kind + " exact source prefab, including health/loot/events");
             Require(actor.GetComponentInChildren<Animator>()?.runtimeAnimatorController == source.GetComponentInChildren<Animator>()?.runtimeAnimatorController, kind + " source animation controller");
         }
-        for (int sector = 1; sector <= RunRoute.TotalSectors; sector++)
+        for (int sector = 1; sector <= StageProfileData.ProductionTierCount; sector++)
         {
             var profile = AssetDatabase.LoadAssetAtPath<EnemySpawnProfile>($"Assets/_Project/Data/Stages/EnemySpawnProfiles/ESP_Level_{sector:00}.asset");
             foreach (var phase in profile.Phases)

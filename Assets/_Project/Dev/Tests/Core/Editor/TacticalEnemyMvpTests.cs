@@ -170,7 +170,7 @@ public sealed class TacticalEnemyMvpTests
     [Test]
     public void ProductionProfilesAddBothVariantsAndKeepExistingEnemies()
     {
-        for (int sector = 1; sector <= RunRoute.TotalSectors; sector++)
+        for (int sector = 1; sector <= StageProfileData.ProductionTierCount; sector++)
         {
             var profile = AssetDatabase.LoadAssetAtPath<EnemySpawnProfile>($"Assets/_Project/Data/Stages/EnemySpawnProfiles/ESP_Level_{sector:00}.asset");
             foreach (var phase in profile.Phases)

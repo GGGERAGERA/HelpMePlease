@@ -81,10 +81,10 @@ public partial class EnemySpawner
         firstAutomaticAssault = FirstAutomaticAssaultProgress.NotStarted;
         breathRemaining = recoveryRemaining = 0f;
         assaultElapsed = 0f;
-        var profile = RunStateManager.Instance?.CurrentSector?.StageProfile;
+        var sector = RunStateManager.Instance?.CurrentSector;
         float lead = Mathf.Lerp(Mathf.Clamp(exitAssaultLeadTime.x, 10f, 15f),
             Mathf.Clamp(exitAssaultLeadTime.y, 10f, 15f), (float)assaultRandom.NextDouble());
-        assaultNextAt = profile != null ? Mathf.Max(0f, profile.ExitActivationTime - lead) :
+        assaultNextAt = sector?.StageProfile != null ? Mathf.Max(0f, sector.Duration - lead) :
             Mathf.Max(assaultBreathDuration, Mathf.Lerp(firstAssaultDelay.x, firstAssaultDelay.y, (float)assaultRandom.NextDouble()));
         CancelPendingAssault();
     }
