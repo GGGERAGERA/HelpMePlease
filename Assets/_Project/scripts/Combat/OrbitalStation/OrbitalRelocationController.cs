@@ -23,7 +23,6 @@ namespace Subject42.Combat.OrbitalStation
             draggedModule = null;
             sourceMount = null;
             targetMount = null;
-            station.Interaction?.SetCursor(OrbitalCursorState.Normal);
         }
 
         private void Update()
@@ -56,13 +55,11 @@ namespace Subject42.Combat.OrbitalStation
                     station.Interaction?.ShowHint(DisplayName(hoveredModule.Kind),
                         string.Format(LocalizationService.EnsureExists().Get("orbit.move.orbit"), hoveredModule.CurrentMount.Ring.State.Order + 1) +
                         LocalizationService.EnsureExists().Get("orbit.move.drag"));
-                    station.Interaction?.SetCursor(OrbitalCursorState.Grabbable);
                 }
                 else
                 {
                     SetHoverAffordance(false);
                     station.Interaction?.ClearHint();
-                    station.Interaction?.SetCursor(OrbitalCursorState.Normal);
                 }
             }
             if (hoveredModule != null && Input.GetMouseButtonDown(0))
@@ -84,7 +81,6 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalMountInteractionPresentation.Apply(station, null, sourceMount);
             station.Interaction?.ShowHint(DisplayName(module.Kind),
                 LocalizationService.EnsureExists().Get("orbit.move.target"));
-            station.Interaction?.SetCursor(OrbitalCursorState.Dragging);
         }
 
         private void UpdateDrag()
@@ -98,9 +94,6 @@ namespace Subject42.Combat.OrbitalStation
                 ? targetMount.Transform.position
                 : world);
             draggedModule.SetDragValidity(valid);
-            station.Interaction?.SetCursor(valid
-                ? OrbitalCursorState.ValidDrop
-                : OrbitalCursorState.InvalidDrop);
             station.Interaction?.ShowHint(DisplayName(draggedModule.Kind), valid
                 ? string.Format(LocalizationService.EnsureExists().Get("orbit.move.ring"), targetMount.Ring.State.Order + 1) +
                   string.Format(LocalizationService.EnsureExists().Get("orbit.move.release"), targetMount.MountIndex + 1)
@@ -138,7 +131,6 @@ namespace Subject42.Combat.OrbitalStation
             sourceMount = null;
             targetMount = null;
             station.Interaction?.ClearHint();
-            station.Interaction?.SetCursor(OrbitalCursorState.Normal);
             if (!station.MoveModule(id, ringId, mountIndex, out string error))
             {
                 movedModule.CancelPresentationDrag();
@@ -159,7 +151,6 @@ namespace Subject42.Combat.OrbitalStation
             targetMount = null;
             RestoreTimeScale();
             station.Interaction?.ClearHint();
-            station.Interaction?.SetCursor(OrbitalCursorState.Normal);
         }
 
         private void RestoreTimeScale()
@@ -251,7 +242,6 @@ namespace Subject42.Combat.OrbitalStation
             hoveredModule?.SetHighlighted(false);
             hoveredModule = null;
             station?.Interaction?.ClearHint();
-            station?.Interaction?.SetCursor(OrbitalCursorState.Normal);
         }
     }
 }

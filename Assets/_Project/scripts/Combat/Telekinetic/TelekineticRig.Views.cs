@@ -91,7 +91,7 @@ namespace Subject42.Combat.Telekinetic { public sealed partial class Telekinetic
                         // Scale the renderer child; the cell transform remains in metres.
                         var node=body.gameObject.AddComponent<SpriteRenderer>(); ApplyIcon(node,c.Kind);
                         node.sortingLayerID=visualLayer; node.sortingOrder=ModuleOrder;
-                        body.localScale=Vector3.one*(c.Kind==TelekineticPart.Frame?.16f:.4f);
+                        body.localScale=Vector3.one*.4f;
                     }
                     if (c.IsModule)
                     {
@@ -102,7 +102,7 @@ namespace Subject42.Combat.Telekinetic { public sealed partial class Telekinetic
                     }
                 }
                 go.transform.localPosition=c.Center*CellSpacing;
-                go.transform.localRotation=Quaternion.Euler(0,0,c.IsWeapon ? Mathf.Atan2(c.Center.y,c.Center.x)*Mathf.Rad2Deg : 0);
+                go.transform.localRotation=Quaternion.Euler(0,0,c.IsWeapon ? c.Heading : 0);
                 if (c.Kind==TelekineticPart.Saw) go.transform.localScale=Vector3.one*station.State.ContactSizeMultiplier;
                 float reach=CellSpacing*.75f;
                 if (weaponBodies.TryGetValue(c.Id,out var bodies))

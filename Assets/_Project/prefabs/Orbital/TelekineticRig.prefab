@@ -76,6 +76,7 @@ MonoBehaviour:
   ShotClip: {fileID: 8300000, guid: 907d3442b4fc4244ea4e9c020e3966d6, type: 3}
   SawClip: {fileID: 8300000, guid: a93ea7b78df801c4aa5a9aa966352e9a, type: 3}
   StructureView: {fileID: 5773851977180331271}
+  constructorPanelPrefab: {fileID: 100000, guid: dcf2a82c9e364e9aa06a248046227a3c, type: 3}
   CellSpacing: 1.05
   RotationSpeed: 90
   RotationCapacity: 100
@@ -259,6 +260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83e380cb5b6c04d4392a78687116a3a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Subject42.DebugLabs.Telekinetic.TelekineticStructureView
+  SimpleLinks: 1
   SegmentPitch: 0.17
   SpineWidth: 0.21
   PulseStrength: 0.18

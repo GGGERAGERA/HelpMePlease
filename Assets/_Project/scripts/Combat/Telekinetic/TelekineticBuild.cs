@@ -21,6 +21,15 @@ namespace Subject42.Combat.Telekinetic
         public TelekineticPart Kind;
         public Vector2Int Position;
         public int QuarterTurns;
+        public int AimSteps;
+        public float Heading
+        {
+            get
+            {
+                Vector2 center = Center;
+                return Mathf.Atan2(center.y, center.x) * Mathf.Rad2Deg + AimSteps * 45f;
+            }
+        }
         public int Level = 1;
         public float Remaining, ShotRemaining;
         [SerializeField] internal float LastCooldown;
@@ -38,7 +47,7 @@ namespace Subject42.Combat.Telekinetic
         public IReadOnlyList<Vector2Int> Footprint => Shape(Kind);
         public static IReadOnlyList<Vector2Int> Shape(TelekineticPart kind) => kind switch
         {
-            TelekineticPart.Shotgun or TelekineticPart.DMG or TelekineticPart.Energy or TelekineticPart.Pierce or TelekineticPart.Splash or TelekineticPart.Shred => Bar,
+            TelekineticPart.Shotgun or TelekineticPart.Sniper or TelekineticPart.DMG or TelekineticPart.Energy or TelekineticPart.Pierce or TelekineticPart.Splash or TelekineticPart.Shred => Bar,
             TelekineticPart.Saw or TelekineticPart.Double or TelekineticPart.Chain or TelekineticPart.Echo => Square,
             TelekineticPart.RIC => Elbow, _ => Single
         };
@@ -132,14 +141,19 @@ namespace Subject42.Combat.Telekinetic
             if (!valid) return Reject(reason+" Операция отменена целиком.");
             Message=other!=null ? "Предметы обменены целиком." : "Положение и форма обновлены."; return true;
         }
+        public bool CanRemove(TelekineticItem item) => item != null && items.Contains(item) &&
+            ValidateLayout(out _, out _, item);
+
         public bool Remove(TelekineticItem item)
         {
-            if (item==null || !items.Contains(item)) return false;
-            int index=items.IndexOf(item); items.RemoveAt(index);
-            bool valid=ValidateLayout(out string reason,out var problem);
-            Disconnected.Clear(); Disconnected.UnionWith(problem);
-            if (!valid) { items.Insert(index,item); return Reject(reason+" Удаление отменено."); }
-            Message=$"Предмет удалён: освобождено {item.CellCount} кл."; return true;
+            if (item == null || !items.Contains(item)) return false;
+            bool valid = ValidateLayout(out string reason, out var problem, item);
+            Disconnected.Clear();
+            Disconnected.UnionWith(problem);
+            if (!valid) return Reject(reason + " Удаление отменено.");
+            items.Remove(item);
+            Message = $"Предмет удалён: освобождено {item.CellCount} кл.";
+            return true;
         }
         public bool Merge(TelekineticItem keep,TelekineticItem consume)
         {
@@ -155,11 +169,19 @@ namespace Subject42.Combat.Telekinetic
         {
             bool valid=ValidateLayout(out _,out var problem); Disconnected.Clear(); Disconnected.UnionWith(problem); return valid;
         }
-        private bool ValidateLayout(out string reason,out HashSet<Vector2Int> problem)
+        private bool ValidateLayout(out string reason, out HashSet<Vector2Int> problem, TelekineticItem excluded = null)
         {
             problem=new HashSet<Vector2Int>(); var occupied=new HashSet<Vector2Int>();
-            foreach (var item in items) for (int i=0;i<item.CellCount;i++)
-            { var p=item.Cell(i); if (!InBounds(p) || Math.Abs(p.x)>AvailableRadius || Math.Abs(p.y)>AvailableRadius || !occupied.Add(p)) problem.Add(p); }
+            foreach (var item in items)
+            {
+                if (item == excluded) continue;
+                for (int i = 0; i < item.CellCount; i++)
+                {
+                    var p = item.Cell(i);
+                    if (!InBounds(p) || Math.Abs(p.x) > AvailableRadius || Math.Abs(p.y) > AvailableRadius || !occupied.Add(p))
+                        problem.Add(p);
+                }
+            }
             if (problem.Count>0) { reason="Формы пересекаются, занимают ядро или выходят за границы."; return false; }
             var visited=new HashSet<Vector2Int> { Vector2Int.zero }; var queue=new Queue<Vector2Int>();
             queue.Enqueue(Vector2Int.zero);

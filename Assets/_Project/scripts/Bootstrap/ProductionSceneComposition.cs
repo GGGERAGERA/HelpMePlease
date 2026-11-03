@@ -96,8 +96,9 @@ public sealed partial class ProductionSceneComposition : MonoBehaviour
         if (role == SceneRole.Gameplay)
         {
             if (characters == null || enemies == null || levelModifiers == null || hud == null ||
-                cameraFollow == null || gameplayArea == null || rewards == null || hud.OrbitalCursor == null)
+                cameraFollow == null || gameplayArea == null || rewards == null)
                 throw new InvalidOperationException("Gameplay composition has missing scene bindings.");
+            ShowGameplayCursor();
             if (!levelModifiers.PrepareDirectRun(characters.DefaultCharacter))
             {
                 characters.enabled = enemies.enabled = levelModifiers.enabled = false;
@@ -116,10 +117,22 @@ public sealed partial class ProductionSceneComposition : MonoBehaviour
         }
     }
 
+    private void OnApplicationFocus(bool focused)
+    {
+        if (focused && role == SceneRole.Gameplay) ShowGameplayCursor();
+    }
+
+    private static void ShowGameplayCursor()
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
     private void BindGameplayPlayer(GameObject player)
     {
         cameraFollow.target = player.transform;
-        characters.Station?.Interaction?.BindCursor(hud.OrbitalCursor, cameraFollow.ControlledCamera);
+        characters.Station?.Interaction?.BindCamera(cameraFollow.ControlledCamera);
     }
 
     private IEnumerator Start()

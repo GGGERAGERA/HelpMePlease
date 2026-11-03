@@ -9,6 +9,14 @@ namespace Subject42.Combat.Telekinetic
     [DisallowMultipleComponent]
     public sealed class TelekineticStructureView : MonoBehaviour
     {
+        [Header("Chassis presentation")]
+        public bool SimpleLinks;
+
+        private const float CoreRadius = .46f;
+        private const float LinkWidth = .035f;
+        private const float EndGap = .012f;
+        private float PlatePadding => SimpleLinks ? lab.CellSpacing * .13f : .07f;
+
         [Header("Segmented psi chassis")]
         [Min(.08f)] public float SegmentPitch=.17f;
         [Range(.1f,.35f)] public float SpineWidth=.21f;
@@ -106,11 +114,19 @@ namespace Subject42.Combat.Telekinetic
             Core();
             foreach (var item in lab.Build.Items)
             {
-                int mask=0;
-                for (int i=0;i<item.CellCount;i++) for (int side=0;side<4;side++)
-                    if (HasEdge(item.Cell(i),item.Cell(i)+TelekineticBuild.Sides[side])) mask|=1<<side;
                 if (item.CellCount>1) FootprintPlate(item);
-                Socket(item,mask); SocketCount++;
+                if (SimpleLinks)
+                {
+                    if (item.CellCount == 1) SimpleSocket(item);
+                }
+                else
+                {
+                    int mask=0;
+                    for (int i=0;i<item.CellCount;i++) for (int side=0;side<4;side++)
+                        if (HasEdge(item.Cell(i),item.Cell(i)+TelekineticBuild.Sides[side])) mask|=1<<side;
+                    Socket(item,mask);
+                }
+                SocketCount++;
             }
             metal.Upload(chassisMesh); energy.Upload(energyMesh);
             animatedColors=energy.Colors.ToArray(); RebuildVersion++;
@@ -118,8 +134,11 @@ namespace Subject42.Combat.Telekinetic
         }
         private void FootprintPlate(TelekineticItem item)
         {
-            float half=lab.CellSpacing*.5f,padding=.07f;
+            float half=lab.CellSpacing*.5f,padding=PlatePadding;
             Color tint=TelekineticRig.FrameTint(item.Kind);
+            if (SimpleLinks) tint.a *= .62f;
+            Color fill = TelekineticRig.PlateTint(item.Kind);
+            if (SimpleLinks) fill.a *= .26f;
             int first=energy.Vertices.Count;
             for (int i=0;i<item.CellCount;i++)
             {
@@ -128,24 +147,40 @@ namespace Subject42.Combat.Telekinetic
                     up=item.Contains(cell+Vector2Int.up),down=item.Contains(cell+Vector2Int.down);
                 Vector2 min=p-new Vector2(half,half)+new Vector2(left?0:padding,down?0:padding);
                 Vector2 max=p+new Vector2(half,half)-new Vector2(right?0:padding,up?0:padding);
-                metal.Quad(new Vector2(min.x,(min.y+max.y)*.5f),new Vector2(max.x,(min.y+max.y)*.5f),max.y-min.y,TelekineticRig.PlateTint(item.Kind));
+                metal.Quad(new Vector2(min.x,(min.y+max.y)*.5f),new Vector2(max.x,(min.y+max.y)*.5f),max.y-min.y,fill);
                 void Border(Vector2 a,Vector2 b)
                 {
-                    metal.Quad(a,b,item.IsWeapon?.085f:.045f,tint); Glow(a,b,item.IsWeapon?.023f:.012f,tint);
+                    if (SimpleLinks) metal.Quad(a, b, LinkWidth, tint);
+                    else
+                    {
+                        metal.Quad(a,b,item.IsWeapon?.085f:.045f,tint);
+                        Glow(a,b,item.IsWeapon?.023f:.012f,tint);
+                    }
                 }
                 if (!left) Border(min,new Vector2(min.x,max.y));
                 if (!right) Border(new Vector2(max.x,min.y),max);
                 if (!up) Border(new Vector2(min.x,max.y),max);
                 if (!down) Border(min,new Vector2(max.x,min.y));
             }
-            PulseRange(first,item.Center.magnitude*1.5f,item);
+            if (!SimpleLinks) PulseRange(first,item.Center.magnitude*1.5f,item);
         }
         private void Branch(Vector2Int from,Vector2Int to)
         {
             Vector2 a=(Vector2)from*lab.CellSpacing,b=(Vector2)to*lab.CellSpacing;
-            bool armed=lab.Build.At(from)?.IsWeapon==true || lab.Build.At(to)?.IsWeapon==true;
+            var fromItem = lab.Build.At(from);
+            var toItem = lab.Build.At(to);
+            bool armed = fromItem?.IsWeapon == true || toItem?.IsWeapon == true;
+            Vector2 axis = to - from;
+            if (SimpleLinks)
+            {
+                a += axis * EdgeTrim(fromItem);
+                b -= axis * EdgeTrim(toItem);
+                if (Vector2.Dot(b - a, axis) > 0)
+                    metal.Quad(a, b, LinkWidth, armed ? Cyan : new Color(.34f, .65f, .74f, .86f));
+                return;
+            }
             Color channel=armed?Cyan:new Color(.42f,.48f,.55f,.38f);
-            Vector2 axis=(b-a).normalized,side=new(-axis.y,axis.x);
+            Vector2 side=new(-axis.y,axis.x);
             metal.Quad(a,b,SpineWidth*.72f,Metal);
             int count=Mathf.Max(2,Mathf.CeilToInt(lab.CellSpacing/SegmentPitch));
             for (int i=0;i<count;i++)
@@ -162,9 +197,32 @@ namespace Subject42.Combat.Telekinetic
                 PulseRange(first,point.magnitude*1.5f);
             }
         }
+        private float EdgeTrim(TelekineticItem item)
+        {
+            if (item == null) return CoreRadius + LinkWidth * .5f + EndGap;
+            float boundary = item.CellCount == 1 ? SocketRadius(item) : lab.CellSpacing * .5f - PlatePadding;
+            return boundary + LinkWidth * .5f + EndGap;
+        }
+
+        private float SocketRadius(TelekineticItem item) => lab.CellSpacing * (item.IsWeapon ? .37f : .29f);
+
+        private void SimpleSocket(TelekineticItem item)
+        {
+            Vector2 center = item.Center * lab.CellSpacing;
+            float radius = SocketRadius(item);
+            metal.Disk(center, radius, Metal, 16);
+            Ring(metal, center, radius, LinkWidth, TelekineticRig.FrameTint(item.Kind), 16);
+        }
+
         private void Core()
         {
             Vector2 p=Vector2.zero;
+            if (SimpleLinks)
+            {
+                metal.Disk(p, CoreRadius, Metal, 24);
+                Ring(metal, p, CoreRadius, LinkWidth, Cyan, 24);
+                return;
+            }
             metal.Disk(p,.65f,Bevel); metal.Disk(p,.58f,Metal);
             Ring(metal,p,.49f,.045f,new Color(.26f,.39f,.43f),8,0,.98f);
             int first=energy.Vertices.Count;

@@ -12,7 +12,11 @@ namespace Subject42.Combat.OrbitalStation
         public bool TelekineticAutoRotate = true;
         public void EnableTelekineticRig()
         {
-            if (Telekinetic != null) return;
+            if (Telekinetic != null)
+            {
+                if (Telekinetic.RemoveLegacyFrames()) Revision++;
+                return;
+            }
             EnableSegmentedOrbit();
             Telekinetic = new TelekineticBuild { AvailableRadius = Mathf.Clamp(UnlockedSegmentedLevels+1,2,TelekineticBuild.Radius) };
             TelekineticAngle = Rings.Count > 0 ? Rings[0].CurrentPhase : 0;
@@ -37,7 +41,6 @@ namespace Subject42.Combat.OrbitalStation
                     SegmentedLinkKind.FireRate => TelekineticPart.FR,
                     SegmentedLinkKind.ExtraShot => TelekineticPart.Double,
                     _ => TelekineticPart.RIC });
-            Telekinetic.Grant(TelekineticPart.Frame);
             Revision++;
         }
     }

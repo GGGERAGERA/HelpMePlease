@@ -107,7 +107,7 @@ namespace Subject42.Combat.Telekinetic
         {
             var item=attack.Item; var profile=attack.Profile;
             Vector2 point=views[item.Id].transform.position;
-            Vector2 direction=Construction.rotation*item.Center.normalized;
+            Vector2 direction=views[item.Id].transform.right;
             if (item.Kind==TelekineticPart.Saw)
             {
                 if (!contactsReady && !GatherContactTargets(point)) return false;

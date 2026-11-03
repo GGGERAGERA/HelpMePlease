@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
 
@@ -21,32 +22,68 @@ namespace Subject42.Combat.Telekinetic
             var texture=new MaterialPropertyBlock(); texture.SetTexture("_MainTex",renderer.sprite.texture);
             renderer.SetPropertyBlock(texture);
         }
-        private string Description(TelekineticPart kind,float strength=1,int level=1) => kind switch
+        private SpriteRenderer[] sniperLayers;
+
+        private void DrawIcon(Rect rect, TelekineticPart kind)
         {
-            TelekineticPart.DMG=>$"Следующая атака: +{(Modules.DamageMultiplier-1)*strength:P0} урона.",
-            TelekineticPart.FR=>$"Частота: +{(Modules.RapidMultiplier-1)*strength:P0} на {Modules.RapidDuration:F1}s.",
-            TelekineticPart.Double=>"Дополнительный залп / контакт на следующей атаке.",
-            TelekineticPart.RIC=>$"Следующий залп: +{level} рикошет(а). Для снарядов.",
-            TelekineticPart.Pierce=>$"Следующий залп: +{Mathf.RoundToInt(Modules.PierceBodies*strength)} пробития. Для снарядов.",
-            TelekineticPart.Splash=>$"Первое попадание залпа: область {Modules.SplashRadius:F1} м, {Modules.SplashDamageFraction*strength:P0} урона соседним целям.",
-            TelekineticPart.Chain=>$"Первое попадание: одна дополнительная цель до {Modules.ChainRadius:F1} м, {Modules.ChainDamageFraction*strength:P0} урона. Без рекурсии.",
-            TelekineticPart.Crit=>$"Следующая атака: ×{1+(Modules.CritMultiplier-1)*strength:F2} урона.",
-            TelekineticPart.Slow=>$"Следующие попадания: скорость ×{Mathf.Max(.1f,1-(1-Modules.SlowMultiplier)*strength):F2} на {Modules.SlowSeconds:F1}s.",
-            TelekineticPart.Shred=>"Следующая атака обходит щиты. Не изменяет их постоянную прочность.",
-            TelekineticPart.Knock=>$"Следующая атака: +{Modules.KnockBonus*strength:F1} к отталкиванию.",
-            TelekineticPart.Echo=>$"Повтор одного залпа / контакта через {Modules.EchoDelay:F2}s. Без рекурсии.",
-            TelekineticPart.Energy=>"Сокращает КД только соседних активных модулей.",
-            TelekineticPart.Frame=>"Связность конструкции. Боевые эффекты не передаёт.",
-            _=>"Ствол направлен наружу. Q/E поворачивает всю конструкцию."
-        };
-        private void DrawIcon(Rect rect,TelekineticPart kind)
+            if (kind == TelekineticPart.Sniper)
+            {
+                DrawSniperArt(rect);
+                return;
+            }
+
+            var sprite = Icon(kind);
+            Vector2 size = sprite.textureRect.size;
+            size *= Mathf.Min(rect.width / size.x, rect.height / size.y);
+            DrawSprite(new Rect(rect.center - size * .5f, size), sprite, WeaponKind(kind) ? Color.white : PartColor(kind));
+        }
+
+        private void DrawSniperArt(Rect rect)
         {
-            var sprite=Icon(kind); var uv=sprite.textureRect; var texture=sprite.texture;
-            float fit=Mathf.Min(rect.width/uv.width,rect.height/uv.height);
-            var target=new Rect(rect.center.x-uv.width*fit*.5f,rect.center.y-uv.height*fit*.5f,uv.width*fit,uv.height*fit);
-            var old=GUI.color; GUI.color=WeaponKind(kind)?Color.white:PartColor(kind);
-            GUI.DrawTextureWithTexCoords(target,texture,new Rect(uv.x/texture.width,uv.y/texture.height,uv.width/texture.width,uv.height/texture.height)); GUI.color=old;
-            GUI.Label(rect,new GUIContent("",TelekineticBuild.Label(kind)+" · "+ShapeLabel(kind)+"\n"+Description(kind)),GUIStyle.none);
+            if (sniperLayers == null)
+            {
+                var visual = SniperVisual.GetComponent<OrbitalModuleView>();
+                sniperLayers = visual.Sprites.Where(layer => layer.enabled && layer != visual.Halo)
+                    .OrderBy(layer => layer.sortingOrder).ToArray();
+            }
+
+            Rect LayerRect(SpriteRenderer layer)
+            {
+                var local = SniperVisual.transform.worldToLocalMatrix * layer.transform.localToWorldMatrix;
+                var bounds = layer.localBounds;
+                Vector3 min = local.MultiplyPoint3x4(bounds.min);
+                Vector3 max = local.MultiplyPoint3x4(bounds.max);
+                return Rect.MinMaxRect(min.x, -max.y, max.x, -min.y);
+            }
+
+            Rect art = LayerRect(sniperLayers[0]);
+            foreach (var layer in sniperLayers)
+            {
+                Rect bounds = LayerRect(layer);
+                art = Rect.MinMaxRect(Mathf.Min(art.xMin, bounds.xMin), Mathf.Min(art.yMin, bounds.yMin),
+                    Mathf.Max(art.xMax, bounds.xMax), Mathf.Max(art.yMax, bounds.yMax));
+            }
+
+            // The body and barrel sprites have wide transparent margins in the weapon sheet.
+            const float sniperIconScale = 1.55f;
+            float scale = Mathf.Min(rect.width / art.width, rect.height / art.height) * sniperIconScale;
+            foreach (var layer in sniperLayers)
+            {
+                Rect bounds = LayerRect(layer);
+                DrawSprite(new Rect(rect.center + (bounds.position - art.center) * scale, bounds.size * scale),
+                    layer.sprite, layer.color);
+            }
+        }
+
+        private static void DrawSprite(Rect rect, Sprite sprite, Color tint)
+        {
+            var texture = sprite.texture;
+            Rect uv = sprite.textureRect;
+            var old = GUI.color;
+            GUI.color = tint;
+            GUI.DrawTextureWithTexCoords(rect, texture, new Rect(uv.x / texture.width, uv.y / texture.height,
+                uv.width / texture.width, uv.height / texture.height));
+            GUI.color = old;
         }
     }
 }

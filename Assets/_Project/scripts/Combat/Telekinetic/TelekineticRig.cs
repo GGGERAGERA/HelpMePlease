@@ -14,6 +14,8 @@ namespace Subject42.Combat.Telekinetic
         public Sprite[] ItemIcons;
         public AudioClip ShotClip, SawClip;
         public TelekineticStructureView StructureView;
+        [SerializeField] private GameObject constructorPanelPrefab;
+        private GameObject constructorPanel;
         [Min(.4f)] public float CellSpacing=1.05f;
         [Min(1)] public float RotationSpeed=90, RotationCapacity=100;
         [Min(0)] public float RotationDrain=25, RotationRecovery=12, AutoRotationSpeed=12;
@@ -39,10 +41,8 @@ namespace Subject42.Combat.Telekinetic
         private readonly Dictionary<int,SpriteRenderer> chargeBars=new();
         private float nextContactAudio;
         private bool ready;
-        private TelekineticItem selected, dragging, reserveSelection;
-        private TelekineticPart? brush;
-        private bool merging;
-        private string notice="";
+        private TelekineticItem selected, held;
+        private bool heldFromReserve, merging;
 
         public void Bind(OrbitalStationRuntime owner)
         {
@@ -51,6 +51,8 @@ namespace Subject42.Combat.Telekinetic
             Construction.SetParent(transform,false);
             audioSource=gameObject.AddComponent<AudioSource>(); audioSource.playOnAwake=false; audioSource.spatialBlend=0;
             StructureView.Bind(this,Construction); BindEffectCallbacks();
+            drawnAreaRadius = previousAreaRadius = Build.AvailableRadius;
+            areaRevealedAt = Time.unscaledTime - AreaRevealSeconds;
             ready=true; SyncViews(); ApplyPose();
         }
         public void SetEditing(bool value)
@@ -59,30 +61,47 @@ namespace Subject42.Combat.Telekinetic
         }
         public void SetConstructorVisible(bool visible)
         {
-            ResetAnomaly(); dragging=null; reserveSelection=null; brush=null; merging=false;
+            ResetAnomaly();
+            CancelSelection();
+            if (visible)
+            {
+                if (constructorPanel == null) constructorPanel = Instantiate(constructorPanelPrefab);
+                constructorPanel.SetActive(true);
+                ResetBoardFeedback();
+            }
+            else if (constructorPanel != null) constructorPanel.SetActive(false);
             StructureView.SetCombatVisible(!visible);
         }
         public bool CancelSelection()
         {
-            bool had=dragging!=null || brush.HasValue || merging || selected!=null;
-            dragging=selected=reserveSelection=null; brush=null; merging=false; return had;
+            bool had = held != null || selected != null || merging;
+            held = selected = null;
+            merging = false;
+            return had;
         }
-        public bool Place(TelekineticPart kind,Vector2Int p,int turns=0)
-        {
-            if (!CanEdit) return false;
-            var item=reserveSelection ?? Build.Reserve.FirstOrDefault(c=>c.Kind==kind);
-            bool changed=Apply(item!=null && item.Kind==kind && Build.Install(item,p,turns));
-            if (changed) { reserveSelection=null; brush=null; selected=item; }
-            return changed;
-        }
+
+        public bool Place(TelekineticPart kind, Vector2Int p, int turns = 0) =>
+            Install(Build.Reserve.FirstOrDefault(item => item.Kind == kind), p, turns);
+
+        private bool Install(TelekineticItem item, Vector2Int p, int turns) =>
+            CanEdit && Apply(Build.Install(item, p, turns));
+
         public bool Move(TelekineticItem item,Vector2Int p,int? turns=null) => CanEdit && Apply(Build.Move(item,p,turns));
         public bool Rotate(TelekineticItem item) => CanEdit && Apply(Build.Rotate(item));
+
+        public bool TurnWeapon(TelekineticItem item, int steps)
+        {
+            if (!CanEdit || item == null || !item.IsWeapon || !Build.Items.Contains(item)) return false;
+            item.AimSteps = ((item.AimSteps + steps) % 8 + 8) % 8;
+            views[item.Id].transform.localRotation = Quaternion.Euler(0, 0, item.Heading);
+            return true;
+        }
+
         public bool Remove(TelekineticItem item) => CanEdit && Apply(Build.Stow(item));
         public bool Merge(TelekineticItem keep,TelekineticItem consume) => CanEdit && Apply(Build.Merge(keep,consume));
         private bool CanEdit => ready && station.InputOwner.CanEditConstructor;
         private bool Apply(bool changed)
         {
-            notice=Build.Message;
             if (changed) { InvalidateCharges(); SyncViews(); }
             return changed;
         }
@@ -151,6 +170,7 @@ namespace Subject42.Combat.Telekinetic
             ResetAnomaly(); ClearEffectState(); InvalidateCharges();
             combat.Hit-=RememberBodyTarget; combat.ProjectileSpawned-=CaptureProjectile;
             combat.ProjectileContact-=ProjectileContact; combat.ProjectileEnded-=ProjectileEnded;
+            if (constructorPanel != null) Destroy(constructorPanel);
             ready=false;
         }
         private void OnDestroy() => Release();

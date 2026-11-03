@@ -125,7 +125,7 @@ internal static class RigCatalogueFxCheck
         }
         var expected=new Dictionary<TelekineticPart,int>
         {
-            [TelekineticPart.Frame]=1,[TelekineticPart.Pistol]=1,[TelekineticPart.Sniper]=1,[TelekineticPart.FR]=1,
+            [TelekineticPart.Frame]=1,[TelekineticPart.Pistol]=1,[TelekineticPart.Sniper]=2,[TelekineticPart.FR]=1,
             [TelekineticPart.Crit]=1,[TelekineticPart.Slow]=1,[TelekineticPart.Knock]=1,
             [TelekineticPart.Shotgun]=2,[TelekineticPart.DMG]=2,[TelekineticPart.Energy]=2,[TelekineticPart.Pierce]=2,[TelekineticPart.Splash]=2,[TelekineticPart.Shred]=2,
             [TelekineticPart.RIC]=3,[TelekineticPart.Saw]=4,[TelekineticPart.Double]=4,[TelekineticPart.Chain]=4,[TelekineticPart.Echo]=4
@@ -136,13 +136,13 @@ internal static class RigCatalogueFxCheck
             report.Add("FOOTPRINT "+item.Kind+" cells="+item.CellCount+" at="+item.Position+" turns="+item.QuarterTurns);
         }
         Assert.That(rig.Build.ValidateInventory(),Is.True);
-        var keys=typeof(TelekineticRig).GetMethod("HandleConstructorKeys",methods);
+        var keys=typeof(TelekineticRig).GetMethod("HandleConstructorInput",methods);
         bool auto=rig.AutoRotate;
-        keys.Invoke(rig,new object[]{new Event {type=EventType.KeyDown,keyCode=KeyCode.F}});
+        keys.Invoke(rig,new object[]{new Event {type=EventType.KeyDown,keyCode=KeyCode.F},Vector2Int.zero,false});
         Assert.That(rig.AutoRotate,Is.EqualTo(!auto));
-        keys.Invoke(rig,new object[]{new Event {type=EventType.KeyDown,keyCode=KeyCode.F}});
+        keys.Invoke(rig,new object[]{new Event {type=EventType.KeyDown,keyCode=KeyCode.F},Vector2Int.zero,false});
         typeof(TelekineticRig).GetField("selected",methods).SetValue(rig,rig.Build.Items.First(c=>c.Kind==TelekineticPart.Crit));
-        keys.Invoke(rig,new object[]{new Event {type=EventType.KeyDown,keyCode=KeyCode.M}});
+        keys.Invoke(rig,new object[]{new Event {type=EventType.KeyDown,keyCode=KeyCode.M},Vector2Int.zero,false});
         Assert.That((bool)typeof(TelekineticRig).GetField("merging",methods).GetValue(rig),Is.True);
         rig.CancelSelection();
         typeof(TelekineticRig).GetField("selected",methods).SetValue(rig,rig.Build.Items.First(c=>c.Kind==TelekineticPart.Crit));

@@ -115,7 +115,7 @@ namespace Subject42.Combat.OrbitalStation
                 return OrbitalProgressionConfig.Default.MaxMountsPerRing;
             }
         }
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public int Version = CurrentVersion;
         public void OnBeforeSerialize() { }
@@ -132,6 +132,7 @@ namespace Subject42.Combat.OrbitalStation
             // Preserve rings, levels, allocators, valid modules and all unrelated run progress.
             if (Modules != null) Modules.RemoveAll(m => m != null && ((int)m.ModuleType == 1 || (int)m.ModuleType == 2));
             if (Version < 5) MigrateSegmentedGeometry();
+            if (Version < 6 && Telekinetic?.UpgradeSniperFootprints() == true) Revision++;
             Version = CurrentVersion;
         }
 

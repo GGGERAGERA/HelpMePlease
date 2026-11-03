@@ -5,8 +5,6 @@ using System.Collections;
 
 public class HUDManager : MonoBehaviour
 {
-    [SerializeField] private UICrosshairFollowMouse orbitalCursor;
-    public UICrosshairFollowMouse OrbitalCursor => orbitalCursor;
     private const int ProductionSectorCount =
         RunRoute.ExplorationSectorCount;
 
@@ -32,7 +30,7 @@ public class HUDManager : MonoBehaviour
         Component[] views = { informationGroup, healthBar, healthSlider, healthText,
             experienceBar, experienceSlider, experienceText, levelText, killsCounter,
             goldCounter, killsText, currencyText, timerText, threatPanel, bulletTimeView,
-            dashCooldownView, routeProgressView, orbitalCursor, interactionPrompt, constructorHint,
+            dashCooldownView, routeProgressView, interactionPrompt, constructorHint,
             runMessages != null ? runMessages.View : null, targetTracker, tacticalMap,
             bossHpPanel != null ? bossHpPanel.transform : null, lowHpVignette };
         foreach (var view in views)

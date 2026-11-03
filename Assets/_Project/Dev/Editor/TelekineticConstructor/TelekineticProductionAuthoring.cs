@@ -151,9 +151,14 @@ public static class TelekineticProductionAuthoring
             }
             rig.PistolVisual=Visual(OrbitalModuleKind.Pistol); rig.ShotgunVisual=Visual(OrbitalModuleKind.Shotgun);
             rig.SawVisual=Visual(OrbitalModuleKind.Saw); rig.SniperVisual=Visual(OrbitalModuleKind.Sniper);
+            var rigData=new SerializedObject(rig);
+            rigData.FindProperty("constructorPanelPrefab").objectReferenceValue=
+                AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/UI/OrbitalWeaponPanel.prefab");
+            rigData.ApplyModifiedPropertiesWithoutUndo();
             rig.StructureView=go.AddComponent<TelekineticStructureView>();
-            // Preserve the V3 authored chassis settings exactly.
+            // Reuse the authored palette with clean production connections.
             EditorUtility.CopySerialized(lab.StructureView,rig.StructureView);
+            rig.StructureView.SimpleLinks = true;
             var prefab=PrefabUtility.SaveAsPrefabAsset(go,PrefabPath);
             config.TelekineticRigPrefab=prefab.GetComponent<TelekineticRig>();
             EditorUtility.SetDirty(config); AssetDatabase.SaveAssets();

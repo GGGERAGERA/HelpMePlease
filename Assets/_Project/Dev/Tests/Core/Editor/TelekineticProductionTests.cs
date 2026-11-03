@@ -25,7 +25,7 @@ public sealed class TelekineticProductionTests
         shotgun.Remaining=.37f; string before=JsonUtility.ToJson(build);
         Assert.That(build.TrySwap(shotgun,pistol),Is.False,"Whole bar collides with frame");
         Assert.That(JsonUtility.ToJson(build),Is.EqualTo(before),"Rejected swap is atomic");
-        Assert.That(build.Place(TelekineticPart.Sniper,new Vector2Int(-1,0)),Is.True);
+        Assert.That(build.Place(TelekineticPart.Sniper,new Vector2Int(-1,0),2),Is.True);
         int count=build.Items.Count; var ids=build.Items.Select(i=>i.Id).ToArray();
         Assert.That(build.TrySwap(pistol,build.Items.Last()),Is.True);
         for (int i=0;i<20;i++) { build.TryGlitch(new System.Random(i)); Assert.That(build.Validate(),Is.True); }
@@ -61,6 +61,55 @@ public sealed class TelekineticProductionTests
         Assert.That(state.Modules[0].DamageLevel,Is.EqualTo(2),"Keep original run data as a rollback source");
         Assert.That(AssetDatabase.GetDependencies(TelekineticProductionAuthoring.PrefabPath,true).Any(path=>path.StartsWith("Assets/_Project/Dev/",StringComparison.Ordinal)),Is.False,"Rig prefab must carry only production dependencies");
     }
+    [Test] public void RetiredFrameReturnsDetachedPartsToReserve()
+    {
+        var state = OrbitalRunState.CreateDefault(42);
+        state.EnableTelekineticRig();
+        var build = state.Telekinetic;
+        Assert.That(build.Reserve.Any(item => item.Kind == TelekineticPart.Frame), Is.False);
+        Assert.That(OrbitalRewardProvider.GetRigPart((OrbitalRewardKind)28), Is.Null);
+
+        build.Grant(TelekineticPart.Frame);
+        Assert.That(build.Place(TelekineticPart.Frame, Vector2Int.right), Is.True);
+        var module = build.Grant(TelekineticPart.FR);
+        module.Level = 2;
+        Assert.That(build.Install(module, new Vector2Int(2, 0)), Is.True);
+        var gun = build.Items.Single(item => item.IsWeapon);
+
+        state.EnableTelekineticRig();
+        Assert.That(build.Items, Is.EquivalentTo(new[] { gun }));
+        Assert.That(build.Reserve, Is.EquivalentTo(new[] { module }));
+        Assert.That(module.Level, Is.EqualTo(2));
+        Assert.That(build.ValidateInventory(), Is.True);
+        int revision = state.Revision;
+        state.EnableTelekineticRig();
+        Assert.That(state.Revision, Is.EqualTo(revision));
+    }
+
+    [Test] public void OldSniperFootprintsKeepValidPlacementsAndStowConflicts()
+    {
+        var state = OrbitalRunState.CreateDefault(42);
+        state.EnableTelekineticRig();
+        var build = state.Telekinetic;
+        var blocked = build.Grant(TelekineticPart.Sniper);
+        var branch = build.Grant(TelekineticPart.FR);
+        var stays = build.Grant(TelekineticPart.Sniper);
+        Assert.That(build.Install(blocked, Vector2Int.left), Is.True);
+        Assert.That(build.Install(branch, new Vector2Int(-2, 0)), Is.True);
+        Assert.That(build.Install(stays, Vector2Int.right), Is.True);
+
+        // With the old one-cell shape this facing didn't overlap the core.
+        blocked.QuarterTurns = 1;
+        blocked.Level = 2;
+        state.Version = 5;
+        state.MigrateRetiredModules();
+
+        Assert.That(build.ValidateInventory(), Is.True);
+        Assert.That(build.Reserve, Is.EquivalentTo(new[] { blocked, branch }));
+        Assert.That(blocked.Level, Is.EqualTo(2));
+        Assert.That(build.At(new Vector2Int(1, 1)), Is.SameAs(stays));
+    }
+
     [UnityTearDown] public IEnumerator Cleanup()
     {
         if (Application.isPlaying) yield return new ExitPlayMode();

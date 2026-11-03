@@ -32,7 +32,7 @@ namespace Subject42.Combat.OrbitalStation
         FireRateLink = 23,
         ExtraShotLink = 24,
         RicochetLink = 25,
-        RigExpansion = 26, RigEnergy = 27, RigFrame = 28, RigPierce = 29, RigSplash = 30,
+        RigExpansion = 26, RigEnergy = 27, RigPierce = 29, RigSplash = 30,
         RigChain = 31, RigCrit = 32, RigSlow = 33, RigShred = 34, RigKnock = 35, RigEcho = 36
     }
 

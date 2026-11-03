@@ -11,6 +11,7 @@ namespace Subject42.Combat.OrbitalStation
         public SpriteRenderer[] Sprites;
         public Animator Animator;
         public ParticleSystem[] Particles;
+        public SpriteRenderer IconSource;
         public Sprite Icon;
         public Color IconTint = Color.white;
         public bool IconUsesOwnColors;

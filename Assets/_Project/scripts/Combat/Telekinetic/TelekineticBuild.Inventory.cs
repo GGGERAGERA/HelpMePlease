@@ -26,7 +26,8 @@ namespace Subject42.Combat.Telekinetic
         }
         public bool Install(TelekineticItem item, Vector2Int anchor, int turns = 0)
         {
-            if (item == null || !reserve.Contains(item) || !CanPlace(item.Kind, anchor, turns)) return false;
+            if (item == null || !reserve.Contains(item)) return false;
+            if (!CanPlace(item.Kind, anchor, turns, out string reason)) return Reject(reason);
             item.Position = anchor; item.QuarterTurns = (turns % 4 + 4) % 4;
             reserve.Remove(item); items.Add(item); Disconnected.Clear();
             Message = "Предмет установлен из запаса.";
@@ -39,6 +40,54 @@ namespace Subject42.Combat.Telekinetic
             Message = "Предмет возвращён в запас.";
             return true;
         }
+        internal bool RemoveLegacyFrames()
+        {
+            bool removedFromReserve = reserve.RemoveAll(item => item.Kind == TelekineticPart.Frame) > 0;
+            if (items.RemoveAll(item => item.Kind == TelekineticPart.Frame) == 0) return removedFromReserve;
+
+            StowDisconnectedItems();
+            return true;
+        }
+
+        internal bool UpgradeSniperFootprints()
+        {
+            if (!items.Exists(item => item.Kind == TelekineticPart.Sniper)) return false;
+
+            // Reserve every old cell before trying to add any sniper's new second cell.
+            var occupied = new HashSet<Vector2Int>();
+            foreach (var item in items)
+            {
+                int oldCellCount = item.Kind == TelekineticPart.Sniper ? 1 : item.CellCount;
+                for (int i = 0; i < oldCellCount; i++) occupied.Add(item.Cell(i));
+            }
+
+            items.RemoveAll(item =>
+            {
+                if (item.Kind != TelekineticPart.Sniper) return false;
+                var extra = item.Cell(1);
+                if (InBounds(extra) && Mathf.Abs(extra.x) <= AvailableRadius &&
+                    Mathf.Abs(extra.y) <= AvailableRadius && occupied.Add(extra)) return false;
+                reserve.Add(item);
+                return true;
+            });
+
+            StowDisconnectedItems();
+            return true;
+        }
+
+        private void StowDisconnectedItems()
+        {
+            // Whole footprints are internally connected, so the anchor represents the entire item.
+            if (!ValidateLayout(out _, out var disconnected))
+                items.RemoveAll(item =>
+                {
+                    if (!disconnected.Contains(item.Position)) return false;
+                    reserve.Add(item);
+                    return true;
+                });
+            Disconnected.Clear();
+        }
+
         public bool Expand()
         {
             if (AvailableRadius >= Radius) return false;

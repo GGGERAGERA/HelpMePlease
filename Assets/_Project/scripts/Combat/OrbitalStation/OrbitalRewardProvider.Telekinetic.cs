@@ -11,7 +11,7 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalRewardKind.Saw=>TelekineticPart.Saw, OrbitalRewardKind.Sniper=>TelekineticPart.Sniper,
             OrbitalRewardKind.DamageLink=>TelekineticPart.DMG, OrbitalRewardKind.FireRateLink=>TelekineticPart.FR,
             OrbitalRewardKind.ExtraShotLink=>TelekineticPart.Double, OrbitalRewardKind.RicochetLink=>TelekineticPart.RIC,
-            OrbitalRewardKind.RigFrame=>TelekineticPart.Frame, OrbitalRewardKind.RigEnergy=>TelekineticPart.Energy,
+            OrbitalRewardKind.RigEnergy=>TelekineticPart.Energy,
             OrbitalRewardKind.RigPierce=>TelekineticPart.Pierce, OrbitalRewardKind.RigSplash=>TelekineticPart.Splash,
             OrbitalRewardKind.RigChain=>TelekineticPart.Chain, OrbitalRewardKind.RigCrit=>TelekineticPart.Crit,
             OrbitalRewardKind.RigSlow=>TelekineticPart.Slow, OrbitalRewardKind.RigShred=>TelekineticPart.Shred,

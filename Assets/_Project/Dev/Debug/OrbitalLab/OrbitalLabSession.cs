@@ -97,7 +97,7 @@ public abstract class OrbitalLabSession : MonoBehaviour
         if (ScenePlayer == null) PlayerLoadoutFactory.ApplyCharacterStats(player, Character);
         Player = player.GetComponent<PlayerHealth>();
         Station = OrbitalStationRuntime.Ensure(player, Character);
-        Station?.Interaction?.BindCursor(UnityEngine.Object.FindFirstObjectByType<UICrosshairFollowMouse>(), Camera.main);
+        Station?.Interaction?.BindCamera(Camera.main);
         CameraRig.target = player.transform;
         CameraRig.transform.position = player.transform.position + CameraRig.offset;
         TargetRing = 0;
