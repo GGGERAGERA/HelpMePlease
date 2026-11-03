@@ -656,7 +656,7 @@ public sealed class ProductionAnomalySite : MonoBehaviour
                 {
                     specialInstructionsShown = true;
                     RunMessageService.Instance?.ShowCustom("site.start",
-                        "site.startDescription", 4f);
+                        RunStateManager.Instance?.OrbitalStationState?.UsesTelekineticRig==true ? "site.rigStartDescription" : "site.startDescription", 4f);
                 }
             }
         }

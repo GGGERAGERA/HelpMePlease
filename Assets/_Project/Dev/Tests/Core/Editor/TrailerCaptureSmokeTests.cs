@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections;
 using System.Linq;
-using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -28,9 +27,8 @@ public sealed class TrailerCaptureSmokeTests
         starter.StartRun(starter.transform);
         yield return CoreTestSupport.Await(() => Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized: true } &&
             !SceneTransitionOverlay.IsTransitioning);
-        var menu = Object.FindFirstObjectByType<Subject42DebugMenu>();
-        Assert.That(menu, Is.Not.Null);
-        var capture = menu.GetComponent<TrailerCaptureSession>() ?? menu.gameObject.AddComponent<TrailerCaptureSession>();
+        var captureOwner = new GameObject("Trailer capture test session");
+        var capture = captureOwner.AddComponent<TrailerCaptureSession>();
         var run = RunStateManager.Instance;
         var station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         int originalRings = station.Rings.Count;
@@ -88,23 +86,15 @@ public sealed class TrailerCaptureSmokeTests
         var hud = HUDManager.Instance;
         var pause = Object.FindFirstObjectByType<PauseMenuUI>();
         var pauseGraphics = pause.GetComponentsInChildren<Graphic>(true).Select(g => (g, g.enabled)).ToArray();
-        var setOpen = typeof(Subject42DebugMenu).GetMethod("SetOpen", BindingFlags.Instance | BindingFlags.NonPublic);
-        setOpen.Invoke(menu, new object[] { true });
-        var tabType = typeof(Subject42DebugMenu).GetNestedType("DebugTab", BindingFlags.NonPublic);
-        var selectTab = typeof(Subject42DebugMenu).GetMethod("SelectTab", BindingFlags.Instance | BindingFlags.NonPublic);
-        selectTab.Invoke(menu, new object[] { System.Enum.Parse(tabType, "PlayerBuild"), true });
-        selectTab.Invoke(menu, new object[] { System.Enum.Parse(tabType, "Shooting"), true });
         capture.SetHudVisible(false);
         capture.SetNumbersVisible(false);
-        selectTab.Invoke(menu, new object[] { System.Enum.Parse(tabType, "Shooting"), true });
         Assert.That(hud.DebugHudVisible, Is.False);
         Assert.That(hud.IsTacticalMapVisible, Is.False);
         Assert.That(pauseGraphics.All(pair => pair.g.enabled == pair.enabled), Is.True, "Capture must preserve the pause menu graphics.");
         Assert.That(hud.GetComponentsInChildren<HudBar>(true).SelectMany(b => b.GetComponentsInChildren<Graphic>(true)).All(g => !g.enabled), Is.True);
         System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/TrailerCapture");
-        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/TrailerCapture/f1-capture.png");
+        ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/TrailerCapture/capture.png");
         yield return null;
-        setOpen.Invoke(menu, new object[] { false });
         yield return null;
         Assert.That(Time.timeScale, Is.EqualTo(1f));
         Assert.That(station.InputOwner.IsGameplayInputBlocked, Is.False);

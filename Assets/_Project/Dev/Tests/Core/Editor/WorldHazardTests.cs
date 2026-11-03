@@ -350,7 +350,7 @@ public sealed class WorldHazardTests
         var boss = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/_Project/prefabs/Enemies/p_Boss1.prefab").GetComponent<BossRocketAttack>();
         var bossData = new SerializedObject(boss);
-        for (int i = 1; i <= RunRoute.TotalSectors; i++)
+        for (int i = 1; i <= StageProfileData.ProductionTierCount; i++)
         {
             var stage = AssetDatabase.LoadAssetAtPath<StageProfileData>(
                 $"Assets/_Project/Data/Stages/StageProfiles/StageProfile_{i:00}.asset");

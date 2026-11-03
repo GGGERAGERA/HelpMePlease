@@ -1,28 +1,9 @@
 using UnityEngine;
 
-public interface IPlayerRuntimeResolver
-{
-    GameObject ResolvePlayer(string playerTag);
-}
-
-public sealed class TagPlayerRuntimeResolver : IPlayerRuntimeResolver
-{
-    public GameObject ResolvePlayer(string playerTag)
-    {
-        return string.IsNullOrWhiteSpace(playerTag)
-            ? GameObject.FindGameObjectWithTag("Player")
-            : GameObject.FindGameObjectWithTag(playerTag);
-    }
-}
-
 public static class PlayerRuntimeReference
 {
     private const float ResolveCooldownSeconds = 1f;
     private const string DefaultPlayerTag = "Player";
-    private static readonly IPlayerRuntimeResolver DefaultResolver =
-        new TagPlayerRuntimeResolver();
-
-    private static IPlayerRuntimeResolver resolver = DefaultResolver;
     private static GameObject cachedPlayer;
     private static PlayerHealth cachedPlayerHealth;
     private static float nextResolveTime;
@@ -30,7 +11,6 @@ public static class PlayerRuntimeReference
     public static GameObject CachedPlayer => cachedPlayer;
     public static Transform PlayerTransform => ResolvePlayerTransform(forceLookup: false);
     public static PlayerHealth PlayerHealth => ResolvePlayerHealth(forceLookup: false);
-    public static IPlayerRuntimeResolver Resolver => resolver;
 
     public static Transform ResolvePlayerTransform(
         string playerTag = DefaultPlayerTag,
@@ -42,16 +22,11 @@ public static class PlayerRuntimeReference
                 return null;
 
             nextResolveTime = Time.time + ResolveCooldownSeconds;
-            Bind(ResolveWithResolver(playerTag));
+            Bind(GameObject.FindGameObjectWithTag(string.IsNullOrWhiteSpace(playerTag)
+                ? DefaultPlayerTag : playerTag));
         }
 
         return cachedPlayer != null ? cachedPlayer.transform : null;
-    }
-
-    public static void ConfigureResolver(IPlayerRuntimeResolver playerResolver)
-    {
-        resolver = playerResolver ?? DefaultResolver;
-        Clear();
     }
 
     public static PlayerHealth ResolvePlayerHealth(string playerTag = DefaultPlayerTag, bool forceLookup = false)
@@ -73,18 +48,5 @@ public static class PlayerRuntimeReference
     public static void Clear()
     {
         Bind(null);
-    }
-
-    private static GameObject ResolveWithResolver(string playerTag)
-    {
-        IPlayerRuntimeResolver activeResolver = resolver ?? DefaultResolver;
-        string normalizedTag = string.IsNullOrWhiteSpace(playerTag)
-            ? DefaultPlayerTag
-            : playerTag;
-
-        if (activeResolver == null)
-            return null;
-
-        return activeResolver.ResolvePlayer(normalizedTag);
     }
 }

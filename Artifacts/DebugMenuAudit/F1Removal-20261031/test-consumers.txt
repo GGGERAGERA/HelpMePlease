@@ -1,0 +1,54 @@
+F1 UI removal — test consumer audit, 2026-10-31
+Scope: CombatReadabilityTests.cs; Subject42OrbitalOperationsTests.cs; TrailerCaptureSmokeTests.cs;
+DevelopmentInputContractTests.cs; AudioMonitorTests.cs; MvpF1Verification.cs.
+
+Audit before editing:
+- Combat capture setup/readiness, manual enemy ownership, menu-state assertions and private UI helpers depended on Subject42DebugMenu.
+- Miss-return pistol capture used a reflected F1 toggle; trailer capture attached its existing session to the menu.
+- AdditiveDevelopmentMenusHaveOneInputOwner covered only F1 input ownership.
+- Audio history test had one unrelated F1-open assertion.
+- MvpF1Verification.cs has no Subject42DebugMenu dependency; its actual reward text/icon/card/cap checks are standalone.
+
+Adapted and retained:
+CombatReadabilityTests:
+- WoundedRetreatChaserProductionMvpF1GameViewCapture -> WoundedRetreatChaserProductionMvpGameViewCapture
+- RecoilingShooterProductionMvpF1GameViewCapture -> RecoilingShooterProductionMvpGameViewCapture
+- InterceptingBomberProductionMvpF1GameViewCapture -> InterceptingBomberProductionMvpGameViewCapture
+- BlockLockedShieldProductionMvpF1GameViewCapture -> BlockLockedShieldProductionMvpGameViewCapture
+- CommittedRamProductionMvpF1GameViewCapture -> CommittedRamProductionMvpGameViewCapture
+- StrafingShooterProductionMvpF1GameViewCapture -> StrafingShooterProductionMvpGameViewCapture
+- CommittedVolleyProductionMvpF1GameViewCapture -> CommittedVolleyProductionMvpGameViewCapture
+  Setup now selects the same eligible prefab from the current production profile, enables the retained EnemySpawner experiment API,
+  and uses its DebugSpawn...Around API. Each test destroys only its own actor in finally.
+  Real movement, damage/shield collision, state/visual transitions, production camera/AI/physics and Development assertions remain.
+- FlankingChaserF1ImmediateSpawnPreservesCadenceAndClosesMenu -> FlankingChaserDebugSpawnPreservesCadenceAndLiveMovement
+  Keeps disabled opt-in rejection, production prefab eligibility, manual spawn cadence independence, fourth automatic assignment,
+  live movement/physics and capture. F1 button availability, close callback and menu-owned list cleanup checks removed.
+- FireteamClearanceProductionMvpGameViewCapture and EscortCargoProductionMvpEscortPauseAndRewardCapture retain their production
+  event API setup and independent live-event/reward assertions; obsolete menu-state/readiness/cleanup references removed.
+Subject42OrbitalOperationsTests:
+- MissReturnPistolProductionMvpF1GameViewCapture -> MissReturnPistolProductionMvpGameViewCapture.
+  Enables the retained station.DebugSetMissReturnPistolExperiment API; preserves natural outbound/return trajectory,
+  full-miss/range, production firing, visual capture, Development and restoration checks.
+- Production reward catalogue assertion wording no longer calls the catalogue F1.
+TrailerCaptureSmokeTests:
+- CapturePresetsRepeatHudEventBossAndReset owns an existing TrailerCaptureSession on a test fixture GameObject.
+  Retains presets, real world rules, density, HUD/pause graphics/input, Rocket Storm, boss, reset/progression checks.
+AudioMonitorTests:
+- MainRunHistoryShowsRealCallerAndClipWithoutInterruptingGameplay retains playback/history, input, clock, cursor,
+  movement/dash, bounded history and non-interactive panel assertions; removed only Subject42DebugMenu.IsDebugMenuOpen assertion.
+MvpF1Verification.cs:
+- Retained unchanged: independent reward localization/icon/card reuse/runtime-cap audit, despite its historical class name.
+
+Removed exclusively UI cases/helpers:
+- DevelopmentInputContractTests.AdditiveDevelopmentMenusHaveOneInputOwner and its now-unused ExitFixturePlayMode teardown/imports.
+  Seeded random stream, unseeded Unity state and tutorial preference contracts remain.
+- CombatReadabilityTests.EscortF1Call, OpenEscortF1 and EscortF1Button.
+- Reflected menu setup and menu-owned debugEnemies checks in the adapted cases above.
+
+Static verification only:
+- rg: no Subject42DebugMenu/BotLabDebugUI/private F1 UI helpers/menuRoot/debugEnemies/F1 key references in owned consumers.
+- rg: all eight EnemySpawner experiment setters and DebugSpawn...Around APIs used by adaptations exist in production source.
+- rg: renamed tests have no remaining C# references under Assets/_Project/Dev.
+- git diff --check passes for modified owned files.
+- No Unity launch, tests, build, git add, commit or branch change performed. Runtime correctness remains unverified in this work.

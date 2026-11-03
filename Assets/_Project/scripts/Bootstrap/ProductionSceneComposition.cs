@@ -7,7 +7,7 @@ using UnityEngine;
 // Each service reference may be a local scene component or a reusable authored prefab.
 [DefaultExecutionOrder(-32700)]
 [DisallowMultipleComponent]
-public sealed class ProductionSceneComposition : MonoBehaviour
+public sealed partial class ProductionSceneComposition : MonoBehaviour
 {
     public enum SceneRole { ServicesOnly, StartScreen, Bunker, Gameplay }
     public static ProductionSceneComposition Active { get; private set; }
@@ -31,7 +31,6 @@ public sealed class ProductionSceneComposition : MonoBehaviour
     [SerializeField] private OrbitalPresentationConfig orbital;
     [SerializeField] private VisualTuningPreset visualPreset;
     [SerializeField] private AnomalyItemData[] anomalyItems;
-    [SerializeField] private EvolutionRecipe[] evolutionRecipes;
     [SerializeField] private CurrencyManager currency;
     [SerializeField] private RunSelectionManager selection;
     [SerializeField] private MetaProgressionManager metaProgression;
@@ -67,7 +66,6 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         VisualTuningPresetStorage.Configure(visualPreset);
         Subject42.Visuals.LiveVisualRuntime.Attach(this, visualPreset);
         AnomalyItemCatalog.Configure(anomalyItems);
-        EvolutionRecipeCatalog.Configure(evolutionRecipes);
 
         if (LocalizationService.Instance == null)
         {
@@ -98,8 +96,9 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         if (role == SceneRole.Gameplay)
         {
             if (characters == null || enemies == null || levelModifiers == null || hud == null ||
-                cameraFollow == null || gameplayArea == null || rewards == null || hud.OrbitalCursor == null)
+                cameraFollow == null || gameplayArea == null || rewards == null)
                 throw new InvalidOperationException("Gameplay composition has missing scene bindings.");
+            ShowGameplayCursor();
             if (!levelModifiers.PrepareDirectRun(characters.DefaultCharacter))
             {
                 characters.enabled = enemies.enabled = levelModifiers.enabled = false;
@@ -118,10 +117,22 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         }
     }
 
+    private void OnApplicationFocus(bool focused)
+    {
+        if (focused && role == SceneRole.Gameplay) ShowGameplayCursor();
+    }
+
+    private static void ShowGameplayCursor()
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
     private void BindGameplayPlayer(GameObject player)
     {
         cameraFollow.target = player.transform;
-        characters.Station?.Interaction?.BindCursor(hud.OrbitalCursor, cameraFollow.ControlledCamera);
+        characters.Station?.Interaction?.BindCamera(cameraFollow.ControlledCamera);
     }
 
     private IEnumerator Start()
@@ -134,12 +145,17 @@ public sealed class ProductionSceneComposition : MonoBehaviour
         while (!SubsystemsReady()) yield return null;
         // Scene activation and Start callbacks finish before the transition reveals it.
         yield return null;
+        BindDevelopmentSession();
         IsReady = true;
     }
 
+    // Optional implementation lives in Dev; the compiler erases this call when absent.
+    partial void BindDevelopmentSession();
+
     private bool SubsystemsReady() => role switch
     {
-        SceneRole.Gameplay => characters.SpawnedPlayer != null && levelModifiers.IsInitialized &&
+        SceneRole.Gameplay => characters.SpawnedPlayer != null &&
+            (levelModifiers.IsInitialized || levelModifiers.IsAwaitingFirstRoute) &&
             characters.Station is { IsInitialized: true } &&
             hud.IsPlayerBound && cameraFollow.target != null && cameraFollow.ControlledCamera != null,
         SceneRole.Bunker => bunkerLoadout.IsReady && cameraFollow.target != null && cameraFollow.ControlledCamera != null,

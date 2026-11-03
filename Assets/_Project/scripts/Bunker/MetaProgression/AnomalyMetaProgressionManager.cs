@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public sealed class AnomalyMetaProgressionManager : MonoBehaviour
+public sealed partial class AnomalyMetaProgressionManager : MonoBehaviour
 {
     private const string LevelKeyPrefix = "META_ANOMALY_LEVEL_";
     private const string InvestmentKeyPrefix = "META_ANOMALY_INVESTED_";

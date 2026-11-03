@@ -17,6 +17,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     [Header("Level Choice")]
     [SerializeField] private LevelChoiceManager levelChoiceManager;
+    internal LevelChoiceManager LevelChoice => levelChoiceManager;
 
     [Header("Level Mechanics")]
     [SerializeField] private WorldEventSpawner worldEventSpawner;
@@ -31,6 +32,7 @@ public sealed class RunFlowController : MonoBehaviour
     private EnemyHealth finalBoss;
     private bool levelCompleted;
     private StageProfileData sectorProfile;
+    private float sectorDuration;
     private int runId;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     internal void DebugBindRun(int id) => runId = id;
@@ -38,13 +40,14 @@ public sealed class RunFlowController : MonoBehaviour
     public float SectorElapsedTime { get; private set; }
     public bool IsExitUnlocked { get; private set; }
     public float ExitMinimumTimeRemaining => sectorProfile != null
-        ? Mathf.Max(0f, sectorProfile.ExitActivationTime - SectorElapsedTime) : 0f;
+        ? Mathf.Max(0f, sectorDuration - SectorElapsedTime) : 0f;
     public bool IsExitRecovering => enemySpawner != null && enemySpawner.IsRecoveringFromFirstAutomaticAssault;
     private bool CanUnlockExit => TutorialController.IsTutorialSector
         ? TutorialController.IsActive && TutorialController.Active.GoalCompleted
-        : sectorProfile != null && SectorElapsedTime >= sectorProfile.ExitActivationTime &&
-            (!RunRoute.IsFinalSector(RunStateManager.Instance.CurrentLevel) || RunStateManager.Instance.FinalObjectiveSatisfied);
-    public RunPhase Phase { get; private set; }
+        : sectorProfile != null && SectorElapsedTime >= sectorDuration &&
+            (!RunRoute.IsFinalSector(RunStateManager.Instance.CurrentSector.SectorNumber) ||
+                RunStateManager.Instance.FinalObjectiveSatisfied);
+    public RunPhase Phase { get; private set; } = RunPhase.Stopped;
     public EnemyHealth FinalBoss => finalBoss;
     public bool IsVictoryConfirmed => Phase == RunPhase.Victory;
 
@@ -60,6 +63,7 @@ public sealed class RunFlowController : MonoBehaviour
         levelCompleted = false;
         finalBoss = null;
         sectorProfile = profile;
+        sectorDuration = RunStateManager.Instance.CurrentSector.Duration;
         SectorElapsedTime = 0f;
         IsExitUnlocked = false;
         TutorialController.Prepare(this);
@@ -71,13 +75,16 @@ public sealed class RunFlowController : MonoBehaviour
     {
         if (Phase == RunPhase.NormalSector && !levelCompleted)
         {
-            SectorElapsedTime += Time.deltaTime;
+            if (TutorialController.IsTutorialSector) SectorElapsedTime += Time.deltaTime;
+            else SectorElapsedTime = Mathf.Min(sectorDuration, SectorElapsedTime + Time.deltaTime);
             // The countdown is the complete availability contract; waves never extend it.
             if (!IsExitUnlocked && CanUnlockExit)
             {
                 IsExitUnlocked = true;
                 ExitUnlocked?.Invoke();
             }
+            if (IsExitUnlocked && !TutorialController.IsTutorialSector && Time.timeScale > 0f)
+                HandleExitReached();
         }
     }
 
@@ -168,8 +175,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     public bool HandleExitReached()
     {
-        if (levelCompleted || Phase != RunPhase.NormalSector || !IsExitUnlocked ||
-            RunStateManager.Instance == null || !RunStateManager.Instance.IsActiveRun(runId))
+        if (levelCompleted || Phase != RunPhase.NormalSector || !IsExitUnlocked || !CanContinue)
             return false;
 
         RunStateManager runState = RunStateManager.Instance;
@@ -180,7 +186,7 @@ public sealed class RunFlowController : MonoBehaviour
         if (sectorNumber == RunRoute.TutorialSector)
         {
             var transition = levelChoiceManager;
-            if (!CanContinue || !RewardsResolved || !TutorialController.IsActive ||
+            if (!RewardsResolved || !TutorialController.IsActive ||
                 TutorialController.Active.Step != TutorialStep.Exit ||
                 transition == null || !transition.CanLeaveTutorial) return false;
             levelCompleted = true;
@@ -228,6 +234,8 @@ public sealed class RunFlowController : MonoBehaviour
             return false;
         }
 
+        if (!RewardsResolved) return false;
+        worldEventSpawner?.CancelActiveEventsForDeparture();
         levelCompleted = true;
 
         if (!manager.TryShowChoices())
@@ -237,7 +245,7 @@ public sealed class RunFlowController : MonoBehaviour
         }
 
         RegisterCurrentLevelCompletion();
-        runState?.RegisterCompletedLevel();
+        if (RunRoute.CompletesLevel(sectorNumber)) runState.RegisterCompletedLevel();
         ExitReached?.Invoke();
         return true;
     }

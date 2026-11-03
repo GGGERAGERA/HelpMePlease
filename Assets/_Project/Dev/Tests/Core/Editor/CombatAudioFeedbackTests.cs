@@ -87,6 +87,18 @@ public sealed class CombatAudioFeedbackTests
         Assert.That(death.TryGetRandomClip(out var deathClip), Is.True, "The authored death cue needs a real clip.");
         // A prior spawn hit must finish the existing invulnerability interval.
         yield return WaitRealtime(.7f);
+        var feedback = PlayerRuntimeReference.CachedPlayer.GetComponent<PlayerFeedbackPresentation>();
+        var bindings = new SerializedObject(feedback).FindProperty("renderers");
+        var boundRenderers = Enumerable.Range(0, bindings.arraySize)
+            .Select(index => bindings.GetArrayElementAtIndex(index).objectReferenceValue as SpriteRenderer).ToArray();
+        Assert.That(boundRenderers, Is.Not.Empty);
+        Assert.That(boundRenderers.All(renderer => renderer != null), Is.True);
+        BunkerDebugTools.SetGameView1600();
+        const string output = "Artifacts/GeneratedQA/RemainingCleanup";
+        string characterName = Object.FindFirstObjectByType<CharacterSpawner>().SpawnedCharacterData.name;
+        System.IO.Directory.CreateDirectory(output);
+        ScreenCapture.CaptureScreenshot(output + "/" + characterName + "-alive.png");
+        yield return null;
         health.SetRuntimeHealth(100f, 1f);
         health.SetIncomingDamageMultiplier(1f);
         var played = new List<AudioCueId>();
@@ -95,6 +107,9 @@ public sealed class CombatAudioFeedbackTests
         {
             Assert.That(health.TakeDamage(100f, Vector2.right), Is.True, "Apply fatal damage through the real health owner.");
             Assert.That(health.IsDead, Is.True);
+            Assert.That(boundRenderers.All(renderer => !renderer.enabled), Is.True,
+                "Real death must hide every remaining authored feedback renderer.");
+            ScreenCapture.CaptureScreenshot(output + "/" + characterName + "-dead.png");
             Assert.That(Count(played, AudioCueId.PlayerDeath), Is.EqualTo(1));
             Assert.That(Count(played, AudioCueId.PlayerHurt), Is.Zero, "A fatal hit must not layer the hurt sound over death.");
             Assert.That(service.GetComponentsInChildren<AudioSource>().Any(source => source.clip == deathClip &&
@@ -106,6 +121,24 @@ public sealed class CombatAudioFeedbackTests
             Assert.That(Count(played, AudioCueId.PlayerHurt), Is.Zero);
         }
         finally { service.DebugCuePlayed -= played.Add; }
+    }
+
+    [UnityTest]
+    public IEnumerator DiMagFatalDamageKeepsAuthoredDeathFeedback()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return BeginProductionRun("02_Di-mag");
+        yield return VerifyPlayerDeath();
+    }
+
+    [UnityTest]
+    public IEnumerator VikaFatalDamageKeepsAuthoredDeathFeedback()
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        yield return new EnterPlayMode();
+        yield return BeginProductionRun("03_Vika");
+        yield return VerifyPlayerDeath();
     }
 
     [UnityTest]
@@ -329,15 +362,17 @@ public sealed class CombatAudioFeedbackTests
         finally { service.DebugCuePlayed -= played.Add; }
     }
 
-    private static IEnumerator BeginProductionRun()
+    private static IEnumerator BeginProductionRun(string characterName = "01_Gera")
     {
         yield return CoreTestSupport.LoadBunker();
-        var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset");
+        var character = AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/" + characterName + ".asset");
+        Assert.That(character, Is.Not.Null, characterName);
         RunSelectionManager.Instance.SelectCharacter(character);
         var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
         starter.StartRun(starter.transform);
         yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == "MVP" &&
             Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized: true } && !SceneTransitionOverlay.IsTransitioning);
+        Assert.That(Object.FindFirstObjectByType<CharacterSpawner>().SpawnedCharacterData, Is.SameAs(character));
         PlayerRuntimeReference.CachedPlayer.GetComponent<PlayerHealth>().AddMaxHealth(1000000f);
         Object.FindFirstObjectByType<EnemySpawner>().StopSpawning();
         Assert.That(AudioService.Instance, Is.Not.Null, "Exercise the authored production audio composition.");

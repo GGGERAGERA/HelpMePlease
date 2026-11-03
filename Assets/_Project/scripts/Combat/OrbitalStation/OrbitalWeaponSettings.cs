@@ -17,6 +17,7 @@ public sealed class OrbitalWeaponSettings
     }
     // Supplied by the presentation asset; legacy/lab profiles retain their authored visuals.
     public ProjectileStyle Presentation;
+    [NonSerialized] public bool ChargedLinePresentation;
     public OrbitalUpgradeCategory Category;
     public OrbitalModuleKind Kind;
     [Tooltip("Visual-only wrapper containing the authored artist prefab.")] public GameObject WeaponVisual;
@@ -73,33 +74,6 @@ public sealed class OrbitalWeaponSettings
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     [NonSerialized] public bool MissReturnExperiment;
 
-    public OrbitalWeaponSettings CreateRamSlugShotgunExperiment()
-    {
-        var runtime = (OrbitalWeaponSettings)MemberwiseClone();
-        if (Kind != OrbitalModuleKind.Shotgun) return runtime;
-        runtime.Pellets = 1;
-        runtime.BurstShots = 1;
-        runtime.SpreadDegrees = 0f;
-        runtime.Damage = 10f;
-        runtime.Range = 3.5f;
-        runtime.ProjectileSpeed = 7f;
-        runtime.BodyPierces = 3;
-        runtime.Knockback = 5f;
-        runtime.BypassShields = false;
-        if (Presentation != null)
-            runtime.Presentation = new ProjectileStyle
-            {
-                Color = Presentation.Color,
-                BodySize = Presentation.BodySize * 1.6f,
-                TrailSeconds = Presentation.TrailSeconds,
-                TrailWidth = Presentation.TrailWidth,
-                TrailOpacity = Presentation.TrailOpacity
-            };
-        else
-            runtime.ProjectileVisualScale *= 1.6f;
-        return runtime;
-    }
-
     public OrbitalWeaponSettings CreateMissReturnPistolExperiment()
     {
         var runtime = (OrbitalWeaponSettings)MemberwiseClone();
@@ -110,16 +84,6 @@ public sealed class OrbitalWeaponSettings
         return runtime;
     }
 
-    public OrbitalWeaponSettings CreateSweepingShotgunExperiment()
-    {
-        var runtime = (OrbitalWeaponSettings)MemberwiseClone();
-        runtime.BurstShots = 3;
-        runtime.BurstInterval = .12f;
-        runtime.Pellets = 2;
-        runtime.SpreadDegrees = 12f;
-        return runtime;
-    }
-
     // Shallow copy intentionally preserves authored visual references; only scalar combat values change.
     public OrbitalWeaponSettings CreateChargedLineSniperExperiment()
     {
@@ -127,6 +91,7 @@ public sealed class OrbitalWeaponSettings
         runtime.Damage = 24f;
         runtime.ChargeSeconds = .45f;
         runtime.BodyPierces = 3;
+        runtime.ChargedLinePresentation = true;
         return runtime;
     }
 #endif

@@ -6,8 +6,10 @@ using UnityEngine;
 )]
 public sealed class StageProfileData : ScriptableObject
 {
+    public const int ProductionTierCount = 3;
+
     [SerializeField, Min(1)]
-    [Tooltip("One-based sector number in the finite route.")]
+    [Tooltip("One-based tier in the stage profile catalog.")]
     private int sectorNumber = 1;
 
     [SerializeField]

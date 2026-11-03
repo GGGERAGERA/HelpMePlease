@@ -2,40 +2,10 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
-using System.Collections;
-using System.Linq;
-using UnityEngine.TestTools;
-using UnityEngine.SceneManagement;
-using UnityEditor.SceneManagement;
 
 [Category("Core")]
 public sealed class DevelopmentInputContractTests
 {
-    [UnityTearDown]
-    public IEnumerator ExitFixturePlayMode()
-    {
-        if (Application.isPlaying) yield return new ExitPlayMode();
-    }
-
-    [UnityTest]
-    public IEnumerator AdditiveDevelopmentMenusHaveOneInputOwner()
-    {
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
-        yield return new EnterPlayMode();
-        var first = new GameObject("first development menu");
-        var second = new GameObject("additive development menu");
-        var additive = SceneManager.CreateScene("DevelopmentMenuOwnership");
-        SceneManager.MoveGameObjectToScene(second, additive);
-        try
-        {
-            first.AddComponent<Subject42DebugMenu>();
-            second.AddComponent<Subject42DebugMenu>();
-            Assert.That(UnityEngine.Object.FindObjectsByType<Subject42DebugMenu>(FindObjectsSortMode.None)
-                .Count(menu => menu.enabled), Is.EqualTo(1), "Only one menu may process F1 input across loaded scenes.");
-        }
-        finally { UnityEngine.Object.DestroyImmediate(first); UnityEngine.Object.DestroyImmediate(second); }
-    }
-
     [Test]
     public void SeededStreamsReplayIndependentlyAndReleaseOwnership()
     {

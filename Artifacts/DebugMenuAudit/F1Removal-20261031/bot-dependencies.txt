@@ -1,0 +1,39 @@
+F1 removal: preserved bot and Golden Path dependencies
+Date: 2026-10-31
+
+Changed files:
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotRunSession.cs
+  Removed only Subject42DebugMenu.IsDebugMenuOpen pause and RestoreBotResumeScale.
+  Kept explicit Ensure/BindScene/start/stop APIs, existing pause, reward, death,
+  transition checks, reward resume-scale handoff, seed/speed/input cleanup.
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotRunSession.GoldenPath.cs
+  Removed only F1-open checks and F1-only deadline extension. Existing reward,
+  Time.timeScale, transition, death and route verification checks remain.
+- Assets/_Project/Dev/Debug/GoldenPathLab/BotBatchRunner.cs
+  Removed only F1-open orchestration pause/deadline reset. Existing batch APIs,
+  readiness, transition constraints, result/history serialization remain.
+- Assets/_Project/Dev/Debug/GoldenPathLab/GoldenPathLab.cs
+  Removed F1-open screenshot suppression. Existing standalone lab, recording,
+  cancel/transition checks and launch APIs remain.
+- Assets/_Project/scripts/Bootstrap/ProductionSceneComposition.cs
+  Replaced deleted F1.Start -> BindBotLabScene scene rebinding with a one-time
+  editor/development hook in the existing composition Start coroutine.
+  After SubsystemsReady and the existing final startup frame, before IsReady,
+  gameplay/bunker compositions bind only BotRunSession.Current using serialized
+  characters/rewards/gameplayArea and existing RunFlowController.Instance.
+  This preserves restart/sector-transition rebinding without session creation,
+  object search, polling, a replacement menu, a new manager or a new lab tool.
+
+Unchanged scope:
+- Bot controller, balance, combat and route decisions.
+- GoldenPathLab scene/authoring and independently available lab/tools.
+- Existing public bot/session/batch/lab APIs.
+- No gameplay-design or GDD changes in this dependency cleanup.
+
+Verification in this subtask:
+- Read existing F1 bind/resume implementation and composition/flow lifecycle.
+- Static search: no Subject42DebugMenu/RestoreBotResumeScale/BindBotLabScene
+  references remain in the four bot files or ProductionSceneComposition.
+- git diff --check on the five changed C# files: passed.
+- No Unity, builds or tests launched here; root owns the single smoke compile.
+- No staging, commits, branch changes or resets performed.

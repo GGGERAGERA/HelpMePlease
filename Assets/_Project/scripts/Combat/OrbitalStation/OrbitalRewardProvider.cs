@@ -31,7 +31,9 @@ namespace Subject42.Combat.OrbitalStation
         DamageLink = 22,
         FireRateLink = 23,
         ExtraShotLink = 24,
-        RicochetLink = 25
+        RicochetLink = 25,
+        RigExpansion = 26, RigEnergy = 27, RigPierce = 29, RigSplash = 30,
+        RigChain = 31, RigCrit = 32, RigSlow = 33, RigShred = 34, RigKnock = 35, RigEcho = 36
     }
 
     public sealed class OrbitalRewardData : UpgradeData
@@ -58,6 +60,7 @@ namespace Subject42.Combat.OrbitalStation
             maxHealthUpgrade = Find(legacyUpgrades, UpgradeType.MaxHealthFlat);
             moveSpeedUpgrade = Find(legacyUpgrades, UpgradeType.MoveSpeedPercent);
             CreateDefinitions();
+            CreateRigDefinitions();
         }
 
         public List<UpgradeData> BuildChoices(int count, bool offerNewRing = false)
@@ -125,7 +128,10 @@ namespace Subject42.Combat.OrbitalStation
         }
 
         internal static bool IsSupportedByState(OrbitalRewardKind kind, OrbitalRunState state) =>
-            Enum.IsDefined(typeof(OrbitalRewardKind), kind) && (state?.UsesSegmentedOrbit == true
+            Enum.IsDefined(typeof(OrbitalRewardKind), kind) &&
+            (state?.UsesTelekineticRig==true ? RigSupported(kind) : kind<OrbitalRewardKind.RigExpansion) &&
+            (GetModuleKind(kind) is not OrbitalModuleKind module || state == null || state.IsWeaponAvailable(module)) &&
+            (state?.UsesSegmentedOrbit == true
                 ? kind is not (OrbitalRewardKind.RingSpeed or OrbitalRewardKind.RingPower or OrbitalRewardKind.RingCapacity or
                     OrbitalRewardKind.ArcEmitter or OrbitalRewardKind.LinkPair or OrbitalRewardKind.LinkMatrix or OrbitalRewardKind.ModuleDamage)
                 : !GetSegmentedLinkKind(kind).HasValue);
@@ -141,6 +147,7 @@ namespace Subject42.Combat.OrbitalStation
 
         public OrbitalRewardData GetDefinition(OrbitalRewardKind kind, OrbitalRunState state)
         {
+            if (state?.UsesTelekineticRig==true && kind==OrbitalRewardKind.NewRing) kind=OrbitalRewardKind.RigExpansion;
             RefreshPresentation(state);
             return definitions.Find(value => value.RewardKind == kind);
         }
@@ -196,7 +203,8 @@ namespace Subject42.Combat.OrbitalStation
                 if (!IsSupportedByState(reward.RewardKind, state)) continue;
                 if (demoOnly && !IsInActivePool(reward, state)) continue;
                 OrbitalModuleKind? moduleKind = GetModuleKind(reward.RewardKind);
-                bool eligible = GetSegmentedLinkKind(reward.RewardKind).HasValue ? state.UsesSegmentedOrbit : moduleKind.HasValue
+                bool eligible = state.UsesTelekineticRig && GetRigPart(reward.RewardKind).HasValue ? true :
+                    state.UsesTelekineticRig && reward.RewardKind==OrbitalRewardKind.RigExpansion ? state.Telekinetic.AvailableRadius<Subject42.Combat.Telekinetic.TelekineticBuild.Radius : GetSegmentedLinkKind(reward.RewardKind).HasValue ? state.UsesSegmentedOrbit : moduleKind.HasValue
                     ? freeMounts >= (moduleKind.Value == OrbitalModuleKind.LinkNode ? 2 : 1)
                     : reward.RewardKind switch
                 {
@@ -283,6 +291,21 @@ namespace Subject42.Combat.OrbitalStation
         {
             foreach (var definition in definitions)
             {
+                if (state?.UsesTelekineticRig==true)
+                {
+                    if (GetRigPart(definition.RewardKind) is Subject42.Combat.Telekinetic.TelekineticPart part)
+                    {
+                        definition.upgradeName=Subject42.Combat.Telekinetic.TelekineticBuild.Label(part);
+                        definition.description="Один целый предмет в запас. Общая сторона даёт соседство. R — поворот формы; Merge — повышение модуля.";
+                        definition.RequiresArenaSelection=GetModuleKind(definition.RewardKind).HasValue;
+                    }
+                    if (definition.RewardKind==OrbitalRewardKind.RigExpansion)
+                    {
+                        int size=state.Telekinetic.AvailableRadius*2+1;
+                        definition.description=$"Доступное поле {size} × {size} → {Math.Min(9,size+2)} × {Math.Min(9,size+2)}. Открывает пространство без круговых слотов.";
+                    }
+                    continue;
+                }
                 bool segmented = state?.UsesSegmentedOrbit == true;
                 if (definition.RewardKind == OrbitalRewardKind.Pistol)
                 {
@@ -300,13 +323,6 @@ namespace Subject42.Combat.OrbitalStation
                 {
                     definition.upgradeName = "reward.shotgun";
                     definition.description = segmented ? "reward.segmentedShotgunDescription" : "reward.shotgunDescription";
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    if (segmented && state.RamSlugShotgunExperiment)
-                    {
-                        definition.upgradeName = "reward.ramSlugShotgun";
-                        definition.description = "reward.ramSlugShotgunDescription";
-                    }
-#endif
                 }
                 if (definition.RewardKind == OrbitalRewardKind.Saw)
                 {

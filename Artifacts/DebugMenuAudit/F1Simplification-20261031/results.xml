@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-30 22:20:56Z" end-time="2026-10-30 22:21:10Z" duration="14,1284932">
+  <test-suite type="TestSuite" id="1000" name="Subject#42" fullname="Subject#42" runstate="Runnable" testcasecount="426" result="Passed" start-time="2026-10-30 22:20:56Z" end-time="2026-10-30 22:21:10Z" duration="14.128493" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1539" name="Assembly-CSharp-Editor.dll" fullname="D:/fork/HelpMePlease/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="426" result="Passed" start-time="2026-10-30 22:20:56Z" end-time="2026-10-30 22:21:10Z" duration="13.975579" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7928" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1209" name="F1SandboxTests" fullname="F1SandboxTests" classname="F1SandboxTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-30 22:20:56Z" end-time="2026-10-30 22:21:10Z" duration="13.969422" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1211" name="SimplifiedF1ProductionSmoke" fullname="F1SandboxTests.SimplifiedF1ProductionSmoke" methodname="SimplifiedF1ProductionSmoke" classname="F1SandboxTests" runstate="Runnable" seed="594127967" result="Passed" start-time="2026-10-30 22:20:47Z" end-time="2026-10-30 22:21:10Z" duration="22.700362" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[[BunkerInteractableCollider] Interaction source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerPlayerShowcase 1 renderers=16
+[BunkerInteractableCollider] Interaction source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_EscapeProtocolStation renderers=3
+[BunkerInteractableCollider] Interaction source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] SlotMachine renderers=56
+[BunkerInteractableCollider] SlotMachine source=SlotMachine, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=PF_RunExitDoor, interactable=True, hoverable=True
+[BunkerHoverOutline] PF_RunExitDoor renderers=46
+[BunkerHoverOutline] PF_MissionOperator renderers=1
+[BunkerInteractableCollider] PF_MissionOperator source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] Interaction source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerWeaponShowcase renderers=10
+[BunkerInteractableCollider] ArcadeInteraction source=p_RouletteTable1, interactable=True, hoverable=True
+[BunkerHoverOutline] p_RouletteTable1 renderers=19
+[BunkerInteractableCollider] PF_InteractionArrow source=p_RouletteTable1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerArkade1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_MissionOperator, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_EscapeProtocolStation, interactable=True, hoverable=True
+[BunkerHoverOutline] p_PockerTable1 renderers=15
+[BunkerInteractableCollider] ArcadeInteraction source=p_bunkerArkade1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_PockerTable1, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=PF_RunExitDoor, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=SlotMachine, interactable=True, hoverable=True
+[BunkerHoverOutline] p_bunkerArkade1 renderers=13
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerWeaponShowcase, interactable=True, hoverable=True
+[BunkerInteractableCollider] PF_InteractionArrow source=p_bunkerPlayerShowcase 1, interactable=True, hoverable=True
+[RunSelectionManager] Character selected: 01_Gera
+[RunSelectionManager] Character selected: 01_Gera
+[RunState] New run: character=01_Gera, weapon=NULL, stabilizer=NULL
+[TacticalMap] breakableMarkers=0
+[CharacterSpawner] Weapons found: 0
+[MetaUpgradeApplier] Loaded meta: HP=0, DMG=0, SPD=0, XP=0, GOLD=0, PICKUP=0
+[RunState] Applied to spawned player. Upgrades: 0, hasHealth: False
+[EnemySpawner] Phase 1: interval 1,50, max alive 10.
+[EnemySpawner] Level scaling: HP x1,00, speed x1,00, pressure x1,00.
+[WorldEventSpawner] Placement rejected 'PF_CorridorEvent(Clone)': Route intersects static obstacle or reserved exit.
+[Corridor] admitted Random seed=-2027466902 rotation=180 start=(-26.38, 23.76)
+[Corridor] admitted Random seed=-441705373 rotation=180 start=(2.73, 21.76)
+SECTOR LAYOUT
+Coverage: 96,0%
+Player: (0.00, 0.00, 0.00)
+Normal 1: center (-33.14, 29.24), size (33.72, 41.53)
+Normal 2: center (33.13, -29.24), size (33.74, 41.53)
+Normal 3: center (-29.59, -38.89), size (40.82, 22.23)
+Special RedBeam: center (29.59, 20.76), size (40.82, 58.47), distance 36,1/70,7
+Line-to-Special in Normal: 0%
+Exit: (-31.38, 41.68), inside NORMAL
+Attempts: 1
+[ExplorationSector] Special Site: BEAM (ProductionBeamSiteHazard).
+[Corridor] admitted Random seed=1248280299 rotation=0 start=(41.52, 33.91)
+[Breakables] requested=8 spawned=8 visible=8 rejected=1 fallback=0 bounds=100x100
+[PropScatter] seed=-5490611, count=230/238. Safety takes priority over requested counts.
+[ExplorationSector] Sector ready: 6 Normal, 1 Special (RedBeam), 96% map coverage, 8 breakables, Exit at (-31.38, 41.68).
+[SectorRuntime]
+Source=RunSector
+Sector=1
+StageProfile='StageProfile_01'
+WorldRule='WorldRule_None'
+LocalAnomaly='LocalAnomaly_Berserk'
+[TacticalMap] breakableMarkers=8
+[EnemySpawner] Spawning stopped.
+[EnemySpawner] Spawning resumed.
+[EnemySpawner] Spawning stopped.
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+There are no audio listeners in the scene. Please ensure there is always one audio listener in the scene
+Saving results to: Artifacts/GeneratedQA/CompactHud/results.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

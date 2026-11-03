@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CurrencyManager : MonoBehaviour
+public partial class CurrencyManager : MonoBehaviour
 {
     public static CurrencyManager Instance;
 

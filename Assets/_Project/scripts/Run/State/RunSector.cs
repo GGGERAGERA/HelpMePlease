@@ -5,11 +5,13 @@ public sealed class RunSector
     private RunConfig config = RunConfig.Default;
     internal void ApplyRunConfig(RunConfig value) => config = value ?? RunConfig.Default;
     public int SectorNumber { get; }
+    public RouteNode RouteNode { get; }
+    public float Duration => SectorNumber == RunRoute.TutorialSector
+        ? StageProfile.ExitActivationTime : RunRoute.SectorDuration;
     public StageProfileData StageProfile { get; }
     private readonly WorldRuleData stageWorldRule;
-    // Surface selection supplies the initial location rule; subsequent locations own their chosen rule.
-    public WorldRuleData WorldRule => SectorNumber <= RunRoute.FirstSector && config.WorldRule != null
-        ? config.WorldRule : stageWorldRule;
+    public WorldRuleData WorldRule => RouteNode != null ? RouteNode.WorldRule :
+        SectorNumber <= RunRoute.FirstSector && config.WorldRule != null ? config.WorldRule : stageWorldRule;
     public LocalAnomalyData LocalAnomaly { get; }
 
     public EnemySpawnProfile SpawnProfile => config.SpawnProfile != null ? config.SpawnProfile : StageProfile != null
@@ -44,9 +46,11 @@ public sealed class RunSector
         int sectorNumber,
         StageProfileData stageProfile,
         WorldRuleData worldRule,
-        LocalAnomalyData localAnomaly)
+        LocalAnomalyData localAnomaly,
+        RouteNode routeNode = null)
     {
         SectorNumber = sectorNumber;
+        RouteNode = routeNode;
         StageProfile = stageProfile;
         stageWorldRule = worldRule;
         LocalAnomaly = localAnomaly;

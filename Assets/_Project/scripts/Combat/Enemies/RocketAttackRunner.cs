@@ -5,6 +5,9 @@ using UnityEngine;
 /// <summary>Shared fixed-target rocket flight, warning and impact. Owners supply timing and cancellation.</summary>
 public sealed class RocketAttackRunner : IDisposable
 {
+    private static readonly Unity.Profiling.ProfilerMarker LaunchProfile = new("RocketAttack.Launch");
+    private static readonly Unity.Profiling.ProfilerMarker SpawnProfile = new("RocketAttack.SpawnRocket");
+    private static readonly Unity.Profiling.ProfilerMarker TickProfile = new("RocketAttack.Tick");
     private sealed class Shot
     {
         public float age, delay, duration;
@@ -44,6 +47,7 @@ public sealed class RocketAttackRunner : IDisposable
 
     public bool Launch(Vector3 target, Vector3? origin, float delay, float duration, float radius)
     {
+        using var profilerScope = LaunchProfile.Auto();
         if (!IsReady) return false;
         var shot = new Shot { target = target, delay = Mathf.Max(.01f, delay),
             duration = Mathf.Max(.05f, duration), launchStart = origin ?? target };
@@ -67,6 +71,7 @@ public sealed class RocketAttackRunner : IDisposable
 
     private PooledGameObject SpawnRocket(Vector3 position, bool falling)
     {
+        using var profilerScope = SpawnProfile.Auto();
         var rocket = rockets.Get(position, Quaternion.identity, configurePresentation: item =>
         {
             var configured = item.PrimaryParticleSystem;
@@ -89,6 +94,7 @@ public sealed class RocketAttackRunner : IDisposable
     public void Tick(float deltaTime, float spawnHeight, float radius, int damage,
         Func<bool> combatAllowed, bool nonLethal = false)
     {
+        using var profilerScope = TickProfile.Auto();
         if (disposed) return;
         if (!combatAllowed()) { Cancel(); return; }
         for (int i = impacts.Count - 1; i >= 0; i--)

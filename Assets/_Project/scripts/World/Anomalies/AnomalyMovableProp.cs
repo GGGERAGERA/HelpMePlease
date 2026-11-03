@@ -29,7 +29,7 @@ public sealed class AnomalyMovableProp : MonoBehaviour
         for (Transform ancestor = transform.parent; ancestor != null; ancestor = ancestor.parent)
             if (ancestor.GetComponent<Collider2D>() != null || ancestor.GetComponent<Rigidbody2D>() != null ||
                 ancestor.GetComponent<Interactable>() != null || ancestor.GetComponent<LocalAnomalyZone>() != null ||
-                ancestor.GetComponent<AnomalyCoreRuntime>() != null || ancestor.GetComponent<AnomalyCoreConstruct>() != null ||
+                ancestor.GetComponent<GravityConstruct>() != null ||
                 ancestor.GetComponent<WorldBreakable>() != null || ancestor.GetComponent<ResourceNode>() != null ||
                 ancestor.GetComponent<Animator>() != null)
                 return false;

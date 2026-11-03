@@ -9,6 +9,11 @@ namespace Subject42.Combat.OrbitalStation
         private readonly SpriteRenderer halo;
         private readonly float baseScale;
         private readonly OrbitalModuleKind kind;
+        private readonly Transform body;
+        private bool chargedLine;
+        private float chargedLineRange;
+        private LineRenderer[] chargeLines;
+        private static readonly Color ChargeBlue = new(.25f, .7f, 1.5f, 1f);
         private GameObject instance;
         private readonly Vector3 authoredBodyPosition;
         private readonly Quaternion authoredBodyRotation;
@@ -52,12 +57,89 @@ namespace Subject42.Combat.OrbitalStation
             Trigger();
             UpdateShotHalo();
         }
-        public void WeaponCharge(float amount) => weaponCharge = Mathf.Clamp01(amount);
+        public void WeaponCharge(float amount)
+        {
+            weaponCharge = Mathf.Clamp01(amount);
+            if (chargedLine) UpdateChargeLines();
+        }
+        public void ConfigureChargedLine(bool enabled, float range)
+        {
+            bool wasCharged = chargedLine;
+            chargedLine = enabled;
+            chargedLineRange = range;
+            if (enabled && chargeLines == null)
+            {
+                // One guide and three converging strokes, owned/reused by this existing visual.
+                chargeLines = new LineRenderer[4];
+                for (int i = 0; i < chargeLines.Length; i++)
+                {
+                    var line = Object.Instantiate(OrbitalPresentationConfig.Active.EnergyLinePrefab, root.transform, false);
+                    line.name = i == 0 ? "Charged sniper direction" : "Charged sniper pulse " + i;
+                    line.transform.localPosition = Vector3.zero;
+                    line.transform.localRotation = Quaternion.identity;
+                    line.transform.localScale = Vector3.one;
+                    line.useWorldSpace = false;
+                    line.positionCount = 2;
+                    line.sortingLayerID = sprites[0].sortingLayerID;
+                    int order = 0;
+                    foreach (var sprite in sprites) if (sprite != null) order = Mathf.Max(order, sprite.sortingOrder);
+                    line.sortingOrder = order + 1;
+                    line.enabled = false;
+                    chargeLines[i] = line;
+                }
+            }
+            if (!enabled && wasCharged)
+            {
+                weaponCharge = 0f;
+                body.localPosition = authoredBodyPosition;
+                body.localRotation = authoredBodyRotation;
+                body.localScale = authoredBodyScale;
+            }
+            UpdateChargeLines();
+        }
+        private void UpdateChargeLines()
+        {
+            if (chargeLines == null) return;
+            bool visible = chargedLine && weaponCharge > 0f && !dragging && !previewing;
+            float final = Mathf.InverseLerp(1f - .1f / .45f, 1f, weaponCharge);
+            Vector3 muzzle = new(.42f, 0f, 0f);
+            for (int i = 0; i < chargeLines.Length; i++)
+            {
+                var line = chargeLines[i];
+                line.enabled = visible;
+                if (!visible) continue;
+                Color color = Color.Lerp(ChargeBlue, new Color(1.7f, 2f, 2.4f, 1f), final);
+                if (i == 0)
+                {
+                    line.SetPosition(0, muzzle);
+                    line.SetPosition(1, new Vector3(chargedLineRange, 0f, 0f));
+                    line.widthMultiplier = .018f + .012f * final;
+                    color.a = (.08f + weaponCharge * .12f + final * .12f) * DepthOpacity;
+                }
+                else
+                {
+                    float phase = Mathf.Repeat(Time.time * (5f + final * 3f) + i * .31f, 1f);
+                    Vector3 origin = new(-.55f + i * .12f, (i - 2) * .38f, 0f);
+                    line.SetPosition(0, Vector3.Lerp(origin, muzzle, phase));
+                    line.SetPosition(1, Vector3.Lerp(origin, muzzle, Mathf.Min(1f, phase + .36f)));
+                    line.widthMultiplier = .035f + .03f * weaponCharge + .02f * final;
+                    color.a = (.25f + weaponCharge * .5f + final * .25f) * DepthOpacity;
+                }
+                line.startColor = line.endColor = color;
+            }
+        }
         public void ResetWeaponFeedback()
         {
             weaponRecoil = weaponCharge = 0f; flashUntil = effectStopAt = 0f; StopParticles();
             shotHaloUntil = 0f;
+            UpdateChargeLines();
             UpdateShotHalo();
+            if (chargedLine)
+            {
+                body.localPosition = authoredBodyPosition;
+                body.localRotation = authoredBodyRotation;
+                body.localScale = authoredBodyScale;
+            }
             if (instance != null)
             {
                 instance.transform.localPosition = authoredBodyPosition;
@@ -106,6 +188,7 @@ namespace Subject42.Combat.OrbitalStation
             root.name = name + " Visual";
             var view = root.GetComponent<OrbitalModuleView>();
             if (view == null || !view.IsValid) throw new System.InvalidOperationException($"required {kind} visual references missing");
+            body = view.Body;
             halo = view.Halo;
             if (halo != null)
             {
@@ -149,10 +232,16 @@ namespace Subject42.Combat.OrbitalStation
             var config = OrbitalPresentationConfig.Active;
             float pulse = config.ShotHaloDuration > 0f
                 ? Mathf.Clamp01((shotHaloUntil - Time.time) / config.ShotHaloDuration) : 0f;
-            halo.enabled = highlighted || pulse > 0f;
-            halo.transform.localScale = authoredHaloScale * Mathf.Lerp(1f, config.ShotHaloScale, pulse);
+            bool charging = chargedLine && weaponCharge > 0f;
+            float final = charging ? Mathf.InverseLerp(1f - .1f / .45f, 1f, weaponCharge) : 0f;
+            halo.enabled = highlighted || pulse > 0f || charging;
+            float chargeScale = charging ? 1.1f + weaponCharge * .35f + final * .2f : 1f;
+            float haloScale = Mathf.Lerp(1f, config.ShotHaloScale, pulse);
+            halo.transform.localScale = authoredHaloScale * (charging ? Mathf.Max(chargeScale, haloScale) : haloScale);
             Color color = pulse > 0f ? Color.Lerp(weaponTint, Color.white, .25f * pulse) : authoredHaloColor;
+            if (charging) color = Color.Lerp(ChargeBlue, Color.white * 1.8f, final);
             color.a = Mathf.Max(authoredHaloColor.a, config.ShotHaloAlpha * pulse) * DepthOpacity;
+            if (charging) color.a = Mathf.Max(color.a, (.15f + weaponCharge * .45f + final * .3f) * DepthOpacity);
             halo.color = color;
         }
 
@@ -213,6 +302,17 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Tick()
         {
+            if (chargedLine)
+            {
+                float kick = weaponRecoil * Mathf.Clamp01(1f - (Time.time - weaponRecoilAt) / .12f);
+                body.localPosition = authoredBodyPosition - Vector3.right * kick;
+                body.localRotation = authoredBodyRotation;
+                body.localScale = authoredBodyScale * (1f + weaponCharge * .08f);
+                if (effectStopAt > 0f && Time.time >= effectStopAt) { StopParticles(); effectStopAt = 0f; }
+                UpdateChargeLines();
+                ApplyTint();
+                return;
+            }
             if (weaponFeedback && instance != null)
             {
                 float kick = weaponRecoil * Mathf.Clamp01(1f - (Time.time - weaponRecoilAt) / .16f);
@@ -301,6 +401,11 @@ namespace Subject42.Combat.OrbitalStation
             {
                 if (sprites[i] == null) continue;
                 Color color = spriteColors[i];
+                if (chargedLine && weaponCharge > 0f && sprites[i] != halo)
+                {
+                    float final = Mathf.InverseLerp(1f - .1f / .45f, 1f, weaponCharge);
+                    color = Color.Lerp(color, Color.Lerp(ChargeBlue, Color.white * 1.8f, final), weaponCharge * .45f + final * .35f);
+                }
                 if (weaponFeedback && !preserveWeaponColors && sprites[i] != halo) color = Color.Lerp(color, Color.Lerp(weaponTint, Color.white, weaponCharge), .65f);
                 if (previewing)
                 {
@@ -315,7 +420,7 @@ namespace Subject42.Combat.OrbitalStation
                         : new Color(1f, 0.12f, 0.18f, color.a), 0.72f);
                 else if (Time.time < flashUntil)
                     color = Color.Lerp(color, weaponFeedback
-                        ? Color.Lerp(weaponTint, Color.white, .25f)
+                        ? Color.Lerp(chargedLine ? ChargeBlue : weaponTint, Color.white, .25f)
                         : Color.white, 0.72f);
                 color.a *= DepthOpacity;
                 sprites[i].color = color;

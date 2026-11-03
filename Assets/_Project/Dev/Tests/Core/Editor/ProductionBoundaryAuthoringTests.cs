@@ -173,6 +173,129 @@ public sealed class ProductionBoundaryAuthoringTests
         }
     }
 
+    [Test]
+    public void EscortDestinationHasAnImportedSprite()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/_Project/prefabs/Environment/WorldEvents/EscortCargoEvent.prefab");
+        var destination = prefab.transform.Find("Presentation/Destination").GetComponent<SpriteRenderer>();
+        Assert.That(destination.sprite, Is.Not.Null, "The authored destination must remain visible when Escort is enabled.");
+    }
+
+    [TestCase("Dark")]
+    [TestCase("Blue")]
+    [TestCase("BigGait")]
+    public void ProductionSpiderAnimationsHaveProductionOwnership(string variant)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/_Project/prefabs/Enemies/p_Enemy_Spider" + variant + ".prefab");
+        var controller = prefab.GetComponentInChildren<Animator>(true).runtimeAnimatorController;
+        Assert.That(controller, Is.Not.Null);
+        Assert.That(Subject42AssetReferenceValidator.IsDevPath(AssetDatabase.GetAssetPath(controller)), Is.False,
+            "Production animation must survive removal of the development labs.");
+        Assert.That(controller.animationClips, Is.Not.Empty);
+        Assert.That(controller.animationClips.All(clip => clip != null && clip.length > 0f), Is.True);
+    }
+
+    [TestCase("Gera")]
+    [TestCase("DiMag")]
+    [TestCase("Vika")]
+    public void CharacterDeathFeedbackBindsExistingRenderers(string character)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/_Project/prefabs/Characters/" + character + ".prefab");
+        var feedback = prefab.GetComponent<PlayerFeedbackPresentation>();
+        var renderers = new SerializedObject(feedback).FindProperty("renderers");
+        Assert.That(renderers.arraySize, Is.GreaterThan(0));
+        for (int index = 0; index < renderers.arraySize; index++)
+            Assert.That(renderers.GetArrayElementAtIndex(index).objectReferenceValue, Is.Not.Null,
+                character + " death feedback renderer " + index);
+    }
+
+    [TestCase(false, "ORPHAN_PREFAB_OVERRIDE")]
+    [TestCase(true, "MISSING_PREFAB_SOURCE")]
+    public void MissingPrefabReferencesIdentifyTheirRole(bool strippedSource, string expectedCode)
+    {
+        string source = SaveRendererPrefab(null);
+        string variant = SaveVariant(source);
+        string guid = AssetDatabase.AssetPathToGUID(source);
+        string text = File.ReadAllText(variant);
+        if (strippedSource)
+        {
+            string instanceId = Regex.Match(text, @"(?m)^--- !u!1001 &(-?\d+)").Groups[1].Value;
+            Assert.That(instanceId, Is.Not.Empty);
+            text += "\n--- !u!212 &987654321 stripped\nSpriteRenderer:\n" +
+                "  m_CorrespondingSourceObject: {fileID: 987654320, guid: " + guid + ", type: 3}\n" +
+                "  m_PrefabInstance: {fileID: " + instanceId + "}\n  m_PrefabAsset: {fileID: 0}\n";
+        }
+        else
+        {
+            var target = new Regex(@"(- target: \{fileID: )-?\d+(, guid: " + guid + @", type: 3\})");
+            Assert.That(target.IsMatch(text), Is.True);
+            text = target.Replace(text, "${1}987654321${2}", 1);
+        }
+        File.WriteAllText(variant, text);
+        AssetDatabase.ImportAsset(variant, ImportAssetOptions.ForceSynchronousImport);
+        var report = Subject42AssetReferenceValidator.Validate(new[] { variant });
+        Assert.That(report.Issues.Any(issue => issue.Code == expectedCode), Is.True, report.FormatErrors());
+        Assert.That(report.Issues.Any(issue => issue.Code == "BROKEN_FILE_ID"), Is.False,
+            "Prefab bookkeeping needs a different diagnosis from a missing live object reference.");
+    }
+
+    [Test]
+    public void NestedPrefabAndVariantReferencesRemainValid()
+    {
+        string variant = SaveVariant(SaveRendererPrefab(null));
+        var owner = new GameObject("Nested fixture");
+        try
+        {
+            var nested = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(variant));
+            nested.transform.SetParent(owner.transform, false);
+            string path = fixtureRoot + "/Nested.prefab";
+            PrefabUtility.SaveAsPrefabAsset(owner, path);
+            var report = Subject42AssetReferenceValidator.Validate(new[] { path });
+            Assert.That(report.ErrorCount, Is.Zero, report.FormatErrors());
+        }
+        finally { Object.DestroyImmediate(owner); }
+    }
+
+    [Test]
+    public void SharedDevDependencyListsAllConsumersOnce()
+    {
+        string name = "InitTestSceneIntegrityDev_" + Guid.NewGuid().ToString("N") + ".unity-fixtures";
+        string devFolder = "Assets/_Project/Dev/" + name;
+        AssetDatabase.CreateFolder("Assets/_Project/Dev", name);
+        try
+        {
+            string materialPath = devFolder + "/Shared.mat";
+            var material = new Material(Shader.Find("Sprites/Default"));
+            AssetDatabase.CreateAsset(material, materialPath);
+            string first = SaveRendererPrefab(null, material);
+            string second = fixtureRoot + "/Other.prefab";
+            Assert.That(AssetDatabase.CopyAsset(first, second), Is.True);
+            var report = Subject42AssetReferenceValidator.Validate(new[] { first, second });
+            var issues = report.Issues.Where(issue => issue.Code == "DEV_DEPENDENCY").ToArray();
+            Assert.That(issues, Has.Length.EqualTo(1), report.FormatErrors());
+            Assert.That(issues[0].Message, Does.Contain(materialPath).And.Contain(first).And.Contain(second));
+            Assert.That(issues[0].Severity, Is.EqualTo(Subject42ValidationSeverity.Error));
+        }
+        finally { AssetDatabase.DeleteAsset(devFolder); }
+    }
+
+    private string SaveVariant(string source)
+    {
+        var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(source));
+        try
+        {
+            instance.name = "Variant fixture";
+            PrefabUtility.RecordPrefabInstancePropertyModifications(instance);
+            string path = fixtureRoot + "/Variant.prefab";
+            PrefabUtility.SaveAsPrefabAsset(instance, path);
+            return path;
+        }
+        finally { Object.DestroyImmediate(instance); }
+    }
+
     private string SaveRendererPrefab(Sprite sprite, Material material = null)
     {
         var owner = new GameObject("Reference fixture", typeof(SpriteRenderer), typeof(CameraFollow));

@@ -32,6 +32,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             get
             {
+                if (Rig!=null) return Rig.PresentationRadius;
                 float radius = 0f;
                 foreach (var ring in rings)
                     if (ring.IsActive) radius = Mathf.Max(radius, ring.Geometry.MaximumRadius(ring.Radius));
@@ -69,7 +70,9 @@ namespace Subject42.Combat.OrbitalStation
         private OrbitalRingRuntime placementRing;
         private OrbitalRingRuntime selectedRing;
         private bool initialized;
-        private bool segmentedOrbit;
+        private bool segmentedOrbit, telekineticRig;
+        public Subject42.Combat.Telekinetic.TelekineticRig Rig { get; private set; }
+        public bool UsesTelekineticRig => State?.UsesTelekineticRig==true;
         public bool UsesSegmentedOrbit => State != null && State.UsesSegmentedOrbit;
         public float RotationEnergy => State.RotationEnergy;
         private bool tearingDown;
@@ -96,6 +99,7 @@ namespace Subject42.Combat.OrbitalStation
         {
             get
             {
+                if (Rig!=null) return Vector2.one*Rig.PresentationRadius;
                 Vector2 extents = Vector2.zero;
                 foreach (var ring in rings)
                     if (ring.IsActive) extents = Vector2.Max(extents, ring.Geometry.Extents(ring.Radius));
@@ -118,7 +122,7 @@ namespace Subject42.Combat.OrbitalStation
             _ => "READY"
         };
 
-        public static OrbitalStationRuntime Ensure(GameObject player, CharacterData character = null, bool segmentedOrbit = false)
+        public static OrbitalStationRuntime Ensure(GameObject player, CharacterData character = null, bool segmentedOrbit = false, bool telekineticRig = false)
         {
             if (player == null)
                 return null;
@@ -133,6 +137,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             station.boundPlayer = player;
             station.segmentedOrbit = segmentedOrbit;
+            station.telekineticRig = telekineticRig;
             if (!station.initialized) station.boundCharacter = character;
             station.Initialize();
             return station;
@@ -165,6 +170,8 @@ namespace Subject42.Combat.OrbitalStation
             }
             State = state;
             if (segmentedOrbit) State.EnableSegmentedOrbit();
+            if (telekineticRig) State.EnableTelekineticRig();
+            State.ApplyProductionWeaponAvailability(segmentedOrbit);
             try
             {
                 if (!OrbitalPresentationConfig.TryGetRequired(out var config, out error))
@@ -209,6 +216,16 @@ namespace Subject42.Combat.OrbitalStation
                     FlashLink(point - side * size * .3f, point + side * size * .3f,
                         Color.Lerp(color, Color.white, .75f), life * .45f, family);
                 };
+                ((ProductionOrbitalCombatAdapter)Combat).ChargedLineVisualImpact = (point, direction) =>
+                {
+                    Vector2 side = new(-direction.y, direction.x);
+                    FlashLink(point - side * .24f, point + side * .24f, new Color(.25f, .75f, 1.7f, .8f), .08f,
+                        OrbitalFlashFamily.ImpactSniper, 3f);
+                    FlashLink(point - direction * .15f, point + direction * .15f, new Color(1.8f, 2f, 2.3f, 1f), .055f,
+                        OrbitalFlashFamily.ImpactSniper, 1.3f, 1);
+                    FlashLink(point - side * .1f, point + side * .1f, Color.white, .045f,
+                        OrbitalFlashFamily.ImpactSniper, 1f, 1);
+                };
                 for (int i = 0; i < config.FlashPoolCapacity; i++) idleFlashes.Push(CreateFlashLine());
                 InputOwner = authoredView.Input;
                 InputOwner.Bind(this);
@@ -218,12 +235,19 @@ namespace Subject42.Combat.OrbitalStation
                 RewardFlow.Bind(this);
                 relocation = UsesSegmentedOrbit ? null : authoredView.Relocation;
                 relocation?.Bind(this);
-                if (!BuildPresentationFromState(out string restoreError))
+                string restoreError=null;
+                if (!UsesTelekineticRig && !BuildPresentationFromState(out restoreError))
                 {
                     FailRestore(restoreError);
                     return;
                 }
+                if (UsesTelekineticRig)
+                {
+                    if (config.TelekineticRigPrefab==null) throw new System.InvalidOperationException("Authored TelekineticRig prefab is missing");
+                    Rig=Instantiate(config.TelekineticRigPrefab,transform,false); Rig.Bind(this);
+                }
                 initialized = true;
+                if (UsesSegmentedOrbit) LevelAnomalyController.Instance?.UseSegmentedOrbitAnomalies();
                 authoredView.CenterShift.Bind(this);
                 runStateManager.RegisterSceneCleanup(Teardown);
                 enabled = true;
@@ -314,6 +338,13 @@ namespace Subject42.Combat.OrbitalStation
             authoredView.CenterShift.Refresh();
             if (HasPendingCustomRings) { ReleaseBulletTime(); return; }
             UpdateRightMouse(Time.unscaledDeltaTime);
+            if (UsesTelekineticRig)
+            {
+                Rig.Tick(Time.deltaTime,Application.isFocused && InputOwner.CanUseDebugPlacement && Input.GetKey(KeyCode.Q),Application.isFocused && InputOwner.CanUseDebugPlacement && Input.GetKey(KeyCode.E),
+                    Owner.CanControl && !IsRunEnded && Time.timeScale>0 && InputOwner.IsIdle && !InputOwner.IsGameplayInputBlocked && InputOwner.IsRewardQueueIdle);
+                UpdateFlashes(); return;
+            }
+            TickOrbitAnomaly(Time.deltaTime);
             if (UsesSegmentedOrbit)
                 TickManualRotation(Time.deltaTime, Input.GetKey(KeyCode.Q), Input.GetKey(KeyCode.E),
                     Application.isFocused && Owner.CanControl && !IsRunEnded && Time.timeScale > 0f &&
@@ -458,6 +489,8 @@ namespace Subject42.Combat.OrbitalStation
             float capacity = 100f, float speed = 90f, float drain = 25f, float recovery = 12f)
         {
             if (!allowed || deltaTime <= 0f) return;
+            speed *= OrbitRotationSpeedFactor;
+            drain *= OrbitRotationDrainFactor;
             State.RotationEnergy = Mathf.Clamp(State.RotationEnergy, 0f, capacity);
             if (!counterClockwise && !clockwise)
             {
@@ -766,17 +799,18 @@ namespace Subject42.Combat.OrbitalStation
             CreatePixelVisual(name, color, scale, 14);
 
         public void FlashLink(Vector2 from, Vector2 to, Color color, float life,
-            OrbitalFlashFamily family = OrbitalFlashFamily.Other)
+            OrbitalFlashFamily family = OrbitalFlashFamily.Other, float widthScale = 1f, int sortingOffset = 0)
         {
             if (!initialized || idleFlashes.Count == 0)
                 return;
             LineRenderer line = idleFlashes.Pop();
+            line.sortingOrder = OrbitalPresentationConfig.Active.EnergyLinePrefab.sortingOrder + sortingOffset;
             line.enabled = true;
             line.SetPosition(0, from);
             line.SetPosition(1, to);
             var style = OrbitalPresentationConfig.Active.GetFlashStyle(family);
             line.startColor = line.endColor = style.ApplyColor(color);
-            float width = OrbitalPresentationConfig.Active.EnergyLinePrefab.widthMultiplier;
+            float width = OrbitalPresentationConfig.Active.EnergyLinePrefab.widthMultiplier * Mathf.Max(.01f, widthScale);
             line.widthMultiplier = width * style.Width;
             flashes.Add((line, color, Time.time, Time.time + life, family, width));
         }
@@ -804,6 +838,10 @@ namespace Subject42.Combat.OrbitalStation
 
         public void Teardown()
         {
+            Rig?.Release();
+            if (Rig!=null) Destroy(Rig.gameObject);
+            Rig=null;
+            ResetOrbitAnomaly(); orbitAnomalyRandom = null;
             runStateManager?.UnregisterSceneCleanup(Teardown);
             ReleaseBulletTime();
             bulletTime.Reset();
@@ -1343,6 +1381,7 @@ namespace Subject42.Combat.OrbitalStation
 
         private void OnDisable()
         {
+            ResetOrbitAnomaly();
             ReleaseBulletTime();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             LabInputSuspended?.Invoke();

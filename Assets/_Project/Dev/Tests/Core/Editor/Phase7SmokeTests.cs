@@ -25,7 +25,7 @@ public sealed class Phase7SmokeTests
         yield return ExerciseProductionRoute();
     }
 
-    private static IEnumerator ExerciseProductionRoute()
+    public static IEnumerator ExerciseProductionRoute()
     {
         Object.FindFirstObjectByType<StartScreenController>().Begin();
         yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName &&
@@ -37,6 +37,7 @@ public sealed class Phase7SmokeTests
         yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == "MVP" &&
             Object.FindFirstObjectByType<CharacterSpawner>() is { SpawnedPlayer: not null, Station: { IsInitialized: true } } &&
             !SceneTransitionOverlay.IsTransitioning);
+        yield return CoreTestSupport.SelectInitialRouteNode();
 
         var characters = Object.FindFirstObjectByType<CharacterSpawner>();
         Assert.That(characters, Is.Not.Null, $"Run player owner missing in {SceneManager.GetActiveScene().name}; play={Application.isPlaying}.");

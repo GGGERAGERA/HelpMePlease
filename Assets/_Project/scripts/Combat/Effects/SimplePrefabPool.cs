@@ -140,6 +140,7 @@ public sealed class SimplePrefabPool
 [DisallowMultipleComponent]
 public sealed class PooledGameObject : MonoBehaviour
 {
+    private static readonly Unity.Profiling.ProfilerMarker PrepareProfile = new("PrefabPool.Prepare");
     private SimplePrefabPool ownerPool;
     private Vector3 authoredScale;
     private ParticleSystem[] particles;
@@ -216,6 +217,7 @@ public sealed class PooledGameObject : MonoBehaviour
         bool useHierarchyParticleScaling,
         System.Action<PooledGameObject> configurePresentation = null)
     {
+        using var profilerScope = PrepareProfile.Auto();
         released = false;
         releaseAt = -1f;
         transform.SetParent(null, false);

@@ -3,12 +3,14 @@ using UnityEngine;
 
 internal static class EnemyExplosion
 {
+    private static readonly Unity.Profiling.ProfilerMarker DetonateProfile = new("RocketAttack.Detonate");
     // Enemy explosions damage players, matching Bomber's existing target policy.
     // Resolve parent health and deduplicate so compound colliders receive one hit.
     internal static ParticleSystem Detonate(Vector2 position, float radius, int damage,
         ParticleSystem explosionPrefab, SimplePrefabPool pool = null, bool nonLethal = false,
         AudioCueId audioCue = AudioCueId.Explosion)
     {
+        using var profilerScope = DetonateProfile.Auto();
         var recipients = new HashSet<PlayerHealth>();
         var hits = new List<Collider2D>();
         var filter = ContactFilter2D.noFilter;

@@ -45,10 +45,6 @@ namespace Subject42.Combat.OrbitalStation
         // Only Development/Editor code can opt in; public builds never apply this profile.
         [UnityEngine.SerializeField] private bool chargedLineSniperExperiment;
         public bool ChargedLineSniperExperiment => chargedLineSniperExperiment;
-        [UnityEngine.SerializeField] private bool sweepingShotgunExperiment;
-        public bool SweepingShotgunExperiment => sweepingShotgunExperiment;
-        [UnityEngine.SerializeField] private bool ramSlugShotgunExperiment;
-        public bool RamSlugShotgunExperiment => ramSlugShotgunExperiment;
         [UnityEngine.SerializeField] private bool pulsedSawExperiment;
         public bool PulsedSawExperiment => pulsedSawExperiment;
         [UnityEngine.SerializeField] private bool inertialSawExperiment;
@@ -73,20 +69,6 @@ namespace Subject42.Combat.OrbitalStation
         {
             if (enabled && inertialSawExperiment) return;
             pulsedSawExperiment = enabled;
-            Revision++;
-        }
-
-        internal void SetSweepingShotgunExperiment(bool enabled)
-        {
-            if (enabled && ramSlugShotgunExperiment) return;
-            sweepingShotgunExperiment = enabled;
-            Revision++;
-        }
-
-        internal void SetRamSlugShotgunExperiment(bool enabled)
-        {
-            if (enabled && sweepingShotgunExperiment) return;
-            ramSlugShotgunExperiment = enabled;
             Revision++;
         }
 
@@ -133,7 +115,7 @@ namespace Subject42.Combat.OrbitalStation
                 return OrbitalProgressionConfig.Default.MaxMountsPerRing;
             }
         }
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public int Version = CurrentVersion;
         public void OnBeforeSerialize() { }
@@ -150,6 +132,7 @@ namespace Subject42.Combat.OrbitalStation
             // Preserve rings, levels, allocators, valid modules and all unrelated run progress.
             if (Modules != null) Modules.RemoveAll(m => m != null && ((int)m.ModuleType == 1 || (int)m.ModuleType == 2));
             if (Version < 5) MigrateSegmentedGeometry();
+            if (Version < 6 && Telekinetic?.UpgradeSniperFootprints() == true) Revision++;
             Version = CurrentVersion;
         }
 
@@ -619,6 +602,7 @@ namespace Subject42.Combat.OrbitalStation
         public bool CanInstallModule(OrbitalModuleKind kind, int ringId, int mountIndex, out string error) =>
             CanCommit(out error) && Rule(Enum.IsDefined(typeof(OrbitalModuleKind), kind) && NextStableModuleId < int.MaxValue,
                 "unknown module kind or exhausted ID allocator", out error) &&
+            Rule(IsWeaponAvailable(kind), "Пила временно недоступна в основном ране.", out error) &&
             Rule(!UsesSegmentedOrbit || IsSegmentedWeapon(kind), "module is not supported by Segmented Orbit", out error) &&
             CanOccupy(ringId, mountIndex, 0, out error);
 
@@ -667,6 +651,8 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool Validate(out string error)
         {
+            if (UsesTelekineticRig && !Telekinetic.ValidateInventory())
+            { error = "invalid telekinetic layout or reserve"; return false; }
             if (!IsFinitePositive(ShootingDamageMultiplier) || !IsFinitePositive(ShootingRateMultiplier) ||
                 !IsFinitePositive(ContactDamageMultiplier) || !IsFinitePositive(ContactSizeMultiplier))
             { error = "invalid category multipliers"; return false; }

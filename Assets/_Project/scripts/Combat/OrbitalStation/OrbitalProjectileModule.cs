@@ -10,27 +10,6 @@ namespace Subject42.Combat.OrbitalStation
         public OrbitalWeaponSettings Settings { get; private set; }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly OrbitalWeaponSettings authoredSettings;
-        private bool ramSlugProfilePending;
-        internal void RefreshRamSlugShotgunExperiment()
-        {
-            if (Kind != OrbitalModuleKind.Shotgun) return;
-            // Finish the current burst using its captured profile, without resetting its clocks.
-            ramSlugProfilePending = true;
-            if (burstRemaining != 0 || chargeRemaining >= 0f) return;
-            Settings = Station.UsesSegmentedOrbit && Station.State.RamSlugShotgunExperiment
-                ? authoredSettings.CreateRamSlugShotgunExperiment()
-                : SweepingShotgun ? authoredSettings.CreateSweepingShotgunExperiment() : authoredSettings;
-            ramSlugProfilePending = false;
-        }
-        private bool SweepingShotgun => Kind == OrbitalModuleKind.Shotgun &&
-            Station.UsesSegmentedOrbit && Station.State.SweepingShotgunExperiment;
-        internal void RefreshSweepingShotgunExperiment()
-        {
-            if (Kind != OrbitalModuleKind.Shotgun) return;
-            Settings = SweepingShotgun ? authoredSettings.CreateSweepingShotgunExperiment() : authoredSettings;
-            ResetFiring();
-        }
-
         internal void RefreshMissReturnPistolExperiment()
         {
             if (Kind != OrbitalModuleKind.Pistol) return;
@@ -44,6 +23,8 @@ namespace Subject42.Combat.OrbitalStation
             if (Kind != OrbitalModuleKind.Sniper) return;
             Settings = Station.UsesSegmentedOrbit && Station.State.ChargedLineSniperExperiment
                 ? authoredSettings.CreateChargedLineSniperExperiment() : authoredSettings;
+            ConfigureWeaponFeedback(Settings.ChargedLinePresentation ? new Color(.25f, .7f, 1.5f) : Settings.Color, true);
+            ConfigureChargedLinePresentation(Settings.ChargedLinePresentation, Settings.Range);
             chargeRemaining = -1f;
             WeaponCharge(0f);
         }
@@ -65,9 +46,6 @@ namespace Subject42.Combat.OrbitalStation
         public bool FireExtraShot()
         {
             if (Mount == null || Station.Owner.IsDead || !Visual.activeInHierarchy || !UsesFixedDirection) return false;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (ramSlugProfilePending) RefreshRamSlugShotgunExperiment();
-#endif
             EmitShot(null);
             return true;
         }
@@ -104,13 +82,11 @@ namespace Subject42.Combat.OrbitalStation
             authoredSettings = settings;
             RefreshMissReturnPistolExperiment();
             RefreshChargedLineSniperExperiment();
-            RefreshSweepingShotgunExperiment();
-            RefreshRamSlugShotgunExperiment();
 #endif
             
             this.shotFeedback = shotFeedback;
             spreadRandom = new System.Random(1709 + id);
-            ConfigureWeaponFeedback(settings.Color, true);
+            ConfigureWeaponFeedback(Settings.ChargedLinePresentation ? new Color(.25f, .7f, 1.5f) : settings.Color, true);
             
             Cooldown = .1f + id % 7 * .07f;
         }
@@ -120,9 +96,6 @@ namespace Subject42.Combat.OrbitalStation
         }
         public override void Tick(float deltaTime)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (ramSlugProfilePending) RefreshRamSlugShotgunExperiment();
-#endif
             base.Tick(deltaTime);
             bool fixedDirection = UsesFixedDirection;
             var target = fixedDirection ? null : Combat.FindNearest(WorldPosition, Settings.Range);
@@ -147,9 +120,6 @@ namespace Subject42.Combat.OrbitalStation
         }
         public override void ActivateCombat()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (ramSlugProfilePending) RefreshRamSlugShotgunExperiment();
-#endif
             // Activation respects the same charging and cadence as ordinary fire.
             if (Cooldown > 0f || chargeRemaining >= 0f) return;
             var target = UsesFixedDirection ? null : Combat.FindNearest(WorldPosition, Settings.Range);
@@ -160,11 +130,7 @@ namespace Subject42.Combat.OrbitalStation
         private void Fire(EnemyHealth target)
         {
             if (burstRemaining == 0) burstRemaining = Mathf.Max(1, Settings.BurstShots);
-            float directionOffset = 0f;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (SweepingShotgun) directionOffset = (Settings.BurstShots - burstRemaining - 1) * 18f;
-#endif
-            EmitShot(target, directionOffset);
+            EmitShot(target);
             float rate = FireRateMultiplier;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             rate *= LabRateFactor;
@@ -172,17 +138,13 @@ namespace Subject42.Combat.OrbitalStation
             if (--burstRemaining > 0) Cooldown = Mathf.Max(.02f, Settings.BurstInterval / rate);
             else Cooldown = Mathf.Max(.05f, Settings.FireInterval / rate);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (ramSlugProfilePending && burstRemaining == 0) RefreshRamSlugShotgunExperiment();
-#endif
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             LabOrdinaryShot();
 #endif
             Station.SegmentedOrdinaryShot(StableModuleId);
         }
-        private void EmitShot(EnemyHealth target, float directionOffset = 0f)
+        private void EmitShot(EnemyHealth target)
         {
             Vector2 direction = UsesFixedDirection ? RadialDirection : AimDirection(target);
-            if (directionOffset != 0f) direction = Quaternion.Euler(0f, 0f, directionOffset) * direction;
             AimAt(WorldPosition + direction);
             int pellets = Mathf.Max(1, Settings.Pellets);
             int projectileCount = pellets;
@@ -225,12 +187,24 @@ namespace Subject42.Combat.OrbitalStation
                 OrbitalModuleKind.Sniper => OrbitalFlashFamily.MuzzleSniper,
                 _ => OrbitalFlashFamily.MuzzlePistol
             };
-            Color muzzleColor = Settings.Presentation != null ? Settings.Presentation.Color : Settings.Color;
+            Color muzzleColor = Settings.ChargedLinePresentation ? new Color(.3f, .8f, 1.6f) :
+                Settings.Presentation != null ? Settings.Presentation.Color : Settings.Color;
             Station.FlashLink(WorldPosition, WorldPosition + direction * size, muzzleColor,
                 OrbitalPresentationConfig.Active.ProjectileMuzzleDuration, family);
             Station.FlashLink(WorldPosition - side * size * .4f, WorldPosition + side * size * .4f,
                 Color.Lerp(muzzleColor, Color.white, .25f), .045f, family);
-            AudioService.Instance?.PlayAt(Settings.ShotSound, WorldPosition);
+            if (Settings.ChargedLinePresentation)
+            {
+                Color blue = new(.25f, .7f, 1.6f, .55f);
+                Vector2 end = WorldPosition + direction * Settings.Range;
+                Station.FlashLink(WorldPosition, end, blue, .12f, OrbitalFlashFamily.MuzzleSniper, 4f);
+                Station.FlashLink(WorldPosition, end, new Color(2f, 2f, 2.1f, 1f), .1f, OrbitalFlashFamily.MuzzleSniper, 1.1f, 1);
+                Station.FlashLink(WorldPosition - side * .3f, WorldPosition + side * .3f,
+                    new Color(1.4f, 1.8f, 2f, 1f), .075f, OrbitalFlashFamily.MuzzleSniper, 2f, 1);
+                AudioService.Instance?.PlayAt(AudioCueId.ChargedSniperFire, WorldPosition);
+                CameraShake.Instance?.Shake(.075f, .045f);
+            }
+            else AudioService.Instance?.PlayAt(Settings.ShotSound, WorldPosition);
             shotFeedback?.Invoke(Settings.Recoil / .23f);
         }
         private void TrackAimTarget(EnemyHealth target, float deltaTime)
@@ -271,28 +245,5 @@ namespace Subject42.Combat.OrbitalStation
             ResetWeaponFeedback();
         }
 
-        public override void Attach(OrbitalMountRuntime mount)
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (SweepingShotgun && Mount != mount) ResetFiring();
-#endif
-            base.Attach(mount);
-        }
-
-        public override void Detach()
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (SweepingShotgun) ResetFiring();
-#endif
-            base.Detach();
-        }
-
-        public override void Teardown()
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (SweepingShotgun) ResetFiring();
-#endif
-            base.Teardown();
-        }
     }
 }

@@ -7,8 +7,6 @@ public sealed class BunkerStationEditor : Editor
     private SerializedProperty script;
     private SerializedProperty stationType;
     private SerializedProperty interactionText;
-    private SerializedProperty progressionEnabled;
-    private SerializedProperty progressionStationId;
     private SerializedProperty runTransitionTarget;
     private SerializedProperty panelManager;
     private SerializedProperty animator;
@@ -20,8 +18,6 @@ public sealed class BunkerStationEditor : Editor
         script = serializedObject.FindProperty("m_Script");
         stationType = serializedObject.FindProperty("stationType");
         interactionText = serializedObject.FindProperty("interactionText");
-        progressionEnabled = serializedObject.FindProperty("progressionEnabled");
-        progressionStationId = serializedObject.FindProperty("progressionStationId");
         runTransitionTarget = serializedObject.FindProperty("runTransitionTarget");
         panelManager = serializedObject.FindProperty("panelManager");
         animator = serializedObject.FindProperty("animator");
@@ -49,7 +45,7 @@ public sealed class BunkerStationEditor : Editor
         }
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Fallback", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Navigation", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(panelManager);
 
         serializedObject.ApplyModifiedProperties();
@@ -81,12 +77,5 @@ public sealed class BunkerStationEditor : Editor
             case BunkerStationType.None:
                 return;
         }
-
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Progression", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(progressionEnabled);
-
-        if (progressionEnabled.boolValue)
-            EditorGUILayout.PropertyField(progressionStationId);
     }
 }

@@ -5,10 +5,9 @@ using UnityEngine;
 [Serializable]
 public sealed class SurfaceMissionRecord
 {
-    public string missionId, targetSectorId, contentId, requiredEventId, requiredEventTag;
+    public string missionId, targetSectorId, contentId;
     public SurfaceMissionState missionState;
     public SurfaceMarkerState markerState;
-    public float rewardExperience, rewardGold;
 }
 [Serializable] public sealed class SurfaceContentState { public List<SurfaceMissionRecord> missions = new(); }
 public readonly struct SurfaceMarkerPresentation
@@ -57,9 +56,7 @@ public sealed class SurfaceContentService
     private bool AddRecord(string id, string sectorId, SurfaceSectorContent c)
     {
         if (state.missions.Exists(r => r.missionId == id)) return false;
-        state.missions.Add(new SurfaceMissionRecord { missionId = id, targetSectorId = sectorId, contentId = c.id,
-            requiredEventId = c.requiredEvent != null ? c.requiredEvent.EventId : "", requiredEventTag = c.requiredEventTag,
-            rewardExperience = c.experienceMultiplier, rewardGold = c.goldMultiplier }); return true;
+        state.missions.Add(new SurfaceMissionRecord { missionId = id, targetSectorId = sectorId, contentId = c.id }); return true;
     }
     public bool AssignMission(string missionId, string targetSectorId, SurfaceSectorContent content)
     {

@@ -402,7 +402,6 @@ public static class Subject42ProjectValidator
             UpgradeManager upgradeManager =
                 RequireSingle<UpgradeManager>(scene, report);
             RequireSingle<RunStatsManager>(scene, report);
-            RequireSingle<KillManager>(scene, report);
             RunBossSpawner bossSpawner = RequireSingle<RunBossSpawner>(scene, report);
             RunFlowController flow = RequireSingle<RunFlowController>(scene, report);
             if (flow != null)
@@ -431,8 +430,6 @@ public static class Subject42ProjectValidator
             {
                 RequireSerializedObject(
                     characterSpawner, "defaultCharacter", report);
-                RequireSerializedObject(
-                    characterSpawner, "defaultWeapon", report);
                 RequireSerializedObject(
                     characterSpawner, "metaUpgradeApplier", report);
                 RequireSerializedObject(
@@ -472,7 +469,7 @@ public static class Subject42ProjectValidator
                     choice, "availableWorldRules", 3, report);
                 RequireSerializedObject(
                     choice, "defaultLocalAnomaly", report);
-                RequireSerializedArray(choice, "stageProfiles", RunRoute.TotalSectors, report);
+                RequireSerializedArray(choice, "stageProfiles", StageProfileData.ProductionTierCount, report);
                 RequireSerializedString(choice, "gameplaySceneName", report);
             }
 
@@ -558,20 +555,12 @@ public static class Subject42ProjectValidator
             data => data.Id,
             true,
             report);
-        ValidateUniqueIds<EvolutionDefinition>(
-            data => data.Id,
-            true,
-            report);
         ValidateUniqueIds<AnomalyStabilizerData>(
             data => data.Id,
             true,
             report);
         ValidateUniqueIds<UnlockableContentData>(
             data => data.id,
-            true,
-            report);
-        ValidateUniqueIds<WorldLootRewardDefinition>(
-            data => data.RewardId,
             true,
             report);
 

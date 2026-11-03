@@ -210,6 +210,8 @@ public sealed class GlitchZone : LocalAnomalyZone
     private void Pulse()
     {
         pulseVisual = 1f;
+        // In the segmented production run Glitch changes orbital geometry; actors never jump.
+        if (Controller != null && Controller.UsesSegmentedOrbitAnomalies) return;
         bool movedAny = false;
         Physics2D.SyncTransforms();
 

@@ -1,0 +1,38 @@
+Built-in tool: image_gen.imagegen
+Reference images are specified in manifest.json.
+
+INITIAL GENERATION
+
+Use case: stylized-concept.
+Asset type: small pixel-art game creature roster matching an existing Unity protagonist.
+Input image 1 is ONLY the technical and style reference: the actual protagonist Gera sprite strip. DO NOT redraw this human, do not edit the reference. Draw new original characters.
+
+Create one meticulously coherent roster sprite sheet containing TWELVE DISTINCT original fantastic creatures from twelve different imaginary universes. Exactly 4 columns by 3 rows, ONE single full-body creature per cell, twelve characters total, no repeated poses or duplicates. Intended native canvas 200x150 pixels, exactly 50x50 pixels per cell, figures approximately 30-34 pixels high, simple large pixel clusters at the same actual pixel density as the reference. If output must be displayed larger, keep a strict visibly coarse grid with exact integer square pixel blocks rather than adding any new subpixel detail. A tiny old-school game sprite, NOT an elaborate illustration disguised with pixel texture. Crucial: match the reference's big head, compact skinny short body, small black-pixel eyes, clean silhouette, simple flat clusters, modest contrast, very sparse shading, about 12-16 solid colors per creature. No thick heavy outlines. Left-facing three-quarter standing idle pose as reference, slight top-down game view, entire body visible, same feet baseline within each cell.
+Genuine transparent alpha background; no checkerboard drawn into pixels, no grey or white background, no scenery, ground, shadows, labels, frames, numbers or lettering.
+
+Roster in reading order, radically different silhouettes and anatomy yet all compatible with Gera's art style:
+1. Hollow antler pilgrim from a twilight forest: pale mask face with black eye holes, charcoal short cloak, branching little antlers containing small teal leaf shapes, thin wooden limbs.
+2. Alien cephalopod navigator from an ocean moon: lavender bulb head with three small eyes, short pale peach tentacle beard, deep indigo coat and two small sucker feet, brass neck ring.
+3. Porcelain star automaton: ivory doll-like body, asymmetrical cracked crescent-shaped head with a dark face void and one amber eye, muted gold joint rings, one oversized hand.
+4. Ember salamander humanoid from a volcanic world: dark basalt skin, burnt coral gill frill, small orange chest fissure, stout feet and short curved tail.
+5. Moth oracle from a dream universe: dusty mauve furry head, two short feathery antennae, folded cream moth wings forming a cloak, tiny muted ochre eyes, thin charcoal legs.
+6. Crystal nomad from a frozen dimension: angular blue-grey crystal head with a single white eye, compact slate body, three broad crystal shoulder facets, short fur-like muted scarf.
+7. Mushroom archivist from a sentient fungal world: broad offset muted terracotta cap, cream face, dark olive root legs, small parchment-like layered vest, one hanging spore pouch.
+8. Four-armed alien beetle monk: jade chitin, wedge-shaped head with two ivory mandibles, four distinctly visible compact arms, muted burgundy tabard, two broad insect feet.
+9. Abyssal ray biped: flat dark navy diamond-shaped head with small fin ears, two luminous mint pixel eyes, pale belly patch, slim fin arms and two short legs, tiny tail.
+10. Sandstone homunculus: compact tan eroded head with an inset turquoise circular eye, stacked stone torso, asymmetrical big square forearm, short sturdy boots-like stone feet.
+11. Void-bound scarecrow: oversized weathered bone bird-skull head, burgundy scarf, dark twig body, two straw-like fingers and digitigrade legs, subtle blue interior eye pixel.
+12. Alien botanical astronaut: transparent-looking mint seedpod helmet drawn ONLY using opaque flat pixels, small coral seed-shaped face inside, dusty olive suit, two thick root feet and folded leaf on its back.
+
+Balance humanoid and nonhuman anatomy. Strong unique identities through silhouette, not equipment clutter. No existing franchise characters. Each is readable as a sprite at 1:1 native resolution. No weapons, no aura or glow, no gradients, no blur, no smooth antialiasing, no painted texture. Prioritize matching the tiny coarse reference over beautiful detail.
+
+SIMPLIFICATION REVISION
+
+Use case: style-transfer.
+Image 1: CREATURE DESIGN REFERENCE, preserve the identities and roster order of its twelve characters.
+Image 2: MANDATORY TECHNICAL AND PIXEL STYLE REFERENCE, the actual Gera protagonist. Its sprite strip is 400x50 with eight 50x50 cells. Match the tiny Gera pixel grid, sparse color count and very simple cluster language, NOT image 1's overly detailed rendering.
+
+Redraw the twelve creatures as TRUE TINY LOW-RES PIXEL SPRITES, using about 15 solid colors per creature and 1px features. DELIVER A NATIVE 200px wide x 150px tall transparent PNG, exactly four 50x50 columns and three 50x50 rows. One creature per cell. Do not return a large 1448x1086 illustration. Characters only 30-34 actual pixels tall and about 18-26 pixels wide, enlarged heads about 12x12 pixels, fixed feet baseline y44 within each 50x50 cell. Every edge snaps to the pixel grid. Faces use 1-pixel or 2-pixel dark eyes. One flat base shade and one flat shadow per material. Make every shape a simple small chunky cluster with sharply rectilinear 1-pixel stepping. Reference 2 has a huge head, narrow torso, very short simple legs: use these exact proportions, no tall complex or detailed figures.
+A single full-body standing frame in each cell, same left-facing three-quarter pose as Gera. Keep the original twelve design identities: antler pilgrim, lavender three-eyed cephalopod, crescent porcelain robot, ember salamander, moth oracle, blue crystal nomad, mushroom archivist, four-armed jade beetle, navy abyssal ray biped, sandstone homunculus, bird-skull scarecrow, seedpod astronaut. Exactly 4 columns x 3 rows in that order.
+Genuine fully transparent background ALPHA 0; all painted pixels ALPHA 255. No gradients, no interpolation, no anti-aliasing, no blur, no hundreds of colors, no painted shading, no glows, no ground shadow, no checkerboard pattern, no labels, no border, no grid lines. These must read as the protagonist's same game's actual low-resolution assets, not high-resolution pixel-art illustrations. Preserve species-defining silhouettes with radically fewer details.
+

@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using Subject42.Combat.OrbitalStation;
+using Subject42.Combat.Telekinetic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,7 +12,7 @@ using UnityEngine.UI;
 public sealed partial class Subject42DebugMenu
 {
     private bool IsMvpDebugMenu => SceneManager.GetActiveScene().name == "MVP" && !hubUtilityPage;
-    private static readonly string[] MvpTabLabels = { "Оружие, модули и орбиты", "Карточки и улучшения", "Враги и бой", "Мир и прогресс" };
+    private static readonly string[] MvpTabLabels = { "Оружие, модули и конструкция", "Карточки и улучшения", "Враги и бой", "Мир и прогресс" };
     private int mvpCategoryFilter = -1;
     private bool mvpAvailableOnly;
     private OrbitalRewardKind mvpPreviewKind = OrbitalRewardKind.ShootingDamage;
@@ -126,18 +127,21 @@ public sealed partial class Subject42DebugMenu
     }
 
     private static bool IsMvpBuildReward(OrbitalRewardKind kind) => kind is
-        OrbitalRewardKind.Pistol or OrbitalRewardKind.Sniper or OrbitalRewardKind.Shotgun or OrbitalRewardKind.Saw or
-        OrbitalRewardKind.NewRing or OrbitalRewardKind.AddMount || OrbitalRewardProvider.GetSegmentedLinkKind(kind).HasValue;
+        OrbitalRewardKind.Pistol or OrbitalRewardKind.Sniper or OrbitalRewardKind.Shotgun or
+        OrbitalRewardKind.NewRing or OrbitalRewardKind.AddMount or OrbitalRewardKind.RigExpansion ||
+        OrbitalRewardProvider.GetRigPart(kind).HasValue || OrbitalRewardProvider.GetSegmentedLinkKind(kind).HasValue;
 
     private void BuildMvpOrbits()
     {
         var station = MvpStation;
+        if (station != null && station.Rig != null && station.IsInitialized && upgradeManager != null)
+        { BuildRigRewardCatalogue(false); return; }
         if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit || upgradeManager == null)
         { AddHint("Segmented Orbit ещё не готова. Начните обычный ран из бункера."); return; }
         var state = station.State;
         AddHint("Выдача пополняет запас. Закройте карточку/F1, откройте Tab и перетащите предмет на подходящую ячейку. Установленное оружие занимает общий лимит.");
         AddSectionTitle("Оружие", "");
-        foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun, OrbitalRewardKind.Saw })
+        foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun })
         {
             var module = OrbitalRewardProvider.GetModuleKind(kind);
             AddMvpBuildReward(kind, $"Установлено: {state.Modules.Count(w => w.ModuleType == module)} · В запасе: {state.SegmentedWeapons.Count(w => w.ModuleType == module)}");
@@ -156,6 +160,47 @@ public sealed partial class Subject42DebugMenu
             MvpCanEdit && previousTimeScale > 0f, OpenMvpOrbitSurface);
     }
 
+    // Extend the existing F1 build catalogue; grants still use its normal reward callback.
+    private void BuildRigRewardCatalogue(bool compact)
+    {
+        var build = MvpStation.Rig.Build;
+        foreach (bool weapons in new[] { true, false })
+        {
+            AddSectionTitle(weapons ? "Оружие · запас" : "Модули · запас", "");
+            var cards = upgradeManager.DebugRewardCatalogue.Where(card =>
+                OrbitalRewardProvider.GetRigPart(card.RewardKind) is TelekineticPart part &&
+                (part is TelekineticPart.Pistol or TelekineticPart.Sniper or TelekineticPart.Shotgun or TelekineticPart.Saw) == weapons).ToArray();
+            if (compact)
+            {
+                for (int start = 0; start < cards.Length; start += 4)
+                {
+                    var group = cards.Skip(start).Take(4).ToArray();
+                    SandboxRow("Каталог", group.Select(card =>
+                    {
+                        var kind = card.RewardKind;
+                        var part = OrbitalRewardProvider.GetRigPart(kind).Value;
+                        return (TelekineticBuild.Label(part) + " +1 · " + build.Reserve.Count(item => item.Kind == part),
+                            MvpCanEdit && upgradeManager.DebugRewardUnavailableReason(kind) == null,
+                            (UnityEngine.Events.UnityAction)(() => GrantMvpBuildReward(kind)));
+                    }).ToArray());
+                    var buttons = contentRoot.GetChild(contentRoot.childCount - 1).GetComponentsInChildren<Button>();
+                    for (int i = 0; i < buttons.Length; i++) buttons[i].name = "Rig reward · " + group[i].RewardKind;
+                }
+            }
+            else foreach (var card in cards)
+            {
+                var part = OrbitalRewardProvider.GetRigPart(card.RewardKind).Value;
+                AddMvpBuildReward(card.RewardKind,
+                    $"Установлено: {build.Items.Count(item => item.Kind == part)} · В запасе: {build.Reserve.Count(item => item.Kind == part)} · {TelekineticItem.Shape(part).Count} кл.");
+            }
+        }
+        AddSectionTitle("Пространство конструкции", "");
+        AddMvpBuildReward(OrbitalRewardKind.RigExpansion, $"Сетка: {build.AvailableRadius * 2 + 1}×{build.AvailableRadius * 2 + 1}", "РАСШИРИТЬ");
+        contentRoot.GetChild(contentRoot.childCount - 1).GetComponentInChildren<Button>().name = "Rig reward · " + OrbitalRewardKind.RigExpansion;
+        if (compact)
+            SandboxRow("Конструктор", ("ОТКРЫТЬ TAB", MvpCanEdit && previousTimeScale > 0f, OpenSandboxConstructor));
+    }
+
     private void BuildMvpWeaponExperiments(bool sandbox = false)
     {
         var station = MvpStation;
@@ -169,17 +214,6 @@ public sealed partial class Subject42DebugMenu
         Group("Снайперка", OrbitalModuleKind.Sniper, "Обычная", "Обычный одиночный выстрел в одну цель.",
             ("Заряженная линия", () => state.ChargedLineSniperExperiment, station.DebugSetChargedLineSniperExperiment,
                 "Подготовка 0,45 с, затем пробитие до трёх тел. Q/E ведут линию до выпуска."));
-        Group("Дробовик", OrbitalModuleKind.Shotgun, "Обычный", "Семь дробин одним широким залпом.",
-            ("Веерная очередь", () => state.SweepingShotgunExperiment, station.DebugSetSweepingShotgunExperiment,
-                "Три залпа по две дробины через 0,12 с: слева, центр, справа. Q/E ведут очередь."),
-            ("Картечный таран", () => state.RamSlugShotgunExperiment, station.DebugSetRamSlugShotgunExperiment,
-                "Один медленный снаряд на 3,5 м, до трёх тел; щиты сохраняют защиту."));
-        Group("Пила", OrbitalModuleKind.Saw, "Обычная", "Непрерывный контакт по штатному интервалу.",
-            ("Импульсная", () => state.PulsedSawExperiment, station.DebugSetPulsedSawExperiment,
-                "0,8 с увеличенного контакта, затем 0,4 с остановки без урона."),
-            ("Инерционная", () => state.InertialSawExperiment, station.DebugSetInertialSawExperiment,
-                "Контакт только при фактическом Q/E-вращении кольца. Нужна энергия; первый шаг запоминает фазу."));
-
         void Group(string title, OrbitalModuleKind kind, string normal, string normalDescription,
             params (string Label, Func<bool> Active, Func<bool, bool> Set, string Description)[] modes)
         {
@@ -231,6 +265,7 @@ public sealed partial class Subject42DebugMenu
         string reason = upgradeManager.DebugRewardUnavailableReason(kind);
         MvpRow(LocalizationService.EnsureExists().Get(data.upgradeName), reason ?? status,
             actionLabel, MvpCanEdit && reason == null, () => GrantMvpBuildReward(kind));
+        contentRoot.GetChild(contentRoot.childCount - 1).GetComponentInChildren<Button>().name = "Rig reward · " + kind;
     }
 
     private void GrantMvpBuildReward(OrbitalRewardKind kind)
@@ -344,12 +379,35 @@ public sealed partial class Subject42DebugMenu
     private void SaveMvpOrbitSurface()
     {
         var config = OrbitalPresentationConfig.Active;
-        config.SaveRingAppearance();
+#if UNITY_EDITOR
+        var destination = UnityEditor.AssetDatabase.FindAssets("t:OrbitalPresentationConfig")
+            .Select(guid => UnityEditor.AssetDatabase.LoadAssetAtPath<OrbitalPresentationConfig>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid)))
+            .FirstOrDefault(asset => asset != null && config.name == asset.name + " (Runtime)");
+        if (destination == null) { mvpOrbitSaveStatus.text = "Исходные настройки не найдены"; return; }
+        UnityEditor.Undo.RecordObject(destination, "Save ORBITAL ring appearance");
+        destination.RingSurface = JsonUtility.FromJson<OrbitalPresentationConfig.RingSurfaceSettings>(JsonUtility.ToJson(config.RingSurface));
+        destination.RingLineWidth = config.RingLineWidth;
+        destination.RingLineAlpha = config.RingLineAlpha;
+        UnityEditor.EditorUtility.SetDirty(destination);
+        UnityEditor.AssetDatabase.SaveAssetIfDirty(destination);
+#else
+        PlayerPrefs.SetString("Subject42.Orbits.Appearance", JsonUtility.ToJson(new DebugRingAppearance
+        { Surface = config.RingSurface, Width = config.RingLineWidth, Alpha = config.RingLineAlpha }));
+        PlayerPrefs.Save();
+#endif
         mvpRingSurfaceBackup = JsonUtility.ToJson(config.RingSurface);
         mvpRingWidthBackup = config.RingLineWidth;
         mvpRingAlphaBackup = config.RingLineAlpha;
         mvpOrbitSaveStatus.text = "Сохранено между запусками";
     }
+
+#if !UNITY_EDITOR
+    [Serializable] private sealed class DebugRingAppearance
+    {
+        public OrbitalPresentationConfig.RingSurfaceSettings Surface;
+        public float Width, Alpha;
+    }
+#endif
 
     private void BuildMvpOrbitSurface()
     {

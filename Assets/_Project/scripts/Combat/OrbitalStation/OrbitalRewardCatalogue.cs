@@ -43,6 +43,9 @@ namespace Subject42.Combat.OrbitalStation
         public string GetLevelSummary(OrbitalRewardData data, OrbitalRunState state, RunItemSlots slots)
         {
             if (data == null || state == null) return "Ран не начат";
+            if (state.UsesTelekineticRig && GetRigPart(data.RewardKind) is Subject42.Combat.Telekinetic.TelekineticPart part)
+                return $"В запасе: {state.Telekinetic.Reserve.Count(c=>c.Kind==part)} · установлено: {state.Telekinetic.Items.Count(c=>c.Kind==part)}";
+            if (state.UsesTelekineticRig && data.RewardKind==OrbitalRewardKind.RigExpansion) return $"Поле {state.Telekinetic.AvailableRadius*2+1} × {state.Telekinetic.AvailableRadius*2+1}";
             if (GetSegmentedLinkKind(data.RewardKind) is SegmentedLinkKind linkKind)
                 return $"В запасе: {state.SegmentedLinkStock.Count(kind => kind == linkKind)} · установлено: {state.SegmentedLinks.Count(link => link.Kind == linkKind)}";
             if (GetModuleKind(data.RewardKind) is OrbitalModuleKind module)

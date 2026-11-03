@@ -195,7 +195,7 @@ public class EnemyHealth : MonoBehaviour
                 .GoldInsideAnomalyMultiplier;
         }
 
-        KillManager.Instance?.AddKill(killRewardMultiplier);
+        RunStatsManager.Instance?.AddKill(killRewardMultiplier);
 
         OnDied?.Invoke(this);
 

@@ -8,6 +8,7 @@ namespace Subject42.Combat.OrbitalStation
     {
         private readonly EnemyOrbitalLabController lab;
         public OrbitalWeaponSettings SourceProfile { get; }
+        public LabWeaponVisualComparison ArtistComparison => Visual != null ? Visual.GetComponent<LabWeaponVisualComparison>() : null;
         protected override bool LabFixedDirection => lab != null && lab.isActiveAndEnabled &&
             (lab.SegmentedOrbit || lab.FixedDirection || lab.WeaponModules.HasModule(StableModuleId, "MULTISHOT"));
         protected override float? LabExtraShotAngle => lab != null && lab.isActiveAndEnabled

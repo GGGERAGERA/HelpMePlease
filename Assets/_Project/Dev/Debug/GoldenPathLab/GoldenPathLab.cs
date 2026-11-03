@@ -197,7 +197,7 @@ public sealed class GoldenPathLab : MonoBehaviour
                 {
                     string shot = session.CaptureLabel;
                     if (capturing && captureCount < 120 && shot != null &&
-                        !SceneTransitionOverlay.IsTransitioning && !Subject42DebugMenu.IsDebugMenuOpen &&
+                        !SceneTransitionOverlay.IsTransitioning &&
                         (shot != lastCaptureLabel || Time.realtimeSinceStartup >= nextCapture))
                         yield return CaptureFrame(shot);
                     else yield return null;
@@ -219,7 +219,7 @@ public sealed class GoldenPathLab : MonoBehaviour
     {
         // Capture the completed Game view, including production UI and post-processing.
         yield return new WaitForEndOfFrame();
-        if (cancel || Subject42DebugMenu.IsDebugMenuOpen || SceneTransitionOverlay.IsTransitioning) yield break;
+        if (cancel || SceneTransitionOverlay.IsTransitioning) yield break;
         if (label != "bunker" && session.CaptureLabel != label) yield break;
         Texture2D frame = null;
         try

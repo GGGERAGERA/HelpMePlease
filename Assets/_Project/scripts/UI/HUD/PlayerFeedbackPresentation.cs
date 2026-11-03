@@ -50,7 +50,7 @@ public sealed class PlayerFeedbackPresentation : MonoBehaviour
     {
         AudioService.Instance?.PlayAt(AudioCueId.PlayerDeath, transform.position);
         cameraShake?.StopAllShakes();
-        foreach (var renderer in renderers) renderer.enabled = false;
+        foreach (var renderer in renderers) if (renderer != null) renderer.enabled = false;
         GameOverManager.Instance?.GameOver();
     }
 }

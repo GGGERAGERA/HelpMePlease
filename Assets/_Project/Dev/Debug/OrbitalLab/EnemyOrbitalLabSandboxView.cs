@@ -132,14 +132,17 @@ public sealed class EnemyOrbitalLabSandboxView : IDisposable
     void Heading(string value) => GUILayout.Label(value, heading);
     void Enemies()
     {
+        lab.DrawManualEnemySpawns(heading, small, button);
+        lab.DrawInterceptionControls(heading, small, button);
         Heading("ВЫБЕРИТЕ БОЙ");
-        Label($"На арене: {lab.AliveEnemies} / {EnemyOrbitalLabController.SandboxEnemyLimit}");
+        if (!lab.DensityControl) Label($"На арене: {lab.AliveEnemies} / {EnemyOrbitalLabController.SandboxEnemyLimit}");
         Row(() => Btn("Толпа", () => lab.StartSandboxEncounter(1)), () => Btn("Толпа + стрелки", () => lab.StartSandboxEncounter(2)));
         Row(() => Btn("Щитовые", () => lab.StartSandboxEncounter(3)), () => Btn("Очистить арену", lab.ClearSandboxArena));
         Btn("ПЛОТНЫЙ БОЙ", () => lab.StartSandboxEncounter(4), true);
         GUILayout.Space(8);
-        Btn(lab.SandboxSpawning ? "Остановить спавн" : "Возобновить спавн", () => lab.SetSandboxSpawning(!lab.SandboxSpawning));
-        Label(lab.SandboxSpawning ? "Спавн включён · потери пополняются" : "Спавн остановлен");
+        bool spawning = lab.SandboxSpawning && lab.AutomaticEnemySpawning;
+        Btn(spawning ? "Остановить спавн" : "Возобновить спавн", () => lab.SetSandboxSpawning(!spawning));
+        Label(spawning ? "Спавн включён · потери пополняются" : "Спавн остановлен");
         Heading("РЕЗУЛЬТАТ БОЯ");
         var report = lab.Telemetry.Snapshot();
         bool recording = lab.Telemetry.Recording;

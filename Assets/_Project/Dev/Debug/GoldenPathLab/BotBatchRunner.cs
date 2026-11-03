@@ -41,8 +41,6 @@ public sealed class BotBatchRunner : MonoBehaviour
     private void Update()
     {
         if (!IsActive || !nextPending) return;
-        // User inspection pauses batch orchestration, without consuming an infrastructure timeout.
-        if (Subject42DebugMenu.IsDebugMenuOpen) { nextDeadline = Time.realtimeSinceStartup + 30f; return; }
         if (!(goldenPath ? session.CanStartGoldenPath : session.CanStart))
         {
             if (Time.realtimeSinceStartup > nextDeadline) Complete("Error", "Next sector cannot start: transition or required scene dependencies unavailable");

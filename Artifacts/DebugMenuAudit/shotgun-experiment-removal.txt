@@ -1,0 +1,82 @@
+Shotgun experiment removal - 2026-10-31
+Workspace: D:/fork/HelpMePlease
+Design record: Artifacts/DebugMenuAudit/SegmentedWeaponPass.md
+GDD: Assets/_Project/Documentation/Subject42_Game_Design_Bible.md, section 4.5.
+
+Scope and evidence:
+- User requested removal of SweepingShotgun and RamSlugShotgun from production
+  F1 and their runtime/handlers when no useful consumers remain.
+- C# consumer audit found only F1, the experiment implementation/presentation
+  branches and their tests. Useful laboratories do not call either factory or
+  setter. No prefab/scene/profile asset references to these experiment flags
+  or factories were found. No exclusive script/asset files exist to delete.
+- The ordinary seven-pellet Shotgun factory and all shared settings remain.
+
+Removed runtime/state members:
+- OrbitalRunState.cs: sweepingShotgunExperiment and ramSlugShotgunExperiment
+  serialized flags, public getters and internal setters.
+- OrbitalStationRuntime.Segmented.cs: DebugSetSweepingShotgunExperiment and
+  DebugSetRamSlugShotgunExperiment. Other experiment setters remain unchanged.
+- OrbitalWeaponSettings.cs: CreateSweepingShotgunExperiment and
+  CreateRamSlugShotgunExperiment.
+- OrbitalProjectileModule.cs: ramSlugProfilePending, its pending-refresh calls,
+  RefreshRamSlugShotgunExperiment, SweepingShotgun,
+  RefreshSweepingShotgunExperiment, Sweeping-only direction offset and the
+  Attach/Detach/Teardown overrides whose sole work was resetting Sweeping.
+- PauseBuildOverview.cs: Ram-only display-name branch.
+- LocalizationTable.asset: constructor.ramSlugShotgunLabel,
+  reward.ramSlugShotgun and reward.ramSlugShotgunDescription (RU/EN entries).
+
+Coordinated with other owners:
+- Parent owns F1 selector/smoke updates and charged-sniper presentation.
+- Saw agent owns removal of the Ram-only ConstructorWeaponLabel and
+  OrbitalRewardProvider presentation branches; those files were not edited here.
+- LocalizationService.cs contains no Ram/Sweeping-specific implementation.
+
+Preserved shared code:
+- OrbitalProjectileModule.ResetFiring: EnemyOrbitalLabController calls it.
+- authoredSettings: still required by MissReturn Pistol and ChargedLine Sniper.
+- BurstShots/BurstInterval, Pellets, BodyPierces, Knockback,
+  ProjectileVisualScale/ProjectileTrailSeconds and generic projectile lifecycle.
+- Pistol and MissReturn behavior, methods and factory bodies are unchanged.
+- Ordinary Shotgun factory remains Damage=3.5, FireInterval=1.05, Range=4.5,
+  ProjectileSpeed=10, ProjectileRadius=.14, BurstShots=1, Pellets=7,
+  SpreadDegrees=42, Knockback=4 and Recoil=.23; authored presentation/sound remain.
+
+Charged sniper presentation boundary added at parent's request:
+- OrbitalWeaponSettings.ChargedLinePresentation is NonSerialized, outside the
+  development preprocessor block, and defaults to false.
+- Only CreateChargedLineSniperExperiment sets it true. Its existing combat
+  scalars remain Damage=24, ChargeSeconds=.45 and BodyPierces=3, with all other
+  values/references inherited from the unchanged authored sniper profile.
+- This subtask implements no charge/fire VFX, audio, camera or projectile changes.
+
+Removed exactly seven exclusive UnityTests from Subject42OrbitalOperationsTests:
+- SweepingShotgunSequenceTracksCurrentRadialAndExtraShot
+- SweepingShotgunOptInRestoresProfileAndCancelsPendingBurst
+- SweepingShotgunProductionMvpGameViewCapture
+- RamSlugShotgunHitsThreeBodiesAndStopsAtShield
+- RamSlugShotgunProductionMvpF1GameViewCapture
+- RamSlugShotgunFutureShotsPreserveLiveProjectiles
+- RamSlugShotgunOptInPreservesState
+Their exclusive body helpers, RamSlugProjectileSnapshot, ShotgunClock,
+AssertShotgunPair and InstallSweepingShotgun were removed with them.
+The ordinary-weapon assertion no longer references the removed state flags.
+
+Remaining historically named generic helpers are intentionally retained:
+- BeginSweepingShotgunProductionRun
+- AssertSweepingShotgunProductionReady
+- CaptureSweepingShotgunGameView
+Unrelated pistol/saw/reward/constructor scenarios call these fixture/capture
+helpers. Their names and output paths are not remaining experiment behavior.
+
+Static validation performed (not Unity/runtime PASS):
+- Reviewed scoped diffs; scoped git diff --check has no whitespace errors.
+- Compared public test method sets with HEAD: exactly the seven names above
+  disappeared, with no additional public test method removed.
+- Compared Pistol(), Shotgun(), Sniper() and CreateMissReturnPistolExperiment()
+  source blocks with HEAD (normalizing line endings): identical.
+- Repeated symbol/asset searches; remaining experiment APIs in parent-owned F1
+  are pending its coordinated update. Historical docs and generic helper names
+  are not active consumers.
+- No tests, Unity execution, builds, commits, staging or branch changes run.

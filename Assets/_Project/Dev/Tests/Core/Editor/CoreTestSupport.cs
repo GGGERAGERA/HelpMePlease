@@ -68,7 +68,15 @@ public static class CoreTestSupport
         yield return Await(() => SceneManager.GetActiveScene().name == "MVP" &&
             Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized: true } &&
             !SceneTransitionOverlay.IsTransitioning);
+        yield return SelectInitialRouteNode();
         Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer.GetComponent<PlayerHealth>().AddMaxHealth(1000000f);
+    }
+
+    public static IEnumerator SelectInitialRouteNode()
+    {
+        var choice = Object.FindFirstObjectByType<LevelChoiceManager>();
+        yield return Await(() => choice != null && choice.IsChoosing);
+        Assert.That(choice.DebugSelectFirstRule(), Is.True);
     }
 
     public static IEnumerator LoadBunker()

@@ -70,6 +70,16 @@ namespace Subject42.Combat.OrbitalStation
             hoveredMount = null;
             reservedMount = null;
             firstRingId = 0;
+            if (station.UsesTelekineticRig && (OrbitalRewardProvider.GetRigPart(selected.RewardKind).HasValue || selected.RewardKind==OrbitalRewardKind.RigExpansion))
+            {
+                if (OrbitalRewardProvider.GetRigPart(selected.RewardKind) is Subject42.Combat.Telekinetic.TelekineticPart part)
+                    station.State.Telekinetic.Grant(part);
+                else if (!station.State.Telekinetic.Expand()) { Clear(false); return false; }
+                committed=true; State=OrbitalRewardFlowState.Construction;
+                // Exactly one grant. The constructor closes through the existing reward barrier.
+                if (!station.Interaction.OpenConstructor()) { CompleteReward(); }
+                return true;
+            }
             if (station.UsesSegmentedOrbit && OrbitalRewardProvider.GetModuleKind(selected.RewardKind) is OrbitalModuleKind weapon &&
                 OrbitalRunState.IsSegmentedWeapon(weapon)) return ApplyImmediate();
             if (!selected.RequiresArenaSelection)
@@ -188,7 +198,7 @@ namespace Subject42.Combat.OrbitalStation
             }
             if (IsAwaitingConstructor)
             {
-                CompleteReward();
+                if (!station.InputOwner.IsConstructing) CompleteReward();
                 return;
             }
             if (reward == null || station == null || !station.IsInitialized ||
@@ -274,7 +284,6 @@ namespace Subject42.Combat.OrbitalStation
             station.InputOwner.SetRewardPhase(OrbitalInteractionMode.RewardFlight);
             ClearArenaVisuals();
             station.Interaction?.ClearHint();
-            station.Interaction?.SetCursor(OrbitalCursorState.Normal);
             if (flightRoutine != null)
                 StopCoroutine(flightRoutine);
             flightRoutine = StartCoroutine(PlayFlight(secondLink, sessionToken, ++flightToken));
@@ -460,7 +469,6 @@ namespace Subject42.Combat.OrbitalStation
             DestroyModulePreview();
             ClearArenaVisuals();
             station?.Interaction?.ClearHint();
-            station?.Interaction?.SetCursor(OrbitalCursorState.Normal);
             reward = null;
             hoveredRing = null;
             hoveredModule = null;
@@ -628,14 +636,6 @@ namespace Subject42.Combat.OrbitalStation
                 UpdateAddMountPreview();
             }
             station.Interaction?.ShowHint(reward.upgradeName, GetHint());
-            bool valid = State == OrbitalRewardFlowState.RingSelection
-                ? hoveredRing != null
-                : State == OrbitalRewardFlowState.ModuleSelection
-                    ? hoveredModule != null
-                : CanStageMount(hoveredMount);
-            station.Interaction?.SetCursor(valid
-                ? OrbitalCursorState.ValidDrop
-                : OrbitalCursorState.InvalidDrop);
         }
 
         private void ClearArenaVisuals()

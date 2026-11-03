@@ -260,6 +260,14 @@ public class WorldEventSpawner : MonoBehaviour
         ReleaseRunScene();
     }
 
+    // A timed departure ends gameplay. Resolve earned event results before scene teardown.
+    internal void CancelActiveEventsForDeparture()
+    {
+        foreach (var worldEvent in spawnedEvents.ToArray())
+            if (worldEvent != null && worldEvent.IsStarted && !worldEvent.IsCompleted)
+                worldEvent.Cancel();
+    }
+
     private void ReleaseRunScene()
     {
         enabled = false;

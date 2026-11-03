@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 public sealed class BunkerPanelManager : MonoBehaviour
 {
@@ -15,10 +14,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
     [SerializeField] private BunkerOrbitalSlotPanel orbitalSlotPanel;
     [SerializeField] private BunkerMissionPanel missionPanel;
 
-    [Header("Prefab-Driven Station Panels")]
-    [SerializeField] private GameObject
-        stationUpgradePanelPrefab;
-    private BunkerStationUpgradePanel stationUpgradePanel;
     private ArcadeMinigame activeArcade;
 
     [Header("Run")]
@@ -32,7 +27,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         (orbitalSlotPanel != null && orbitalSlotPanel.IsOpen) ||
         (selectionPanelController != null && selectionPanelController.IsOpen) ||
         (mapPanel != null && mapPanel.activeInHierarchy) ||
-        (stationUpgradePanel != null && stationUpgradePanel.IsVisible) ||
         (audioSettingsPanel != null && audioSettingsPanel.IsOpen);
 
     private void Awake()
@@ -44,30 +38,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
         escapeProtocolPanel?.gameObject.SetActive(false);
         surfaceMapPanel?.gameObject.SetActive(false);
         missionPanel?.Hide();
-
-        if (stationUpgradePanelPrefab != null)
-        {
-            GameObject stationPanelObject = Instantiate(
-                stationUpgradePanelPrefab,
-                transform);
-            stationPanelObject.name = stationUpgradePanelPrefab.name;
-            stationUpgradePanel =
-                stationPanelObject.GetComponent<BunkerStationUpgradePanel>();
-            if (stationUpgradePanel == null)
-            {
-                Debug.LogError(
-                    "[BunkerPanelManager] StationUpgradePanel prefab has " +
-                    "no BunkerStationUpgradePanel component.",
-                    stationPanelObject);
-            }
-        }
-        else
-        {
-            Debug.LogError(
-                "[BunkerPanelManager] StationUpgradePanel prefab is not assigned.",
-                this);
-        }
-
     }
 
     public bool TryCloseForEscape()
@@ -106,7 +76,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
             return;
 
         CloseAll(false);
-        controller.ShowCharacters(selectionSources?.Characters, this);
+        controller.ShowSelection(selectionSources?.Characters, this);
     }
 
     public void OpenWeaponSelection()
@@ -166,10 +136,8 @@ public sealed class BunkerPanelManager : MonoBehaviour
         if (mapPanel != null)
             mapPanel.SetActive(false);
 
-        stationUpgradePanel?.Hide();
         if (audioSettingsPanel != null && audioSettingsPanel.IsOpen)
             audioSettingsPanel.Close();
-
     }
 
     public bool TryOpenArcade(ArcadeMinigame game)
@@ -197,14 +165,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
     {
         CloseAll(false);
         orbitalSlotPanel.Show();
-    }
-
-    public void ShowStationProgression(BunkerStationId stationId)
-    {
-        if (selectionPanelController != null && selectionPanelController.IsOpen)
-            return;
-
-        stationUpgradePanel?.Show(stationId);
     }
 
     public void OpenSettings()
@@ -247,7 +207,6 @@ public sealed class BunkerPanelManager : MonoBehaviour
 
         if (selectionSources == null)
             Debug.LogWarning("[BunkerPanelManager] Selection sources are not assigned.", this);
-
     }
 #endif
 }

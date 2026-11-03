@@ -172,7 +172,7 @@ public sealed partial class Subject42DebugMenu
                 Description = description, Run = run, Available = available ?? (() => true) });
         void Studio() { CloseHub(); LiveVisualStudio.Open(); }
         Add("sandbox.open", 0, "ПЕСОЧНИЦА", "Быстрая подготовка билда и боя", OpenSandbox, () => IsSandboxScene);
-        Add("combat.weapons", 1, "Оружие, модули и орбиты", "Полный каталог Segmented: запас, открытие орбит и лимит оружия", () => HubOpenDetails(0, DebugTab.OrbitalProduction), () => characterSpawner != null);
+        Add("combat.weapons", 1, "Оружие, модули и конструкция", "Полный каталог: оружие, модули и расширение доступного пространства", () => HubOpenDetails(0, DebugTab.OrbitalProduction), () => characterSpawner != null);
         Add("run.catalogue", 1, "Карточки и улучшения", "Каталог характеристик игрока и оружия, штатный выбор награды", () => HubOpenDetails(1, DebugTab.PlayerBuild), () => characterSpawner != null);
         Add("combat.enemies", 2, "Враги и бой", "Ручной спавн, плотность, AI, специальные враги и тестовый босс", () => HubOpenDetails(2, DebugTab.WorldEvents), () => enemySpawner != null);
         Add("run.tools", 3, "Мир и прогресс", "Здоровье, XP, pickups, события, World Rules и переходы", () => HubOpenDetails(3, DebugTab.PlayerBuild));
@@ -182,7 +182,7 @@ public sealed partial class Subject42DebugMenu
         Add("visual.segmented", 4, "Внешний вид Segmented · F9", "Действующие настройки линий и оформления орбит", () => { CloseHub(); ToggleMvpOrbitSurface(); }, () => IsSandboxScene && MvpCanEdit);
         Add("diagnostics.snapshot", 5, "Диагностический снимок", "Состояние production-систем и последние 30 записей лога", SaveHubSnapshot);
         Add("diagnostics.logs", 5, "Последние логи и исключения", "Ограниченный журнал текущего запуска", ShowHubLogs);
-        Add("diagnostics.tools", 5, "Боты, эксперименты и расширенные инструменты", "Боты, Golden Path, шесть вариантов оружия, восемь экспериментов врагов и XP-лаборатория", () => HubOpenUtilityPage(DebugTab.Additional));
+        Add("diagnostics.tools", 5, "Боты, эксперименты и расширенные инструменты", "Боты, Golden Path, варианты пистолета и снайперки, восемь экспериментов врагов и XP-лаборатория", () => HubOpenUtilityPage(DebugTab.Additional));
     }
 
     private void ToggleHub()

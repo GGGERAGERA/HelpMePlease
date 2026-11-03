@@ -1,0 +1,15 @@
+Unity Editor 6000.3.13f1; existing open project, no player build.
+Verified: 2026-10-31T00:50:07.9751331+03:00
+Latest requested script compilation: Editor.log line 17758
+Compiler errors since latest request: 0
+ExitCode: 0 Duration: 4s751ms
+Reloading assemblies after finishing script compilation.
+Assembly-CSharp.dll: 2026-10-31T00:39:55.3306846+03:00, 2315776 bytes
+Assembly-CSharp-Editor.dll: 2026-10-31T00:44:48.3880042+03:00, 1979904 bytes
+Exact smoke: F1SandboxTests.WeaponModesAndSegmentedFeedback; total=1 passed=1 failed=0; 9.835 seconds.
+Editor left open: HelpMePlease - MVP - Windows, Mac, Linux - Unity 6.3 LTS (6000.3.13f1) <DX11>
+sceneSetups:
+- path: Assets/_Project/Scenes/MainBuild/MVP.unity
+  isLoaded: 1
+  isActive: 1
+  isSubScene: 0

@@ -12,7 +12,7 @@ public sealed partial class BotRunSession
     private void FixedUpdate()
     {
         if (goldenStage != "Gameplay" || controller == null || flow == null || rewards == null ||
-            !rewards.IsRewardQueueIdle || Subject42DebugMenu.IsDebugMenuOpen || Time.timeScale <= 0 || SceneTransitionOverlay.IsTransitioning) return;
+            !rewards.IsRewardQueueIdle || Time.timeScale <= 0 || SceneTransitionOverlay.IsTransitioning) return;
         controller.TickGoldenPath(Result.Duration - goldenSectorTime, flow.FinalBoss, goldenEvents, station.State);
     }
     private string goldenStage;
@@ -94,12 +94,6 @@ public sealed partial class BotRunSession
     {
         Result.WallDuration = Time.realtimeSinceStartup - startedAt;
         if (pendingException != null) { GoldenCheck("Runtime.NoException", false, pendingException); return; }
-        if (Subject42DebugMenu.IsDebugMenuOpen)
-        {
-            goldenDeadline += Time.unscaledDeltaTime;
-            if (goldenCompletedAt >= 0) goldenCompletedAt += Time.unscaledDeltaTime;
-            controller?.Pause("Debug menu"); return;
-        }
         if (goldenStage != "Gameplay" && Time.realtimeSinceStartup > goldenDeadline)
         { GoldenCheck("Progression.TransitionDeadline", false, "No progress for 45 real seconds"); return; }
         if (goldenStage == "Initial Bunker")
@@ -132,11 +126,16 @@ public sealed partial class BotRunSession
                 rewards == null || area?.PlayableArea == null || flow == null) return;
             station = spawner.SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>();
             if (station == null || !station.IsInitialized) return;
+            if (RunStateManager.Instance.CurrentSector is { SectorNumber: RunRoute.FirstSector, RouteNode: null })
+            {
+                FindFirstObjectByType<LevelChoiceManager>()?.DebugSelectFirstRule();
+                return;
+            }
             health = spawner.SpawnedPlayer.GetComponent<PlayerHealth>();
             bool second = goldenStage == "Second Run Baseline";
             if (!GoldenCheck("Run.ActiveAfterStart", !RunStateManager.Instance.IsRunEnded, "Run ended at scene startup")) return;
             int sector = RunStateManager.Instance.CurrentSector?.SectorNumber ?? 0;
-            if (!GoldenCheck("Run.SectorSequence", sector == (second ? 1 : goldenSector + 1) && sector <= 3, "Expected next production sector, never sector 4")) return;
+            if (!GoldenCheck("Run.SectorSequence", sector == (second ? 1 : goldenSector + 1) && sector <= RunRoute.TotalSectors, "Expected next production sector")) return;
             if (goldenSnapshot != null && !second && !CheckGoldenPersistence(goldenSnapshot)) return;
             if (goldenSector == 0 || second)
             {
@@ -203,10 +202,10 @@ public sealed partial class BotRunSession
                 "Reward queue, selection or boss survived scene cleanup")) return;
             golden.BunkerClean = true;
             if (goldenStage == "Victory Bunker") { SetGoldenStage("Start Second Run"); return; }
-            if (!GoldenCheck("GoldenPath.Complete", golden.SectorsCompleted == 3 && golden.BossKilled && golden.VictoryCalls == 1 &&
+            if (!GoldenCheck("GoldenPath.Complete", golden.SectorsCompleted == RunRoute.TotalSectors && golden.BossKilled && golden.VictoryCalls == 1 &&
                 golden.BossSpawns == 1 && golden.RewardsTaken > 0 && golden.DirectMountSelections > 0 &&
                 golden.ObjectivesCompleted >= 3 && golden.SecondRunBaseline, "Required route milestone missing")) return;
-            Finish(BotRunOutcome.GoldenPathPassed, "Three sectors, boss victory, bunker cleanup and second run verified");
+            Finish(BotRunOutcome.GoldenPathPassed, "Full route, boss victory, bunker cleanup and second run verified");
             return;
         }
         if (goldenStage != "Gameplay") return;
@@ -217,19 +216,19 @@ public sealed partial class BotRunSession
         if (!GoldenCheck("Run.SceneStillPresent", health != null && flow != null && station != null, "Unexpected scene unload")) return;
         telemetry.Sample(Time.deltaTime);
         if (!GoldenCheck("Run.PlayerAlive", !health.IsDead, "Player died during regression route")) return;
-        if (!GoldenCheck("Run.NoSector4", RunStateManager.Instance.CurrentSector?.SectorNumber == goldenSector && goldenSector <= 3, "Unexpected sector transition")) return;
+        if (!GoldenCheck("Run.WithinRoute", RunStateManager.Instance.CurrentSector?.SectorNumber == goldenSector && goldenSector <= RunRoute.TotalSectors, "Unexpected sector transition")) return;
         if (!CheckGoldenObjects()) return;
         if (!CheckGoldenPersistence(goldenSnapshot)) return;
         goldenSnapshot = CopyGoldenState(station.State);
         if (flow.IsLevelCompleted && golden.SectorsCompleted < goldenSector)
         {
-            if (!GoldenCheck("Run.CompletedSectorOnce", RunStateManager.Instance.CompletedLevels == goldenSector, "Completion counter mismatch")) return;
+            if (!GoldenCheck("Run.CompletedSectorOnce", RunStateManager.Instance.CompletedLevels == goldenSector / RunRoute.SectorsPerLevel, "Completion counter mismatch")) return;
             golden.SectorsCompleted = goldenSector;
             goldenCompletedAt = Time.realtimeSinceStartup;
         }
         if (flow.Phase == RunPhase.FinalBossIntro || flow.Phase == RunPhase.FinalBossCombat)
         {
-            if (!GoldenCheck("Boss.AfterSector3Only", goldenSector == 3 && golden.SectorsCompleted == 3, "Premature finale")) return;
+            if (!GoldenCheck("Boss.AfterFinalSectorOnly", goldenSector == RunRoute.FinalSector && golden.SectorsCompleted == RunRoute.TotalSectors, "Premature finale")) return;
             if (flow.Phase == RunPhase.FinalBossCombat && !GoldenCheck("Boss.Exists", flow.FinalBoss != null && golden.BossSpawns == 1, "Missing or duplicated boss")) return;
         }
         if (!rewards.IsRewardQueueIdle)
@@ -256,7 +255,7 @@ public sealed partial class BotRunSession
         }
         goldenDeadline = Time.realtimeSinceStartup + 45f;
         if (!GoldenCheck("Rewards.SelectionReleased", !station.RewardFlow.PendingReward.HasValue && station.InputOwner.CanTransition, "Queue idle with unfinished arena selection")) return;
-        if (flow.IsLevelCompleted && goldenSector < 3)
+        if (flow.IsLevelCompleted && goldenSector < RunRoute.FinalSector)
         {
             if (!GoldenCheck("Progression.SectorChoiceDeadline", Time.realtimeSinceStartup - goldenCompletedAt < 45f, "Sector choices did not become available")) return;
             var choices = FindFirstObjectByType<LevelChoiceManager>();
@@ -384,7 +383,7 @@ public sealed partial class BotRunSession
         if (!boss.IsBoss) return;
         goldenBosses.Add(boss); golden.BossSpawns++;
         boss.OnDied += GoldenBossDied;
-        GoldenCheck("Boss.SpawnOnceAfterSector3", goldenSector == 3 && golden.BossSpawns == 1, "Boss spawned early or more than once");
+        GoldenCheck("Boss.SpawnOnceAfterFinalSector", goldenSector == RunRoute.FinalSector && golden.BossSpawns == 1, "Boss spawned early or more than once");
     }
     private void GoldenBossDied(EnemyHealth boss)
     {
@@ -395,7 +394,7 @@ public sealed partial class BotRunSession
     {
         golden.VictoryCalls++;
         goldenVictory = true;
-        GoldenCheck("Boss.VictoryOnce", golden.VictoryCalls == 1 && goldenSector == 3, "Repeated or premature victory");
+        GoldenCheck("Boss.VictoryOnce", golden.VictoryCalls == 1 && goldenSector == RunRoute.FinalSector, "Repeated or premature victory");
     }
     private void CaptureGoldenFinal()
     {

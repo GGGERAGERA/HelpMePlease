@@ -81,10 +81,10 @@ public partial class EnemySpawner
         firstAutomaticAssault = FirstAutomaticAssaultProgress.NotStarted;
         breathRemaining = recoveryRemaining = 0f;
         assaultElapsed = 0f;
-        var profile = RunStateManager.Instance?.CurrentSector?.StageProfile;
+        var sector = RunStateManager.Instance?.CurrentSector;
         float lead = Mathf.Lerp(Mathf.Clamp(exitAssaultLeadTime.x, 10f, 15f),
             Mathf.Clamp(exitAssaultLeadTime.y, 10f, 15f), (float)assaultRandom.NextDouble());
-        assaultNextAt = profile != null ? Mathf.Max(0f, profile.ExitActivationTime - lead) :
+        assaultNextAt = sector?.StageProfile != null ? Mathf.Max(0f, sector.Duration - lead) :
             Mathf.Max(assaultBreathDuration, Mathf.Lerp(firstAssaultDelay.x, firstAssaultDelay.y, (float)assaultRandom.NextDouble()));
         CancelPendingAssault();
     }
@@ -324,7 +324,7 @@ public partial class EnemySpawner
             { if (selected == null && candidate.GetComponent<EnemyShooterMovement>() != null) selected = candidate; return; }
             var chase = candidate.GetComponent<EnemyChaseMovement>();
             var identity = candidate.GetComponent<EnemyIdentity>();
-            if (chase == null || candidate.GetComponent<EnemyHealth>().IsBoss ||
+            if (chase == null || chase.IsProductionTacticalEnemy || candidate.GetComponent<EnemyHealth>().IsBoss ||
                 (identity != null && !string.IsNullOrEmpty(identity.EnemyId) &&
                  identity.EnemyId.StartsWith("Elite_", System.StringComparison.OrdinalIgnoreCase))) return;
             if (selected == null || type == AssaultEventType.Encirclement &&

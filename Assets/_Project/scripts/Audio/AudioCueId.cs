@@ -62,5 +62,6 @@ public enum AudioCueId
     LootReelTick = 141,
     LootReelStop = 142,
     BomberExplosion = 143,
-    RocketExplosion = 144
+    RocketExplosion = 144,
+    ChargedSniperFire = 145
 }

@@ -95,6 +95,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private LocalAnomalyData activeAnomaly;
     private bool localCardVisible;
     private LocalAnomalyData displayedLocalAnomaly;
+    private Object displayedLocalSource;
     private Transform focusPlayer;
     private LocalAnomalyZone focusedZone;
     private SpriteRenderer focusOverlay;
@@ -114,6 +115,9 @@ public sealed class LevelAnomalyController : MonoBehaviour
     private static readonly int FocusClearRatioId = Shader.PropertyToID("_ClearRatio");
 
     public LocalAnomalyData ActiveAnomaly => activeAnomaly;
+    public bool UsesSegmentedOrbitAnomalies { get; private set; }
+    internal void UseSegmentedOrbitAnomalies() => UsesSegmentedOrbitAnomalies = true;
+    public LocalAnomalyZone FindOrbitZone(Vector2 position) => FindFocusZone(position,true);
     public bool IsIntroComplete { get; private set; } = true;
     public float CurrentCoverage { get; private set; }
     public bool IsAnomalyFocusActive => focusAmount > 0f;
@@ -309,7 +313,7 @@ public sealed class LevelAnomalyController : MonoBehaviour
         }
     }
 
-    private LocalAnomalyZone FindFocusZone(Vector2 position)
+    private LocalAnomalyZone FindFocusZone(Vector2 position, bool orbital = false)
     {
         LocalAnomalyZone best = null;
         float bestArea = float.MaxValue;
@@ -319,6 +323,8 @@ public sealed class LevelAnomalyController : MonoBehaviour
             LocalAnomalyZone zone = spawnedZones[i];
             if (zone == null || !zone.isActiveAndEnabled)
                 continue;
+
+            if (orbital && zone is GravityZone gravity && gravity.IsSpecialOrbitMode) continue;
 
             Collider2D area = zone.FocusArea;
             if (area == null || !area.enabled || !area.OverlapPoint(position))
@@ -540,12 +546,14 @@ public sealed class LevelAnomalyController : MonoBehaviour
         LocalAnomalyData data =
             activeLocalZones[activeLocalZones.Count - 1].Data;
 
-        if (localCardVisible && displayedLocalAnomaly == data)
+        Object source = activeLocalZones[activeLocalZones.Count - 1].Source;
+        if (localCardVisible && displayedLocalAnomaly == data && displayedLocalSource == source)
             return;
 
         displayedLocalAnomaly = data;
+        displayedLocalSource = source;
         localCardVisible = true;
-        visual?.Show(data);
+        visual?.Show(data,source is LocalAnomalyZone zone ? zone.Presentation : data.Presentation);
     }
 
     private void SpawnLocalAnomalyZones(LocalAnomalyData rootData)

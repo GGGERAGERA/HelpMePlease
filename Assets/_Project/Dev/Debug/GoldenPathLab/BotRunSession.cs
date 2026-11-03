@@ -91,7 +91,7 @@ public sealed partial class BotRunSession : MonoBehaviour
         IsStarting = true;
         pendingException = null;
         health = null; station = null;
-        // New scene's debug menu explicitly rebinds the dependencies after Start.
+        // The new production scene composition rebinds the existing session after startup.
         spawner = null; flow = null; rewards = null; area = null;
         try
         {
@@ -165,7 +165,12 @@ public sealed partial class BotRunSession : MonoBehaviour
         if (pendingException != null) { Finish(BotRunOutcome.Error, pendingException); return; }
         if (IsStarting)
         {
-            if (!SceneTransitionOverlay.IsTransitioning && BeginCurrentSector()) return;
+            if (!SceneTransitionOverlay.IsTransitioning)
+            {
+                if (RunStateManager.Instance?.CurrentSector is { SectorNumber: RunRoute.FirstSector, RouteNode: null })
+                    FindFirstObjectByType<LevelChoiceManager>()?.DebugSelectFirstRule();
+                else if (BeginCurrentSector()) return;
+            }
             if (Time.realtimeSinceStartup - requestedAt > 30f)
                 Finish(BotRunOutcome.Error, "Sector initialization exceeded 30 seconds");
             return;
@@ -180,9 +185,6 @@ public sealed partial class BotRunSession : MonoBehaviour
         { Finish(BotRunOutcome.SectorCompleted, "Production sector exit reached"); return; }
         if (SceneTransitionOverlay.IsTransitioning)
         { Finish(BotRunOutcome.Aborted, "External scene transition"); return; }
-        if (Subject42DebugMenu.IsDebugMenuOpen)
-        { controller.Pause("Debug menu paused"); return; }
-
         if (!rewards.IsRewardQueueIdle)
         {
             controller.Pause("Reward: " + station.RewardFlow.CompactStatus);
@@ -225,7 +227,6 @@ public sealed partial class BotRunSession : MonoBehaviour
         if (ownsSpeed)
         {
             if (rewards != null && !rewards.IsRewardQueueIdle) rewards.DebugSetRewardResumeScale(restoreScale);
-            Subject42DebugMenu.RestoreBotResumeScale(restoreScale);
             if (Time.timeScale > 0f && !SceneTransitionOverlay.IsTransitioning) Time.timeScale = restoreScale;
             ownsSpeed = false;
         }

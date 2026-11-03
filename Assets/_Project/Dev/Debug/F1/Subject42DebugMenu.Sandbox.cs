@@ -38,10 +38,13 @@ public sealed partial class Subject42DebugMenu
             ("НАЧАТЬ БОЙ", spawnReady, () => SandboxAction(StartSandboxCombat)));
         if (state == null || !state.UsesSegmentedOrbit) return;
 
+        if (station.Rig != null) BuildRigRewardCatalogue(true);
+        else
+        {
         AddSectionTitle("БИЛД", "Выдача в запас; установка в штатном конструкторе Tab.");
         SandboxRow("Оружие · запас",
             Weapon(OrbitalRewardKind.Pistol, "Пистолет"), Weapon(OrbitalRewardKind.Sniper, "Снайперка"),
-            Weapon(OrbitalRewardKind.Shotgun, "Дробовик"), Weapon(OrbitalRewardKind.Saw, "Пила"));
+            Weapon(OrbitalRewardKind.Shotgun, "Дробовик"));
         SandboxRow("Модули · запас",
             Weapon(OrbitalRewardKind.DamageLink, "DMG"), Weapon(OrbitalRewardKind.FireRateLink, "FR"),
             Weapon(OrbitalRewardKind.ExtraShotLink, "2X"), Weapon(OrbitalRewardKind.RicochetLink, "RIC"));
@@ -52,6 +55,7 @@ public sealed partial class Subject42DebugMenu
             ("+1 ЛИМИТ", ready && state.SegmentedWeaponLimit < OrbitalRunState.MaxSegmentedWeapons,
                 () => SandboxAction(() => SandboxGrantBuildReward(OrbitalRewardKind.AddMount))),
             ("ОТКРЫТЬ TAB", ready && previousTimeScale > 0f, () => SandboxAction(OpenSandboxConstructor)));
+        }
 
         AddSectionTitle("БОЙ", "Обычные враги текущего профиля; штатные лимиты и паузы волн.");
         bool spawning = enemySpawner != null && enemySpawner.IsSpawningEnabled;
@@ -124,6 +128,11 @@ public sealed partial class Subject42DebugMenu
     {
         CaptureSession.SetInvulnerable(true);
         SetEnemyAutoSpawn(false, captureSettings: true);
+        if (MvpStation.Rig != null)
+        {
+            sandboxStatus = "Тест подготовлен: бессмертие · спавн остановлен. Расширение сетки доступно в каталоге ниже; запас сохранён.";
+            return;
+        }
         if (!SandboxOpenAllOrbits()) return;
         while (MvpStation.State.SegmentedWeaponLimit < OrbitalRunState.MaxSegmentedWeapons)
             if (!SandboxGrantBuildReward(OrbitalRewardKind.AddMount)) return;

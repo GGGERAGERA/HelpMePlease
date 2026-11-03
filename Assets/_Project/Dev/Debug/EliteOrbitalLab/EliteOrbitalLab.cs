@@ -76,7 +76,7 @@ namespace Subject42.DebugLabs.EliteOrbit
             PlayerLoadoutFactory.ApplyDebugMoveSpeed(player.GetComponent<CharacterMovement2D>(),6);
             PlayerRuntimeReference.Bind(player);
             Station=OrbitalStationRuntime.Ensure(player,Character);
-            Station.Interaction.BindCursor(null,ArenaCamera);
+            Station.Interaction.BindCamera(ArenaCamera);
             foreach (var module in Station.State.Modules.ToArray()) Station.RemoveModule(module.StableModuleId);
             var ring=Station.State.Rings[0];
             ring.Radius=(WeaponLoad==1 ? 3.25f : 1.3f)-Presentation.RingRadiusPadding;

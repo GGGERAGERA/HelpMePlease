@@ -137,12 +137,13 @@ public sealed class Subject42TutorialTests
             TutorialStep.OrbitalPlacement, TutorialStep.SectorGoal, TutorialStep.FirstEvent, TutorialStep.Exit, TutorialStep.Completed }));
         Assert.That(TutorialController.IsActive, Is.False);
         yield return CoreTestSupport.Await(() => RunStateManager.Instance.CurrentSector.SectorNumber == 1 && !SceneTransitionOverlay.IsTransitioning);
-        Assert.That(RunStateManager.Instance.CompletedLevels, Is.Zero, "Tutorial is outside the three-sector route.");
+        Assert.That(RunStateManager.Instance.CompletedLevels, Is.Zero, "Tutorial is outside the route.");
         Assert.That(ExperienceManager.Instance.CurrentLevel, Is.EqualTo(2), "Only one tutorial XP reward is granted.");
-        Assert.That(Object.FindFirstObjectByType<LevelChoiceManager>().IsChoosing, Is.False);
+        yield return CoreTestSupport.SelectInitialRouteNode();
         Assert.That(TutorialController.Active, Is.Null, "Later sectors must not install tutorial.");
         Subject42OnboardingTests.SetPlacementPhase("completed restart");
         yield return Restart();
+        yield return CoreTestSupport.SelectInitialRouteNode();
         Assert.That(TutorialController.Active, Is.Null, "Completion must survive a new first-sector run.");
         Assert.That(RunStateManager.Instance.CurrentSector.SectorNumber, Is.EqualTo(1));
         TutorialController.ResetCompletion();

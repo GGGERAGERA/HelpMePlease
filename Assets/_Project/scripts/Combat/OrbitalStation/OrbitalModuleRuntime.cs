@@ -131,6 +131,8 @@ namespace Subject42.Combat.OrbitalStation
         protected void ConfigureWeaponFeedback(Color color, bool preserveColors = false) => presentation.ConfigureWeaponFeedback(color, preserveColors);
         protected void WeaponRecoil(float strength) => presentation.WeaponRecoil(strength);
         protected void WeaponCharge(float amount) => presentation.WeaponCharge(amount);
+        protected void ConfigureChargedLinePresentation(bool enabled, float range) =>
+            presentation.ConfigureChargedLine(enabled, range);
         protected void ResetWeaponFeedback() => presentation.ResetWeaponFeedback();
         public void TriggerUpgradePresentation() => presentation.Trigger();
 

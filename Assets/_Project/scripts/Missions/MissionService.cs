@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Meta mission lifecycle. All objective-type behavior is delegated to objective definitions.</summary>
-public sealed class MissionService : ISurfaceContentSource
+public sealed partial class MissionService : ISurfaceContentSource
 {
     public event Action Changed;
     private readonly MissionCatalog catalog;

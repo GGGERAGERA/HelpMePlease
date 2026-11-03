@@ -4,15 +4,10 @@ using Subject42.Combat.OrbitalStation;
 public class CharacterSpawner : MonoBehaviour
 {
     public event System.Action<GameObject> CharacterSpawned;
-    public event System.Action<BaseWeapon> PrimaryWeaponChanged;
     public GameObject SpawnedPlayer { get; private set; }
-    public BaseWeapon PrimaryWeapon { get; private set; }
     public CharacterData SpawnedCharacterData { get; private set; }
     public OrbitalStationRuntime Station { get; private set; }
     public void PrepareForSceneTransition() => Station?.GetComponent<OrbitalInteractionController>()?.PrepareForExternalPause();
-    public CharacterCombatType CombatType => SpawnedCharacterData != null
-        ? SpawnedCharacterData.combatType
-        : CharacterCombatType.AutoFire;
 
     [Header("Default character for direct MVP launch")]
     [SerializeField] private CharacterData defaultCharacter;
@@ -28,8 +23,6 @@ public class CharacterSpawner : MonoBehaviour
     [SerializeField] private MetaUpgradeApplier metaUpgradeApplier;
     [SerializeField] private UpgradeApplier upgradeApplier;
 
-    [Header("Default weapon for direct MVP launch")]
-    [SerializeField] private WeaponData defaultWeapon;
     [SerializeField] private ControlOnboarding onboardingPrefab;
     private void Start()
     {
@@ -59,7 +52,7 @@ public class CharacterSpawner : MonoBehaviour
         if (RunStateManager.Instance != null)
             RunStateManager.Instance.ApplyToSpawnedPlayer(player, upgradeApplier);
 
-        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData, segmentedOrbit: true);
+        var orbital = OrbitalStationRuntime.Ensure(player, SpawnedCharacterData, segmentedOrbit: true, telekineticRig: true);
         Station = orbital;
         rewards?.BindOrbitalStation(orbital);
         if (onboardingPrefab != null && orbital != null && orbital.IsInitialized)
@@ -89,7 +82,7 @@ public class CharacterSpawner : MonoBehaviour
         {
             OrbitalStationRuntime station = SpawnedPlayer.GetComponentInChildren<OrbitalStationRuntime>(true);
             if (station != null) station.RebuildRuntimeFromState();
-            else station = OrbitalStationRuntime.Ensure(SpawnedPlayer, SpawnedCharacterData, segmentedOrbit: true);
+            else station = OrbitalStationRuntime.Ensure(SpawnedPlayer, SpawnedCharacterData, segmentedOrbit: true, telekineticRig: true);
             Station = station;
             rewards?.BindOrbitalStation(station);
             CharacterSpawned?.Invoke(SpawnedPlayer);
@@ -131,12 +124,6 @@ public class CharacterSpawner : MonoBehaviour
 
         PlayerLoadoutFactory.ApplyCharacterStats(player, selectedCharacter);
 
-        SetPrimaryWeapon(null);
-        PlayerWeaponOrbitVisual orbitVisual =
-            player.GetComponent<PlayerWeaponOrbitVisual>();
-        if (orbitVisual != null)
-            orbitVisual.enabled = false;
-
         return player;
     }
 
@@ -155,20 +142,5 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         return defaultCharacter;
-    }
-
-    private void SetPrimaryWeapon(BaseWeapon weapon)
-    {
-        if (PrimaryWeapon == weapon)
-            return;
-
-        PrimaryWeapon = weapon;
-        PlayerWeaponOrbitVisual orbitVisual = SpawnedPlayer != null
-            ? SpawnedPlayer.GetComponent<PlayerWeaponOrbitVisual>()
-            : weapon != null
-                ? weapon.GetComponentInParent<PlayerWeaponOrbitVisual>()
-                : null;
-        orbitVisual?.Bind(weapon);
-        PrimaryWeaponChanged?.Invoke(weapon);
     }
 }

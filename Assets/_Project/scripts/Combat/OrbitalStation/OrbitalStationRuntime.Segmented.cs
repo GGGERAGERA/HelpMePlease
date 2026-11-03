@@ -5,19 +5,6 @@ namespace Subject42.Combat.OrbitalStation
     public sealed partial class OrbitalStationRuntime
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        public bool DebugSetRamSlugShotgunExperiment(bool enabled)
-        {
-            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
-                runStateManager == null || State.RamSlugShotgunExperiment == enabled ||
-                enabled && State.SweepingShotgunExperiment) return false;
-            if (enabled) runStateManager.DebugMarkDevelopmentRun();
-            State.SetRamSlugShotgunExperiment(enabled);
-            foreach (var module in modules)
-                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Shotgun)
-                    projectile.RefreshRamSlugShotgunExperiment();
-            return true;
-        }
-
         public bool DebugSetInertialSawExperiment(bool enabled)
         {
             if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
@@ -51,19 +38,6 @@ namespace Subject42.Combat.OrbitalStation
             State.SetPulsedSawExperiment(enabled);
             foreach (var module in modules)
                 if (module is OrbitalSawModule saw) saw.ResetPulsePhase();
-            return true;
-        }
-
-        public bool DebugSetSweepingShotgunExperiment(bool enabled)
-        {
-            if (!IsInitialized || !UsesSegmentedOrbit || Owner.IsDead || IsRunEnded ||
-                runStateManager == null || State.SweepingShotgunExperiment == enabled ||
-                enabled && State.RamSlugShotgunExperiment) return false;
-            if (enabled) runStateManager.DebugMarkDevelopmentRun();
-            State.SetSweepingShotgunExperiment(enabled);
-            foreach (var module in modules)
-                if (module is OrbitalProjectileModule projectile && projectile.Kind == OrbitalModuleKind.Shotgun)
-                    projectile.RefreshSweepingShotgunExperiment();
             return true;
         }
 
@@ -148,13 +122,13 @@ namespace Subject42.Combat.OrbitalStation
 
         public bool StowModule(int index) => InputOwner.CanEditConstructor && State.TryDisconnectSegmented(index);
 
-        public float SegmentedDamageFactor(int id) => 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.Damage);
-        public float SegmentedRateFactor(int id) => 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.FireRate);
-        public int SegmentedRicochets(int id) => State.SegmentedBonusCount(id, SegmentedLinkKind.Ricochet);
+        public float SegmentedDamageFactor(int id) => OrbitModulesSuppressed ? 1f : 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.Damage);
+        public float SegmentedRateFactor(int id) => OrbitModulesSuppressed ? 1f : 1f + .2f * State.SegmentedBonusCount(id, SegmentedLinkKind.FireRate);
+        public int SegmentedRicochets(int id) => OrbitModulesSuppressed ? 0 : State.SegmentedBonusCount(id, SegmentedLinkKind.Ricochet);
 
         internal void SegmentedOrdinaryShot(int id)
         {
-            if (!UsesSegmentedOrbit) return;
+            if (!UsesSegmentedOrbit || OrbitModulesSuppressed) return;
             var weapon = modules.FirstOrDefault(gun => gun.StableModuleId == id) as OrbitalProjectileModule;
             if (weapon == null) return;
             foreach (var link in State.ActiveSegmentedLinks())

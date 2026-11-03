@@ -3,17 +3,11 @@ using System;
 using System.Collections;
 using System.IO;
 using UnityEngine;
-using Subject42.Combat.OrbitalStation;
 
 // Opt-in observations and production run startup for the single standalone smoke.
-// F1 input and preset application remain manual UI interactions.
+// Production startup and F12 frame capture remain independent of debug menus.
 public sealed class TrailerStandaloneDiagnostics : MonoBehaviour
 {
-    private bool wasOpen;
-    private Vector3 lastPosition;
-    private float movement;
-    private bool observingMovement;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
@@ -62,30 +56,7 @@ public sealed class TrailerStandaloneDiagnostics : MonoBehaviour
             ScreenCapture.CaptureScreenshot(path);
             Debug.Log("[TrailerStandalone] screenshot=" + path);
         }
-        var player = PlayerRuntimeReference.CachedPlayer;
-        if (observingMovement && player != null)
-        {
-            movement += Vector3.Distance(lastPosition, player.transform.position);
-            lastPosition = player.transform.position;
-        }
-        bool open = Subject42DebugMenu.IsDebugMenuOpen;
-        if (open == wasOpen) return;
-        wasOpen = open;
-        var station = player != null ? player.GetComponentInChildren<OrbitalStationRuntime>() : null;
-        Debug.Log($"[TrailerStandalone] F1 open={open} timeScale={Time.timeScale} rings={station?.Rings.Count} modules={station?.Modules.Count} blocked={station?.InputOwner?.IsGameplayInputBlocked} developmentRun={RunStateManager.Instance?.IsDevelopmentRun}");
-        if (!open && station != null) StartCoroutine(ObserveResume(station));
     }
 
-    private IEnumerator ObserveResume(OrbitalStationRuntime station)
-    {
-        float start = Time.time;
-        movement = 0f;
-        var player = PlayerRuntimeReference.CachedPlayer;
-        lastPosition = player != null ? player.transform.position : Vector3.zero;
-        observingMovement = true;
-        yield return new WaitForSecondsRealtime(3f);
-        observingMovement = false;
-        Debug.Log($"[TrailerStandalone] resume elapsedGameplay={Time.time - start:0.000} movement={movement:0.000} timeScale={Time.timeScale} blocked={station?.InputOwner?.IsGameplayInputBlocked} fullscreen={Screen.fullScreen} screen={Screen.width}x{Screen.height}");
-    }
 }
 #endif

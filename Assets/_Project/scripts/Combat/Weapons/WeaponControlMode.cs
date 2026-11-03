@@ -7,7 +7,7 @@ public enum WeaponControlMode
     AutoAim = 1
 }
 
-public static class WeaponControlSettings
+public static partial class WeaponControlSettings
 {
     private const string PreferenceKey = "accessibility.weapon.autoAim";
 

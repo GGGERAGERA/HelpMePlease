@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Subject42.Combat.OrbitalStation;
 using UnityEditor;
 using UnityEngine;
@@ -14,10 +15,10 @@ public static partial class MvpF1Verification
     static MvpF1Verification()
     {
         EditorApplication.update += Poll;
-        EditorApplication.update += PollPlay;
-        EditorApplication.playModeStateChanged += PlayState;
-        Application.logMessageReceived += PlayLog;
     }
+    private const BindingFlags Hidden = BindingFlags.NonPublic | BindingFlags.Instance;
+    private static object Field(object target, string name) => target.GetType().GetField(name, Hidden).GetValue(target);
+    private static void Call(object target, string name, params object[] args) => target.GetType().GetMethod(name, Hidden).Invoke(target, args);
     private static void Poll()
     {
         if (!File.Exists(Output + "/audit.request") || EditorApplication.isCompiling ||

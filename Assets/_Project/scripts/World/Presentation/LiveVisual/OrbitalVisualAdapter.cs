@@ -16,48 +16,6 @@ namespace Subject42.Visuals
             target.Unsupported.Add("Размер тела снаряда BodySize связан со swept hit shape: изменять через визуальный ползунок небезопасно.");
             target.Unsupported.Add("Геометрия/радиусы орбит, hit radius, отдача и тайминги атак относятся к gameplay и не включены.");
             target.Unsupported.Add("FlashLink: настройки семейства действуют на активные вспышки; уже завершившаяся вспышка не возрождается при увеличении времени.");
-            const string rings = "ORBITAL · Кольца";
-            Add(target, "config.RingSurface.Saturation", "Насыщенность", rings,
-                () => config.RingSurface.Saturation, x => config.RingSurface.Saturation = x, 0, 8);
-            Add(target, "config.RingSurface.Brightness", "Яркость", rings,
-                () => config.RingSurface.Brightness, x => config.RingSurface.Brightness = x, 0, 32);
-            Add(target, "config.RingSurface.Glow", "Свечение", rings,
-                () => config.RingSurface.Glow, x => config.RingSurface.Glow = x, 0, 16);
-            Add(target, "config.RingLineWidth", "Толщина", rings,
-                () => config.RingLineWidth, x => config.RingLineWidth = x, 0, 2);
-            Add(target, "config.RingLineAlpha", "Прозрачность", rings,
-                () => config.RingLineAlpha, x => config.RingLineAlpha = x, 0, 1);
-            Add(target, "config.RingSurface.Pattern", "Узор: 0 цельный / 1 штрих / 2 энергия", rings,
-                () => (int)config.RingSurface.Pattern, x => config.RingSurface.Pattern = (OrbitalPresentationConfig.RingPattern)Mathf.RoundToInt(x), 0, 2);
-            Add(target, "config.RingSurface.DashCount", "Число штрихов", rings,
-                () => config.RingSurface.DashCount, x => config.RingSurface.DashCount = Mathf.RoundToInt(x), 1, 512);
-            Add(target, "config.RingSurface.DashFill", "Заполнение штриха", rings,
-                () => config.RingSurface.DashFill, x => config.RingSurface.DashFill = x, 0, 1);
-            Add(target, "config.RingSurface.PatternSpeed", "Скорость узора", rings,
-                () => config.RingSurface.PatternSpeed, x => config.RingSurface.PatternSpeed = x, -10, 10);
-            Add(target, "config.RingUpgradeBrightness", "Яркость улучшения", rings,
-                () => config.RingUpgradeBrightness, x => config.RingUpgradeBrightness = x, 0, 16);
-            Add(target, "config.RingUpgradeGlow", "Свечение улучшения", rings,
-                () => config.RingUpgradeGlow, x => config.RingUpgradeGlow = x, 0, 16);
-            Add(target, "config.RingHighlightBrightness", "Яркость выделения", rings,
-                () => config.RingHighlightBrightness, x => config.RingHighlightBrightness = x, 0, 16);
-            Add(target, "config.RingDimmedAlpha", "Alpha затемнённых колец", rings,
-                () => config.RingDimmedAlpha, x => config.RingDimmedAlpha = x, 0, 1);
-            for (int tier = 1; tier <= 4; tier++)
-            {
-                int level = tier;
-                string id = "config.Tier" + new[] { "", "I", "II", "III", "IV" }[level];
-                string category = "ORBITAL · Уровень кольца " + level;
-                VisualProperties.Color(target.Properties, id + ".BaseColor", "Цвет", category,
-                    () => config.GetRingTier(level).BaseColor, color => ChangeTier(config, level, s => { s.BaseColor = color; return s; }), 16);
-                AddTier(target, config, level, id, "Alpha", "Прозрачность", category, s => s.Alpha, (s, x) => { s.Alpha = x; return s; }, 1);
-                AddTier(target, config, level, id, "Emission", "Интенсивность", category, s => s.Emission, (s, x) => { s.Emission = x; return s; }, 32);
-                AddTier(target, config, level, id, "Glow", "Свечение", category, s => s.Glow, (s, x) => { s.Glow = x; return s; }, 16);
-                AddTier(target, config, level, id, "CoreWhitening", "Белая сердцевина", category, s => s.CoreWhitening, (s, x) => { s.CoreWhitening = x; return s; }, 1);
-                AddTier(target, config, level, id, "PulseStrength", "Сила пульсации", category, s => s.PulseStrength, (s, x) => { s.PulseStrength = x; return s; }, 1);
-                AddTier(target, config, level, id, "PulseSpeed", "Частота пульсации", category, s => s.PulseSpeed, (s, x) => { s.PulseSpeed = x; return s; }, 20);
-            }
-
             const string cannon = "ORBITAL · Оружейные эффекты";
             Add(target, "config.ShotHaloDuration", "Время ореола выстрела", cannon, () => config.ShotHaloDuration, x => config.ShotHaloDuration = x, 0, 5);
             Add(target, "config.ShotHaloAlpha", "Alpha ореола выстрела", cannon, () => config.ShotHaloAlpha, x => config.ShotHaloAlpha = x, 0, 1);
@@ -74,7 +32,6 @@ namespace Subject42.Visuals
                 AddFlashFamily(target, config, family);
             foreach (var property in target.Properties)
             {
-                if (property.Id is "config.RingSurface.Pattern" or "config.RingSurface.DashCount") property.IsInteger = true;
                 if (property.Id is "config.ProjectileMuzzleDuration" or "config.ProjectileImpactDuration")
                     property.Note = "Базовое время для следующих вспышек. Активные вспышки регулирует множитель времени соответствующего семейства FlashLink.";
                 if (property.Id == "config.ShotHaloAlpha")
@@ -125,25 +82,72 @@ namespace Subject42.Visuals
             }, min, max));
         }
 
-        private static void AddTier(VisualTarget target, OrbitalPresentationConfig config, int tier, string id,
-            string property, string label, string category, Func<OrbitalPresentationConfig.RingTierStyle, float> read,
-            Func<OrbitalPresentationConfig.RingTierStyle, float, OrbitalPresentationConfig.RingTierStyle> write, float max)
+        // Import compatibility only: these historical profile IDs are no longer Studio properties.
+        // Keep their precedence, application bounds and restoration without constructing hidden UI controls.
+        internal static (Action apply, Action restore, int originalMatches) BindSavedRingValues(VisualProfile profile, VisualProfile original)
         {
-            Add(target, id + "." + property, label, category, () => read(config.GetRingTier(tier)),
-                x => ChangeTier(config, tier, style => write(style, x)), 0, max);
-        }
-
-        private static void ChangeTier(OrbitalPresentationConfig config, int tier,
-            Func<OrbitalPresentationConfig.RingTierStyle, OrbitalPresentationConfig.RingTierStyle> change)
-        {
-            var style = change(config.GetRingTier(tier));
-            switch (tier)
+            if (!OrbitalPresentationConfig.IsConfigured) return (null, null, 0);
+            var config = OrbitalPresentationConfig.Active;
+            Action writes = null, restores = null;
+            int originalMatches = 0;
+            void Saved(string id, Func<float> read, Action<float> write, float min, float max, bool integer = false)
             {
-                case 1: config.TierI = style; break;
-                case 2: config.TierII = style; break;
-                case 3: config.TierIII = style; break;
-                case 4: config.TierIV = style; break;
+                if (original != null && original.TryGet("Type", "config:orbital", id, out _)) originalMatches++;
+                if (profile == null || !profile.TryResolve("ORBITAL", "config:orbital", "config:orbital", id, out float value) ||
+                    float.IsNaN(value) || float.IsInfinity(value)) return;
+                float current = read();
+                value = Mathf.Clamp(value, min, max);
+                if (integer) value = Mathf.Round(value);
+                writes += () => write(value);
+                restores += () => write(current);
             }
+            Saved("config.RingSurface.Saturation", () => config.RingSurface.Saturation, x => config.RingSurface.Saturation = x, 0, 8);
+            Saved("config.RingSurface.Brightness", () => config.RingSurface.Brightness, x => config.RingSurface.Brightness = x, 0, 32);
+            Saved("config.RingSurface.Glow", () => config.RingSurface.Glow, x => config.RingSurface.Glow = x, 0, 16);
+            Saved("config.RingLineWidth", () => config.RingLineWidth, x => config.RingLineWidth = x, 0, 2);
+            Saved("config.RingLineAlpha", () => config.RingLineAlpha, x => config.RingLineAlpha = x, 0, 1);
+            Saved("config.RingSurface.Pattern", () => (int)config.RingSurface.Pattern, x => config.RingSurface.Pattern = (OrbitalPresentationConfig.RingPattern)(int)x, 0, 2, true);
+            Saved("config.RingSurface.DashCount", () => config.RingSurface.DashCount, x => config.RingSurface.DashCount = (int)x, 1, 512, true);
+            Saved("config.RingSurface.DashFill", () => config.RingSurface.DashFill, x => config.RingSurface.DashFill = x, 0, 1);
+            Saved("config.RingSurface.PatternSpeed", () => config.RingSurface.PatternSpeed, x => config.RingSurface.PatternSpeed = x, -10, 10);
+            Saved("config.RingUpgradeBrightness", () => config.RingUpgradeBrightness, x => config.RingUpgradeBrightness = x, 0, 16);
+            Saved("config.RingUpgradeGlow", () => config.RingUpgradeGlow, x => config.RingUpgradeGlow = x, 0, 16);
+            Saved("config.RingHighlightBrightness", () => config.RingHighlightBrightness, x => config.RingHighlightBrightness = x, 0, 16);
+            Saved("config.RingDimmedAlpha", () => config.RingDimmedAlpha, x => config.RingDimmedAlpha = x, 0, 1);
+            for (int tier = 1; tier <= 4; tier++)
+            {
+                int level = tier;
+                string id = "config.Tier" + new[] { "", "I", "II", "III", "IV" }[level];
+                void TierValue(string property, Func<OrbitalPresentationConfig.RingTierStyle, float> read,
+                    Func<OrbitalPresentationConfig.RingTierStyle, float, OrbitalPresentationConfig.RingTierStyle> change, float max)
+                {
+                    Saved(id + "." + property, () => read(config.GetRingTier(level)), value =>
+                    {
+                        var style = change(config.GetRingTier(level), value);
+                        switch (level)
+                        {
+                            case 1: config.TierI = style; break;
+                            case 2: config.TierII = style; break;
+                            case 3: config.TierIII = style; break;
+                            case 4: config.TierIV = style; break;
+                        }
+                    }, 0, max);
+                }
+                string[] channels = { "r", "g", "b", "a" };
+                for (int i = 0; i < channels.Length; i++)
+                {
+                    int channel = i;
+                    TierValue("BaseColor." + channels[i], s => s.BaseColor[channel], (s, x) => { s.BaseColor[channel] = x; return s; }, i == 3 ? 1 : 16);
+                }
+                TierValue("Alpha", s => s.Alpha, (s, x) => { s.Alpha = x; return s; }, 1);
+                TierValue("Emission", s => s.Emission, (s, x) => { s.Emission = x; return s; }, 32);
+                TierValue("Glow", s => s.Glow, (s, x) => { s.Glow = x; return s; }, 16);
+                TierValue("CoreWhitening", s => s.CoreWhitening, (s, x) => { s.CoreWhitening = x; return s; }, 1);
+                TierValue("PulseStrength", s => s.PulseStrength, (s, x) => { s.PulseStrength = x; return s; }, 1);
+                TierValue("PulseSpeed", s => s.PulseSpeed, (s, x) => { s.PulseSpeed = x; return s; }, 20);
+            }
+            if (writes == null) return (null, null, originalMatches);
+            return (() => { if (config != null) writes(); }, () => { if (config != null) restores(); }, originalMatches);
         }
     }
 }

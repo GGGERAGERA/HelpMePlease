@@ -13,6 +13,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 {
     public const string ScenePath =
         "Assets/_Project/Dev/Labs/WorldSystemsLab/WorldSystemsLab.unity";
+    [SerializeField] private WorldSystemsLabOrbitExperiment orbitExperiment;
 
     [Header("Production scene objects")]
     [SerializeField] private Transform player;
@@ -29,6 +30,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     [SerializeField] private WorldEvent[] eventPrefabs;
     [SerializeField] private ExplorationSectorConfig explorationConfig;
     [SerializeField] private PropScatterProfile propScatterProfile;
+    [Header("Stasis presentation — lab only")]
+    [SerializeField] private Sprite[] stasisDebrisSprites;
 
     [Header("Corridor V2 prototype only")]
     [SerializeField] private RocketHazardDefinition corridorRocket;
@@ -122,6 +125,9 @@ public sealed class WorldSystemsLabController : MonoBehaviour
     }
 
     public bool SpawnNormalAnomaly()
+        => SpawnNormalAnomaly(null);
+
+    public bool SpawnNormalAnomaly(LocalAnomalyData selected)
     {
         if (!CanSpawnSite() || normalAnomalyAssets.Length == 0)
             return false;
@@ -133,7 +139,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             return false;
         }
 
-        LocalAnomalyData data = normalAnomalyAssets[
+        LocalAnomalyData data = selected != null ? selected : normalAnomalyAssets[
             nextNormalAnomaly++ % normalAnomalyAssets.Length
         ];
         var region = territoryRegions[nextNormalTerritory];
@@ -160,6 +166,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         spawnedSites.Add(site);
+        if (data.AnomalyType == LocalAnomalyType.Stasis)
+            StasisFieldLabVisual.Attach(site, stasisDebrisSprites);
         nextNormalTerritory++;
         notice = $"Normal anomaly: {data.AnomalyType}";
         return true;
@@ -313,7 +321,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
             FirstSiteEvent(), events, anomalies, new Vector2(1000, 1000), .5f, explorationConfig.AnomalyTerritoryFill);
         ClearBootstrapEvent(site);
         if (!initialized || site.AnomalyZone == null) { site.RemoveForLayout(); return false; }
-        spawnedSites.Add(site); return true;
+        spawnedSites.Add(site); StasisFieldLabVisual.Attach(site, stasisDebrisSprites); return true;
     }
 
     public bool SpawnPortalPair()
@@ -424,6 +432,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
     private void OnGUI()
     {
+        if (orbitExperiment != null && orbitExperiment.Active) return;
 
         if (!panelVisible)
         {
@@ -433,7 +442,7 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         EnsureStyles();
-        float width = Mathf.Min(360f, Screen.width * 0.36f);
+        float width = Mathf.Min(460f, Screen.width * 0.40f);
         Rect panel = new(8f, 8f, width, Mathf.Max(200f, Screen.height - 16f));
         GUI.Box(panel, GUIContent.none);
         GUILayout.BeginArea(new Rect(
@@ -459,6 +468,8 @@ public sealed class WorldSystemsLabController : MonoBehaviour
         }
 
         Section("ANOMALY");
+        if (orbitExperiment != null && GUILayout.Button("Segmented Orbit × 5 аномалий", buttonStyle))
+            orbitExperiment.Begin();
         if (GUILayout.Button("spawn normal zone", buttonStyle))
             SpawnNormalAnomaly();
         if (GUILayout.Button("spawn special zone", buttonStyle))
@@ -531,23 +542,25 @@ public sealed class WorldSystemsLabController : MonoBehaviour
 
         titleStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 18,
+            fontSize = 24,
             fontStyle = FontStyle.Bold,
             normal = { textColor = new Color(0.3f, 0.95f, 1f) }
         };
         sectionStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 13,
+            fontSize = 18,
             fontStyle = FontStyle.Bold,
             normal = { textColor = new Color(1f, 0.78f, 0.28f) }
         };
         buttonStyle = new GUIStyle(GUI.skin.button)
         {
             alignment = TextAnchor.MiddleLeft,
-            fixedHeight = 26f
+            fontSize = 18,
+            fixedHeight = 40f
         };
         noteStyle = new GUIStyle(GUI.skin.label)
         {
+            fontSize = 17,
             wordWrap = true,
             normal = { textColor = new Color(0.8f, 0.86f, 0.9f) }
         };

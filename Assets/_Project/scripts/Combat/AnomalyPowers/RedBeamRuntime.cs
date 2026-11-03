@@ -4,8 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 internal sealed class RedBeamRuntime :
     MonoBehaviour,
-    IAnomalyPowerRuntime,
-    IAnomalyEvolutionPower
+    IAnomalyPowerRuntime
 {
     private const int MaximumOverlapHits = 64;
 
@@ -19,13 +18,8 @@ internal sealed class RedBeamRuntime :
     [SerializeField, Min(0f)] private float contactDamage = 35f;
     [SerializeField, Min(0.05f)] private float perEnemyHitCooldown = 0.65f;
 
-    [Header("Beam II Endpoint Payload")]
-    [SerializeField, Min(0.05f)] private float hybridPayloadInterval = 0.8f;
-    [SerializeField, Min(0.1f)] private float payloadTargetRadius = 9f;
-
-    [Header("Beam III Dual-End Overdrive")]
+    [Header("Beam III Rotation Overdrive")]
     [SerializeField, Min(1f)] private float overdriveRotationMultiplier = 1.5f;
-    [SerializeField, Min(0.05f)] private float overdrivePayloadInterval = 0.4f;
 
     private readonly Dictionary<EnemyHealth, float> nextEnemyHitAt = new();
     private readonly Collider2D[] overlapHits = new Collider2D[MaximumOverlapHits];
@@ -33,10 +27,7 @@ internal sealed class RedBeamRuntime :
     private Transform constructVisual;
     private LineRenderer glowLine;
     private LineRenderer coreLine;
-    private BaseWeapon payloadWeapon;
     private float rotationAngle;
-    private float nextPayloadAt;
-    private bool useEndpointA = true;
     private int level = 1;
 
     public AnomalyPowerType Type => AnomalyPowerType.RedBeam;
@@ -45,26 +36,6 @@ internal sealed class RedBeamRuntime :
     public void SetLevel(int value)
     {
         level = AnomalyPowerLevelProfiles.ClampLevel(value);
-        if (level < 3)
-            useEndpointA = true;
-    }
-
-    public void ConfigureEvolutionPayload(
-        BaseWeapon weapon,
-        EvolutionDefinition definition,
-        int anomalyLevel)
-    {
-        payloadWeapon = weapon;
-        SetLevel(anomalyLevel);
-        nextPayloadAt = Time.time + GetPayloadInterval();
-        useEndpointA = true;
-    }
-
-    public void DisableEvolutionPayload()
-    {
-        payloadWeapon = null;
-        nextPayloadAt = 0f;
-        useEndpointA = true;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -88,7 +59,6 @@ internal sealed class RedBeamRuntime :
     public void Deactivate()
     {
         enabled = false;
-        DisableEvolutionPayload();
         nextEnemyHitAt.Clear();
 
         if (constructVisual != null)
@@ -127,7 +97,6 @@ internal sealed class RedBeamRuntime :
 
         UpdateConstructGeometry(attackSize);
         ApplyContactDamage(attackSize);
-        EmitPayloadIfReady(attackSize);
     }
 
     private void UpdateConstructGeometry(float attackSize)
@@ -179,65 +148,6 @@ internal sealed class RedBeamRuntime :
                 contactDamage);
             enemy.TakeDamage(attack.Damage, hitPoint, attack.IsCritical);
         }
-    }
-
-    private void EmitPayloadIfReady(float attackSize)
-    {
-        if (level < 2 || payloadWeapon == null || Time.time < nextPayloadAt)
-            return;
-
-        nextPayloadAt = Time.time + GetPayloadInterval();
-        Vector2 endpoint = GetPayloadEndpoint(attackSize);
-        if (level >= 3)
-            useEndpointA = !useEndpointA;
-
-        if (!TryFindNearestEnemy(endpoint, payloadTargetRadius, out EnemyHealth target))
-            return;
-
-        Vector2 direction = (Vector2)target.transform.position - endpoint;
-        if (direction.sqrMagnitude <= 0.001f)
-            return;
-
-        payloadWeapon.EmitAttack(endpoint, direction.normalized);
-    }
-
-    private Vector2 GetPayloadEndpoint(float attackSize)
-    {
-        Vector2 direction = DirectionFromAngle(rotationAngle);
-        Vector2 center = GetAnchorPosition() + direction * orbitRadius;
-        float halfLength = segmentLength * attackSize * 0.5f;
-        return center + direction * (useEndpointA ? halfLength : -halfLength);
-    }
-
-    private float GetPayloadInterval()
-    {
-        return level >= 3
-            ? overdrivePayloadInterval
-            : hybridPayloadInterval;
-    }
-
-    private static bool TryFindNearestEnemy(
-        Vector2 origin,
-        float radius,
-        out EnemyHealth nearest)
-    {
-        nearest = null;
-        float nearestDistanceSquared = radius * radius;
-        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
-        {
-            if (!IsValidTarget(enemy))
-                continue;
-
-            float distanceSquared =
-                ((Vector2)enemy.transform.position - origin).sqrMagnitude;
-            if (distanceSquared > nearestDistanceSquared)
-                continue;
-
-            nearest = enemy;
-            nearestDistanceSquared = distanceSquared;
-        }
-
-        return nearest != null;
     }
 
     private void BuildConstructVisual()
@@ -311,14 +221,9 @@ internal sealed class RedBeamRuntime :
         rotationSpeed = Mathf.Max(1f, rotationSpeed);
         contactDamage = Mathf.Max(0f, contactDamage);
         perEnemyHitCooldown = Mathf.Max(0.05f, perEnemyHitCooldown);
-        hybridPayloadInterval = Mathf.Max(0.05f, hybridPayloadInterval);
-        payloadTargetRadius = Mathf.Max(0.1f, payloadTargetRadius);
         overdriveRotationMultiplier = Mathf.Max(
             1f,
             overdriveRotationMultiplier);
-        overdrivePayloadInterval = Mathf.Max(
-            0.05f,
-            overdrivePayloadInterval);
     }
 
     private void OnDestroy()

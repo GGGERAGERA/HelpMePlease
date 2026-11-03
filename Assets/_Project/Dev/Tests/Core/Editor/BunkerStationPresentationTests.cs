@@ -292,19 +292,7 @@ public sealed class BunkerStationPresentationTests
     }
     private static void SetResolution()
     {
-        var assembly=typeof(Editor).Assembly;
-        var sizesType=assembly.GetType("UnityEditor.GameViewSizes");
-        var sizes=typeof(ScriptableSingleton<>).MakeGenericType(sizesType).GetProperty("instance").GetValue(null);
-        var group=sizesType.GetMethod("GetGroup").Invoke(sizes,new object[]{0});
-        var type=group.GetType(); int count=(int)type.GetMethod("GetTotalCount").Invoke(group,null), index=-1;
-        for(int i=0;i<count;i++)
-        { var size=type.GetMethod("GetGameViewSize").Invoke(group,new object[]{i});
-          if((int)size.GetType().GetProperty("width").GetValue(size)==1600 && (int)size.GetType().GetProperty("height").GetValue(size)==900) {index=i;break;} }
-        if(index<0)
-        { var size=Activator.CreateInstance(assembly.GetType("UnityEditor.GameViewSize"),new object[]{Enum.ToObject(assembly.GetType("UnityEditor.GameViewSizeType"),1),1600,900,"Station QA 1600×900"});
-          type.GetMethod("AddCustomSize").Invoke(group,new[]{size}); index=count; }
-        var view=EditorWindow.GetWindow(assembly.GetType("UnityEditor.GameView"));
-        view.GetType().GetProperty("selectedSizeIndex").SetValue(view,index); view.Show();
+        BunkerDebugTools.SetGameView1600();
     }
 }
 #endif

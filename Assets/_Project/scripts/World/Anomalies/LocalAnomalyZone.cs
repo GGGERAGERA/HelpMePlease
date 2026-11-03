@@ -12,6 +12,7 @@ public abstract class LocalAnomalyZone : MonoBehaviour
         ? Data.AnomalyType
         : default;
     public Collider2D FocusArea => AreaCollider;
+    public virtual LevelMechanicPresentationData Presentation => Data != null ? Data.Presentation : default;
 
     public void Initialize(
         LocalAnomalyData data,

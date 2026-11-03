@@ -24,7 +24,7 @@ Lab scenes are isolated Editor/development tools, absent from production Build S
 
 ## F1 and other retained tools
 
-`Labs/F1` holds inspector, practice and surface comparison assets. Enemy gallery visual data and the older test scene are under this Dev domain. BunkerSimple variants are manual source scenes used by existing authoring tools; their old navigation runtime remains Dev-only. Source art and unrelated manual tools are retained where current use or abandonment cannot be established.
+`Labs/F1` holds inspector, practice and surface comparison assets. Enemy gallery visual data and the older test scene are under this Dev domain. Source art and unrelated manual tools are retained where current use or abandonment cannot be established.
 
 `GoldenPathLab/GoldenPathLab.unity` owns opt-in bot/batch/replay history. Running a narrow QA filter does not launch it. Generated results go to ignored `Artifacts/GeneratedQA`.
 

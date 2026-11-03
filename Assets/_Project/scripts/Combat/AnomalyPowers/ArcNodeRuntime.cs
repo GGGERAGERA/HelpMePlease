@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAnomalyEvolutionPower
+internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime
 {
     private const float BaseDamage = 40f;
     private const float VisualRadius = 0.53f;
@@ -20,17 +20,8 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
     [SerializeField, Min(0.1f)] private float overshootDistance = 3f;
     [SerializeField, Min(0.01f)] private float returnRadius = 0.3f;
 
-    [Header("Arc II Moving Weapon Platform")]
-    [SerializeField, Min(0.05f)] private float hybridPayloadInterval = 0.75f;
-
     [Header("Arc III Flight Overdrive")]
     [SerializeField, Min(1f)] private float overdriveSpeedMultiplier = 1.35f;
-    [SerializeField, Min(0.05f)] private float overdrivePayloadInterval = 0.2f;
-    [SerializeField, Range(1f, 180f)] private float overdrivePayloadAngularStep = 47f;
-    [SerializeField, Range(0f, 45f)] private float overdrivePayloadJitter = 15f;
-
-    [Header("Payload Safety")]
-    [SerializeField, Min(0f)] private float minPayloadInterval = 0.06f;
 
     private Material material;
     private Transform nodeVisual;
@@ -38,15 +29,10 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
     private readonly HashSet<EnemyHealth> outboundHits = new();
     private readonly HashSet<EnemyHealth> returningHits = new();
     private readonly RaycastHit2D[] sweepHits = new RaycastHit2D[MaximumSweepHits];
-    private EnemyHealth lastCollisionEnemy;
-    private BaseWeapon payloadWeapon;
     private MovementState state;
-    private float lastPayloadTime = float.NegativeInfinity;
     private float hitFlashUntil;
     private float idlePhase;
     private float nextIdleTargetSearch;
-    private float nextPayloadAt;
-    private float payloadAngle;
     private Vector2 outboundDirection;
     private Vector2 outboundEndpoint;
     private int level = 1;
@@ -58,14 +44,6 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
     {
         level = AnomalyPowerLevelProfiles.ClampLevel(value);
     }
-
-    public void ConfigureEvolutionPayload(BaseWeapon weapon, EvolutionDefinition definition, int anomalyLevel)
-    {
-        payloadWeapon = weapon;
-        SetLevel(anomalyLevel);
-    }
-
-    public void DisableEvolutionPayload() => payloadWeapon = null;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void RegisterRuntime()
@@ -85,10 +63,8 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
     public void Deactivate()
     {
         enabled = false;
-        DisableEvolutionPayload();
         outboundHits.Clear();
         returningHits.Clear();
-        lastCollisionEnemy = null;
         if (trail != null)
         {
             trail.emitting = false;
@@ -156,9 +132,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
             (distanceToTarget + overshootDistance);
         outboundHits.Clear();
         returningHits.Clear();
-        lastCollisionEnemy = null;
         state = MovementState.Outbound;
-        nextPayloadAt = Time.time + GetPayloadInterval();
     }
 
     private void UpdateOutbound(float attackSize)
@@ -182,8 +156,6 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
             returningHits.Clear();
             return;
         }
-
-        UpdateMovementPayload();
     }
 
     private void UpdateReturning(float attackSize)
@@ -206,11 +178,8 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
         {
             nodeVisual.position = returnTarget;
             state = MovementState.Idle;
-            lastCollisionEnemy = null;
             return;
         }
-
-        UpdateMovementPayload();
     }
 
     private void ApplySweptDamage(
@@ -246,79 +215,13 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
                 gameObject,
                 BaseDamage);
             enemy.TakeDamage(attack.Damage, hitPoint, attack.IsCritical);
-            lastCollisionEnemy = enemy;
             hitFlashUntil = Time.time + HitFlashDuration;
         }
-    }
-
-    private void UpdateMovementPayload()
-    {
-        if (level < 2 || payloadWeapon == null ||
-            Time.time < nextPayloadAt)
-        {
-            return;
-        }
-
-        nextPayloadAt = Time.time + GetPayloadInterval();
-        if (level >= 3)
-        {
-            float jitter = Random.Range(
-                -overdrivePayloadJitter,
-                overdrivePayloadJitter);
-            Vector2 radialDirection =
-                DirectionFromAngle(payloadAngle + jitter);
-            TryEmitPayload(radialDirection);
-            payloadAngle = Mathf.Repeat(
-                payloadAngle + overdrivePayloadAngularStep,
-                360f);
-            return;
-        }
-
-        EnemyHealth target = FindNearestTarget(
-            nodeVisual.position,
-            targetSearchRadius,
-            lastCollisionEnemy);
-        if (target == null)
-        {
-            target = FindNearestTarget(
-                nodeVisual.position,
-                targetSearchRadius,
-                null);
-        }
-
-        if (target == null)
-            return;
-
-        Vector2 targetDirection =
-            (Vector2)target.transform.position -
-            (Vector2)nodeVisual.position;
-        TryEmitPayload(targetDirection);
     }
 
     private float GetFlightSpeed()
     {
         return flightSpeed * (level >= 3 ? overdriveSpeedMultiplier : 1f);
-    }
-
-    private float GetPayloadInterval()
-    {
-        return level >= 3
-            ? overdrivePayloadInterval
-            : hybridPayloadInterval;
-    }
-
-    private bool TryEmitPayload(Vector2 direction)
-    {
-        if (payloadWeapon == null || direction.sqrMagnitude <= 0.001f ||
-            Time.time < lastPayloadTime + minPayloadInterval)
-        {
-            return false;
-        }
-
-        lastPayloadTime = Time.time;
-        return payloadWeapon.EmitAttack(
-            nodeVisual.position,
-            direction.normalized);
     }
 
     private EnemyHealth FindNearestTarget(
@@ -346,12 +249,6 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
     private static bool IsValidTarget(EnemyHealth enemy)
     {
         return enemy != null && !enemy.IsDead && enemy.gameObject.activeInHierarchy;
-    }
-
-    private static Vector2 DirectionFromAngle(float angle)
-    {
-        float radians = angle * Mathf.Deg2Rad;
-        return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
     }
 
     private void BuildNodeVisual()
@@ -442,20 +339,7 @@ internal sealed class ArcNodeRuntime : MonoBehaviour, IAnomalyPowerRuntime, IAno
         hitRadius = Mathf.Max(0.01f, hitRadius);
         overshootDistance = Mathf.Max(0.1f, overshootDistance);
         returnRadius = Mathf.Max(0.01f, returnRadius);
-        hybridPayloadInterval = Mathf.Max(0.05f, hybridPayloadInterval);
         overdriveSpeedMultiplier = Mathf.Max(1f, overdriveSpeedMultiplier);
-        overdrivePayloadInterval = Mathf.Max(
-            0.05f,
-            overdrivePayloadInterval);
-        overdrivePayloadAngularStep = Mathf.Clamp(
-            overdrivePayloadAngularStep,
-            1f,
-            180f);
-        overdrivePayloadJitter = Mathf.Clamp(
-            overdrivePayloadJitter,
-            0f,
-            45f);
-        minPayloadInterval = Mathf.Max(0f, minPayloadInterval);
     }
 
     private void OnDestroy()
