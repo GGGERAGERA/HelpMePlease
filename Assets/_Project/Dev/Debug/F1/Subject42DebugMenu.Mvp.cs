@@ -680,59 +680,6 @@ public sealed partial class Subject42DebugMenu
 
     private void BuildMvpWorldEvents()
     {
-        var events = FindFirstObjectByType<WorldEventSpawner>();
-        AddSectionTitle("Эксперимент: зачистка огневой группы", "Текущий сектор · default OFF · публично выключен · включение помечает попытку Development");
-        MvpRow("Зачистка огневой группы", events != null && events.FireteamClearanceExperimentEnabled ? "Включено" : "Выключено",
-            "ПЕРЕКЛЮЧИТЬ", MvpCanEdit && events != null && events.isActiveAndEnabled, () =>
-            {
-                if (!MvpCanEdit || events == null || !events.isActiveAndEnabled) return;
-                events.DebugSetFireteamClearanceExperiment(!events.FireteamClearanceExperimentEnabled, out enemyDebugStatus);
-                RefreshCurrentTab();
-            });
-        MvpRow("Создать огневую группу", "Один дополнительный Development-экземпляр сверх обычной вместимости. Перед стартом закончите другое активное событие. Начните обычной интеракцией: три отмеченных стрелка за 35 с; за успех — стандартная награда события.",
-            "СОЗДАТЬ ЗАЧИСТКУ", MvpCanEdit && events != null && events.isActiveAndEnabled &&
-                events.FireteamClearanceExperimentEnabled && events.FireteamClearanceExperimentInstance == null, () =>
-            {
-                if (!MvpCanEdit || events == null || !events.isActiveAndEnabled) return;
-                if (!events.FireteamClearanceExperimentEnabled || events.FireteamClearanceExperimentInstance != null)
-                {
-                    enemyDebugStatus = !events.FireteamClearanceExperimentEnabled ? "Сначала включите эксперимент зачистки." : "Зачистка уже создана.";
-                    RefreshCurrentTab();
-                    return;
-                }
-                if (events.DebugSpawnFireteamClearance(out enemyDebugStatus)) CloseMenu();
-                else RefreshCurrentTab();
-            });
-        MvpRow("Убрать только зачистку", "OFF и удаление отменяют собственное событие и его группу без награды.",
-            "УБРАТЬ ЗАЧИСТКУ", MvpCanEdit && events != null && events.isActiveAndEnabled &&
-                events.FireteamClearanceExperimentInstance != null, () =>
-            {
-                if (!MvpCanEdit || events == null || !events.isActiveAndEnabled) return;
-                events.DebugClearFireteamClearance(out enemyDebugStatus);
-                RefreshCurrentTab();
-            });
-        AddSectionTitle("Эксперимент: эвакуация груза", "Текущий сектор · публично выключен · включение помечает попытку Development");
-        MvpRow("Сопровождение груза", events != null && events.EscortCargoExperimentEnabled ? "Включено" : "Выключено",
-            "ПЕРЕКЛЮЧИТЬ", events != null && MvpCanEdit, () =>
-            {
-                if (!MvpCanEdit || events == null) return;
-                events.DebugSetEscortCargoExperiment(!events.EscortCargoExperimentEnabled, out enemyDebugStatus);
-                RefreshCurrentTab();
-            });
-        MvpRow("Создать груз", "Штатное размещение и лимит событий. После создания F1 закроется; подойдите и примите событие обычной интеракцией.",
-            "СОЗДАТЬ ГРУЗ", events != null && MvpCanEdit && events.EscortCargoExperimentEnabled, () =>
-            {
-                if (!MvpCanEdit || events == null) return;
-                if (events.DebugSpawnEscortCargo(out enemyDebugStatus)) CloseMenu();
-                else RefreshCurrentTab();
-            });
-        MvpRow("Убрать только груз", "Без результата и награды. Выключение переключателя само по себе груз не удаляет.",
-            "УБРАТЬ ГРУЗ", events != null && MvpCanEdit && events.EscortCargoExperimentInstance != null, () =>
-            {
-                if (!MvpCanEdit || events == null) return;
-                events.DebugClearEscortCargo(out enemyDebugStatus);
-                RefreshCurrentTab();
-            });
         var sector = ProductionExplorationSectorController.ActiveInstance;
         if (sector != null)
         {
@@ -741,7 +688,6 @@ public sealed partial class Subject42DebugMenu
             MvpRow("Парные порталы", "Безопасное размещение существующим сервисом", "СОЗДАТЬ", MvpCanEdit, () => { mvpStatus = sector.SpawnPortalPair() ? "Порталы созданы" : "Нет безопасных мест для порталов"; RefreshCurrentTab(); });
             MvpRow("Ресурсные узлы", "Создать узлы в текущем секторе", "СОЗДАТЬ", MvpCanEdit, () => { mvpStatus = $"Создано узлов: {sector.SpawnResourceNodes()}"; RefreshCurrentTab(); });
         }
-        AddHint(enemyDebugStatus);
     }
 
     private void BuildMvpPlayer()
@@ -755,8 +701,9 @@ public sealed partial class Subject42DebugMenu
         BuildMvpPickupTools();
         AddSectionTitle("Текущий забег", "");
         MvpRow("Текущий ран", $"Сектор {run?.CurrentSector?.SectorNumber} · орбит {MvpStation?.Rings.Count} · оружий {MvpStation?.Modules.Count} · угроза {run?.ThreatValue:0.0}");
-        bool canExit = MvpCanEdit && runFlowController != null && runFlowController.CanDebugCompleteCurrentLevel && runFlowController.IsExitUnlocked;
-        MvpRow("Завершить текущий сектор", canExit ? "Через штатный выход и выбор следующего сектора" : "Выход ещё недоступен или ран занят наградой", "ЗАВЕРШИТЬ", canExit, () => { CloseMenu(); CompleteLevel(); });
+        bool canExit = MvpCanEdit && runFlowController != null && runFlowController.CanDebugCompleteCurrentLevel;
+        MvpRow("Завершить текущий сектор", canExit ? "Досрочно довести таймер до конца и продолжить забег через штатный переход" : "Завершение сейчас недоступно",
+            "ПРОЙТИ СЕКТОР", canExit, () => { CloseMenu(); runFlowController?.TryDebugCompleteCurrentLevel(); });
         MvpRow("Вернуться в бункер", "Штатное завершение рана и очистка временного состояния", "ВЕРНУТЬСЯ", run != null && !run.IsRunEnded && RunEndService.Instance != null && !SceneTransitionOverlay.IsTransitioning,
             () => { CloseMenu(); RunEndService.Instance.ReturnToBunker(); });
         BuildMvpWorldEvents();

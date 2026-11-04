@@ -13,16 +13,18 @@ public sealed class WorldHazardDirector : MonoBehaviour
     private GameplayAreaService area;
     private PlayerHealth player;
     private int runId;
+    private bool stopAtSectorDeadline;
     private float timer;
     public int AttacksStarted { get; private set; }
     public Vector3 LastTarget { get; private set; }
     public bool HasPendingAttack => attacks.Exists(attack => attack.IsBusy);
 
     public void Initialize(WorldHazardPreset config, RunFlowController runFlow,
-        CharacterSpawner characterSpawner, GameplayAreaService gameplayArea)
+        CharacterSpawner characterSpawner, GameplayAreaService gameplayArea, bool stopAtDeadline = false)
     {
         DisposeAttacks();
         preset = config;
+        stopAtSectorDeadline = stopAtDeadline;
         flow = runFlow;
         spawner = characterSpawner;
         area = gameplayArea;
@@ -42,6 +44,7 @@ public sealed class WorldHazardDirector : MonoBehaviour
 
     private bool CombatAllowed() => isActiveAndEnabled && preset != null && flow != null &&
         flow.isActiveAndEnabled && flow.Phase == RunPhase.NormalSector &&
+        (!stopAtSectorDeadline || flow.ExitMinimumTimeRemaining > 0f) &&
         RunStateManager.Instance != null && RunStateManager.Instance.IsActiveRun(runId) &&
         player != null && player.isActiveAndEnabled && !player.IsDead &&
         !TutorialController.IsTutorialSector && !SceneTransitionOverlay.IsTransitioning;

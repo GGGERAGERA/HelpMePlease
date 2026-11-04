@@ -691,40 +691,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         RefreshCurrentTab();
     }
 
-    private void CompleteLevel()
-    {
-        CloseMenu();
-        EnemyHealth boss = FindAliveBoss();
-
-        if (boss != null)
-            boss.TakeDamage(float.MaxValue, boss.transform.position);
-        else
-            runFlowController?.TryDebugCompleteCurrentLevel();
-
-        if (runFlowController != null &&
-            runFlowController.TryDebugOpenLevelChoice())
-        {
-            CloseMenu();
-            return;
-        }
-
-        RefreshCurrentTab();
-    }
-
-    private static EnemyHealth FindAliveBoss()
-    {
-        foreach (EnemyHealth enemy in EnemyHealth.ActiveInstances)
-        {
-            if (enemy != null && enemy.IsBoss && enemy.isActiveAndEnabled &&
-                !enemy.IsDead)
-            {
-                return enemy;
-            }
-        }
-
-        return null;
-    }
-
     private void AddTabHeading(string title)
     {
         TextMeshProUGUI heading = CreateText(

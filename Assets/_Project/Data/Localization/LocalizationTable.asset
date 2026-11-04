@@ -836,23 +836,14 @@ MonoBehaviour:
     ru: "МАРШРУТ  /  УРОВЕНЬ {0:00} ИЗ {1:00}"
     en: "ROUTE  /  LEVEL {0:00} OF {1:00}"
   - key: route.node.combat
-    ru: "БОЙ"
-    en: "COMBAT"
+    ru: "ЗАЧИСТКА"
+    en: "CLEARANCE"
   - key: route.node.unknown
-    ru: "?"
-    en: "?"
+    ru: "НЕИЗВЕСТНЫЙ СИГНАЛ"
+    en: "UNKNOWN SIGNAL"
   - key: route.node.minefield
     ru: "МИННОЕ ПОЛЕ"
     en: "MINEFIELD"
-  - key: route.node.anomaly
-    ru: "АНОМАЛИЯ"
-    en: "ANOMALY"
-  - key: route.node.golden
-    ru: "ЗОЛОТОЙ"
-    en: "GOLDEN"
-  - key: route.node.rare
-    ru: "РЕДКИЙ"
-    en: "RARE"
   - key: route.weather.clear
     ru: "ЯСНО"
     en: "CLEAR"
@@ -868,9 +859,45 @@ MonoBehaviour:
   - key: route.weather
     ru: "Погода · {0}"
     en: "Weather · {0}"
-  - key: route.location_type
-    ru: "Локация · {0}"
-    en: "Location · {0}"
+  - key: route.wave.unavailable
+    ru: "Группа пока не может появиться."
+    en: "The group cannot spawn yet."
+  - key: route.incident.cache
+    ru: "Забытый контейнер"
+    en: "Forgotten cache"
+  - key: route.incident.cache.info
+    ru: "Поблизости обнаружен дополнительный сундук."
+    en: "An extra chest was found nearby."
+  - key: route.incident.ambush
+    ru: "Вражеская засада"
+    en: "Enemy ambush"
+  - key: route.incident.ambush.info
+    ru: "Группа врагов приближается к вашей позиции."
+    en: "An enemy group is approaching your position."
+  - key: route.incident.protocol
+    ru: "Аварийный протокол"
+    en: "Emergency protocol"
+  - key: route.incident.protocol.wait
+    ru: "Во время события доступен добровольный вызов ради бонуса."
+    en: "An optional bonus challenge becomes available during a world event."
+  - key: route.incident.protocol.offer
+    ru: "Принять усиленную фазу ради сундука"
+    en: "Accept reinforcements for a bonus chest"
+  - key: route.incident.protocol.started
+    ru: "Устраните подкрепление и завершите текущее событие."
+    en: "Defeat the reinforcements and complete the current event."
+  - key: route.incident.field
+    ru: "Сбой поля"
+    en: "Field fault"
+  - key: route.incident.field.info
+    ru: "Рядом возникла временная аномальная зона."
+    en: "A temporary anomaly zone has appeared nearby."
+  - key: route.incident.med
+    ru: "Заброшенный медпункт"
+    en: "Abandoned aid station"
+  - key: route.incident.med.info
+    ru: "Поблизости обнаружена аптечка."
+    en: "A medkit was found nearby."
   - key: route.node.boss
     ru: "ФИНАЛЬНЫЙ БОСС"
     en: "FINAL BOSS"

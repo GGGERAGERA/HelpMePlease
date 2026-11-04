@@ -6,6 +6,7 @@ public sealed class RunSector
     internal void ApplyRunConfig(RunConfig value) => config = value ?? RunConfig.Default;
     public int SectorNumber { get; }
     public RouteNode RouteNode { get; }
+    public LocationType LocationType => RouteNode?.LocationType ?? LocationType.Clearance;
     public float Duration => SectorNumber == RunRoute.TutorialSector
         ? StageProfile.ExitActivationTime : RunRoute.SectorDuration;
     public StageProfileData StageProfile { get; }

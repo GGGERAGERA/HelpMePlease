@@ -75,8 +75,14 @@ public static partial class EnemyProductionTransferPreview
             var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Dev/Labs/OrbitalLab/ArtistComparison/LabSpider" + kind + ".prefab");
             var actor = AssetDatabase.LoadAssetAtPath<GameObject>(Enemies + "p_Enemy_Spider" + kind + ".prefab");
             Require(actor.GetComponent<EnemyHealth>().MaxHealth == source.GetComponent<EnemyHealth>().MaxHealth && actor.GetComponent<EnemyCollisionHandler>().damage == source.GetComponent<EnemyCollisionHandler>().damage, kind + " original lab health/contact");
-            Require(File.ReadAllText(AssetDatabase.GetAssetPath(actor)) == File.ReadAllText(AssetDatabase.GetAssetPath(source)), kind + " exact source prefab, including health/loot/events");
             Require(actor.GetComponentInChildren<Animator>()?.runtimeAnimatorController == source.GetComponentInChildren<Animator>()?.runtimeAnimatorController, kind + " source animation controller");
+            var marker = new SerializedObject(actor.GetComponent<DarknessEnemyMarker>());
+            var glow = marker.FindProperty("fallbackEyes").objectReferenceValue as GameObject;
+            Require(glow != null && !glow.activeSelf && glow.TryGetComponent(out SpriteRenderer eyes) &&
+                eyes.sprite != null && glow.transform.parent.TryGetComponent(out SpriteRenderer body) &&
+                eyes.sortingLayerID == body.sortingLayerID && eyes.sortingOrder > body.sortingOrder &&
+                marker.FindProperty("eyes").arraySize == 0 && marker.FindProperty("eyeGroups").arraySize == 0,
+                kind + " authored Darkness glow above the original spider sprite");
         }
         for (int sector = 1; sector <= StageProfileData.ProductionTierCount; sector++)
         {

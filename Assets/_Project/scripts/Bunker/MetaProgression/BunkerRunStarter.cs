@@ -51,7 +51,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
         if (escape)
         {
             var expedition = EscapeRoute;
-            return expedition == null ? null : escapeGraph ??= routeSource.CreateEntryGraph(new[] { expedition }, startingWorldRule);
+            return expedition == null ? null : escapeGraph ??= routeSource.CreateGraph(startingWorldRule, expeditions: new[] { expedition });
         }
 
         var expeditions = new List<SurfaceSectorDefinition>();
@@ -71,7 +71,7 @@ public sealed class BunkerRunStarter : MonoBehaviour
         }
         if (expeditions.Count == 0) return null;
         if (surfaceGraph == null || !HasSameEntries(surfaceGraph, expeditions))
-            surfaceGraph = routeSource.CreateEntryGraph(expeditions, startingWorldRule);
+            surfaceGraph = routeSource.CreateGraph(startingWorldRule, expeditions: expeditions);
         return surfaceGraph;
     }
 
@@ -146,9 +146,11 @@ public sealed class BunkerRunStarter : MonoBehaviour
             isTransitioning = true;
             BunkerContext.Instance?.Panels?.CloseAll(false);
             AnomalyStabilizerData stabilizer = RunSelectionManager.Instance.ConsumeAnomalyStabilizer();
+            graph ??= routeSource?.CreateGraph(config?.WorldRule ?? startingWorldRule, config?.WorldRule != null);
             RunStateManager.EnsureExists().BeginNewRun(character, null, startingStageProfile,
                 config?.WorldRule ?? startingWorldRule, config?.LocalAnomaly ?? startingLocalAnomaly,
                 stabilizer, depth.id, false, config, graph, entry);
+            surfaceGraph = escapeGraph = null;
             AudioService.Instance?.Play(AudioCueId.StartRun);
         }, t =>
         {

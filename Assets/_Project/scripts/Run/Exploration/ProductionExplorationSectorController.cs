@@ -2,7 +2,7 @@ using Random = GameplayRandom.WorldRandom;
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class ProductionExplorationSectorController : MonoBehaviour
+public sealed partial class ProductionExplorationSectorController : MonoBehaviour
 {
     private const int NormalSiteCount = 6;
     private const int TotalSiteCount = NormalSiteCount + 1;
@@ -105,6 +105,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
 
     private void ReleaseRunScene()
     {
+        EndRouteContent();
         ClearOwnedSites();
         if (tutorialRelay != null)
         {
@@ -119,6 +120,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         }
         ClearResourceNodes();
         ClearOwnedRewardChests();
+        routeChests.Clear();
         ClearSpawnedBreakables();
         propScatter?.Clear();
         propScatter = null;
@@ -314,6 +316,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         propScatter.Regenerate();
 
         SpawnPortalPair();
+        InitializeRouteContent();
         threatController.Initialize(config.ThreatConfig, enemySpawner);
 
         Debug.Log(
@@ -811,7 +814,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         return overlapCount == 0;
     }
 
-    private void SpawnBreakable(WorldBreakable prefab, Vector2 position)
+    private WorldBreakable SpawnBreakable(WorldBreakable prefab, Vector2 position)
     {
         WorldBreakable instance = Instantiate(
             prefab,
@@ -821,6 +824,7 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         );
         instance.name = prefab.name;
         spawnedBreakables.Add(instance);
+        return instance;
     }
 
     private void ClearSpawnedBreakables()

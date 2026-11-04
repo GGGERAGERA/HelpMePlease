@@ -7,6 +7,7 @@ public sealed class RocketHazardDefinition : WorldHazardDefinition
     [SerializeField] private GameObject rocketPrefab;
     [SerializeField] private GameObject targetPrefab;
     [SerializeField] private ParticleSystem explosionPrefab;
+    [SerializeField] private Sprite groundMine;
     [SerializeField, Min(1.5f)] private float warningDelay = 1.75f;
     [SerializeField, Min(.3f)] private float fallDuration = .5f;
     [SerializeField, Min(1f)] private float spawnHeight = 14f;
@@ -34,7 +35,8 @@ public sealed class RocketHazardDefinition : WorldHazardDefinition
         }
 
         public bool TryStart(Vector3 target) => !IsBusy && runner.Launch(target, null,
-            Mathf.Max(1.5f, definition.warningDelay), Mathf.Max(.3f, definition.fallDuration), definition.DangerRadius);
+            Mathf.Max(1.5f, definition.warningDelay), Mathf.Max(.3f, definition.fallDuration), definition.DangerRadius,
+            definition.groundMine);
 
         public void Tick(float deltaTime, Func<bool> combatAllowed) => runner.Tick(deltaTime,
             definition.spawnHeight, definition.DangerRadius, Mathf.Max(0, definition.damage), combatAllowed, true);

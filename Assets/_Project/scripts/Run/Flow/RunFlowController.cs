@@ -27,10 +27,11 @@ public sealed class RunFlowController : MonoBehaviour
     [SerializeField] private RunBossSpawner bossSpawner;
     [SerializeField] private CharacterSpawner characterSpawner;
     [SerializeField] private WorldHazardDirector worldHazardDirector;
+    [SerializeField] private WorldHazardPreset minefieldHazards;
 
     private EnemySpawner enemySpawner;
     private EnemyHealth finalBoss;
-    private bool levelCompleted;
+    private bool levelCompleted, routeDeadlineReached;
     private StageProfileData sectorProfile;
     private float sectorDuration;
     private int runId;
@@ -61,30 +62,45 @@ public sealed class RunFlowController : MonoBehaviour
         runId = RunStateManager.Instance.RunId;
         Phase = RunPhase.NormalSector;
         levelCompleted = false;
+        routeDeadlineReached = false;
         finalBoss = null;
         sectorProfile = profile;
         sectorDuration = RunStateManager.Instance.CurrentSector.Duration;
         SectorElapsedTime = 0f;
         IsExitUnlocked = false;
         TutorialController.Prepare(this);
-        worldHazardDirector?.Initialize(profile != null ? profile.WorldHazards : null,
-            this, characterSpawner, GameplayAreaService.Instance);
+        bool minefield = RunStateManager.Instance.CurrentSector.LocationType == LocationType.Minefield;
+        worldHazardDirector?.Initialize(minefield ? minefieldHazards : profile != null ? profile.WorldHazards : null,
+            this, characterSpawner, GameplayAreaService.Instance, stopAtDeadline: minefield);
     }
 
     private void Update()
     {
         if (Phase == RunPhase.NormalSector && !levelCompleted)
         {
-            if (TutorialController.IsTutorialSector) SectorElapsedTime += Time.deltaTime;
-            else SectorElapsedTime = Mathf.Min(sectorDuration, SectorElapsedTime + Time.deltaTime);
-            // The countdown is the complete availability contract; waves never extend it.
-            if (!IsExitUnlocked && CanUnlockExit)
-            {
-                IsExitUnlocked = true;
-                ExitUnlocked?.Invoke();
-            }
+            UpdateSectorClock(SectorElapsedTime + Time.deltaTime);
             if (IsExitUnlocked && !TutorialController.IsTutorialSector && Time.timeScale > 0f)
                 HandleExitReached();
+        }
+    }
+
+    private void UpdateSectorClock(float elapsedTime)
+    {
+        if (TutorialController.IsTutorialSector) SectorElapsedTime = elapsedTime;
+        else
+        {
+            SectorElapsedTime = Mathf.Min(sectorDuration, elapsedTime);
+            if (!routeDeadlineReached && SectorElapsedTime >= sectorDuration)
+            {
+                routeDeadlineReached = true;
+                RouteExploration?.EndRouteContent();
+            }
+        }
+        // The countdown is the complete availability contract; waves never extend it.
+        if (!IsExitUnlocked && CanUnlockExit)
+        {
+            IsExitUnlocked = true;
+            ExitUnlocked?.Invoke();
         }
     }
 
@@ -101,12 +117,22 @@ public sealed class RunFlowController : MonoBehaviour
 
     public void StopRunGameplay()
     {
-        worldHazardDirector?.Cancel();
+        EndSectorActivities();
         AudioService.Instance?.StopAllManagedLoops();
         StopAllCoroutines();
         if (Phase != RunPhase.Victory) Phase = RunPhase.Stopped;
         enemySpawner?.StopSpawning();
     }
+
+    private void EndSectorActivities()
+    {
+        worldHazardDirector?.Cancel();
+        RouteExploration?.EndRouteContent();
+    }
+
+    private ProductionExplorationSectorController RouteExploration =>
+        ProductionExplorationSectorController.ActiveInstance is { } exploration && exploration != null &&
+        exploration.gameObject.scene == gameObject.scene ? exploration : null;
 
     private void OnEnable() => RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
     private void OnDisable()
@@ -205,6 +231,8 @@ public sealed class RunFlowController : MonoBehaviour
             return false;
         }
 
+        if (RouteExploration is { HasOpeningRouteChest: true }) return false;
+
         if (RunRoute.IsFinalSector(sectorNumber))
         {
             if (!runState.FinalObjectiveSatisfied) return false;
@@ -218,6 +246,7 @@ public sealed class RunFlowController : MonoBehaviour
             levelCompleted = true;
             Phase = RunPhase.WaitingForRewards;
             enemySpawner.StopSpawning();
+            EndSectorActivities();
             RegisterCurrentLevelCompletion();
             runState.RegisterCompletedLevel();
             StartCoroutine(FinalBossRoutine());
@@ -238,17 +267,6 @@ public sealed class RunFlowController : MonoBehaviour
         worldEventSpawner?.CancelActiveEventsForDeparture();
         levelCompleted = true;
 
-        if (!RunRoute.CompletesLevel(sectorNumber))
-        {
-            if (manager.TryAdvanceWithinLocation(RegisterCurrentLevelCompletion))
-            {
-                ExitReached?.Invoke();
-                return true;
-            }
-            levelCompleted = false;
-            return false;
-        }
-
         if (!manager.TryShowChoices())
         {
             levelCompleted = false;
@@ -256,7 +274,8 @@ public sealed class RunFlowController : MonoBehaviour
         }
 
         RegisterCurrentLevelCompletion();
-        runState.RegisterCompletedLevel();
+        EndSectorActivities();
+        if (RunRoute.CompletesLevel(sectorNumber)) runState.RegisterCompletedLevel();
         ExitReached?.Invoke();
         return true;
     }
@@ -436,22 +455,19 @@ public sealed class RunFlowController : MonoBehaviour
     {
         get
         {
-            RunStateManager runState = RunStateManager.Instance;
-            LevelChoiceManager manager = levelChoiceManager;
-
-            if (levelCompleted || Phase != RunPhase.NormalSector || runState == null ||
-                runState.CurrentSector == null)
-            {
+            var run = RunStateManager.Instance;
+            var sector = run?.CurrentSector;
+            if (sector == null || !RunRoute.IsExplorationSector(sector.SectorNumber) || sectorProfile == null ||
+                levelCompleted || Phase != RunPhase.NormalSector || !CanContinue || !RewardsResolved ||
+                SceneTransitionOverlay.IsTransitioning || RouteExploration is { HasOpeningRouteChest: true })
                 return false;
-            }
 
-            int sectorNumber = runState.CurrentSector.SectorNumber;
+            if (RunRoute.IsFinalSector(sector.SectorNumber))
+                return run.FinalObjectiveSatisfied && bossSpawner != null && bossSpawner.CanSpawn(sector) &&
+                    enemySpawner != null && RunEndService.Instance != null;
 
-            if (RunRoute.IsFinalSector(sectorNumber))
-                return CanContinue && bossSpawner != null && enemySpawner != null;
-
-            return RunRoute.IsExplorationSector(sectorNumber) &&
-                manager != null && !manager.IsChoosing;
+            return levelChoiceManager != null && !levelChoiceManager.IsChoosing &&
+                levelChoiceManager.CanChoose && levelChoiceManager.CanLeaveTutorial;
         }
     }
 
@@ -460,34 +476,10 @@ public sealed class RunFlowController : MonoBehaviour
         if (!CanDebugCompleteCurrentLevel)
             return false;
 
+        if (SectorElapsedTime < sectorDuration)
+            RunStateManager.Instance.DebugMarkDevelopmentRun();
+        UpdateSectorClock(sectorDuration);
         return HandleExitReached();
-    }
-
-    public bool CanDebugOpenLevelChoice
-    {
-        get
-        {
-            RunStateManager runState = RunStateManager.Instance;
-            LevelChoiceManager manager = levelChoiceManager;
-            return levelCompleted &&
-                runState != null &&
-                runState.CurrentSector != null &&
-                RunRoute.HasNextSector(
-                    runState.CurrentSector.SectorNumber
-                ) &&
-                manager != null &&
-                !manager.IsChoosing;
-        }
-    }
-
-    public bool TryDebugOpenLevelChoice()
-    {
-        if (!CanDebugOpenLevelChoice)
-            return false;
-
-        LevelChoiceManager manager = levelChoiceManager;
-        manager.ShowChoices();
-        return manager != null && manager.IsChoosing;
     }
 #endif
 

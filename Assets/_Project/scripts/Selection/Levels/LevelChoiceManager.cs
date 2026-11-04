@@ -6,7 +6,8 @@ public sealed class LevelChoiceManager : MonoBehaviour
 {
     [SerializeField] private LevelChoicePanelView panelView;
     [SerializeField] private WorldRuleData[] availableWorldRules;
-    [SerializeField] private RouteSectorType[] nodeTypes;
+    [SerializeField] private RouteLocationWeight[] locationWeights;
+    [SerializeField, Range(0f, 1f)] private float surpriseChance = .2f;
     [SerializeField] private LocalAnomalyData defaultLocalAnomaly;
     [SerializeField] private StageProfileData[] stageProfiles;
     [SerializeField] private string gameplaySceneName = "MVP";
@@ -42,18 +43,8 @@ public sealed class LevelChoiceManager : MonoBehaviour
     {
         var run = RunStateManager.Instance;
         var sector = run?.CurrentSector;
-        return sector != null && RunRoute.CompletesLevel(sector.SectorNumber) && RunRoute.HasNextSector(sector.SectorNumber) &&
+        return sector != null && RunRoute.IsExplorationSector(sector.SectorNumber) && RunRoute.HasNextSector(sector.SectorNumber) &&
             Show(sector.SectorNumber + 1);
-    }
-
-    internal bool TryAdvanceWithinLocation(Action onDeparting)
-    {
-        var current = RunStateManager.Instance?.CurrentSector;
-        if (current == null || !RunRoute.IsExplorationSector(current.SectorNumber) ||
-            RunRoute.CompletesLevel(current.SectorNumber)) return false;
-        int next = current.SectorNumber + 1;
-        return TransitionToSector(new RunSector(next, ProfileFor(next), current.WorldRule, current.LocalAnomaly,
-            current.RouteNode), onDeparting);
     }
 
     public void ShowChoices() => TryShowChoices();
@@ -61,8 +52,10 @@ public sealed class LevelChoiceManager : MonoBehaviour
     internal bool CanChoose => !SceneTransitionOverlay.IsTransitioning &&
         characters.Station is { IsInitialized: true } station && station.InputOwner.CanTransition;
 
-    internal RunRouteGraph CreateEntryGraph(IReadOnlyList<SurfaceSectorDefinition> expeditions, WorldRuleData fallback) =>
-        RunRouteGraph.Generate(availableWorldRules, nodeTypes, fallback, false, expeditions);
+    internal RunRouteGraph CreateGraph(WorldRuleData initialRule, bool fixedEntryRule = false,
+        IReadOnlyList<SurfaceSectorDefinition> expeditions = null) =>
+        RunRouteGraph.Generate(GameplayRandom.IsActive ? GameplayRandom.Seed : GameplayRandom.NextAuto(),
+            availableWorldRules, locationWeights, initialRule, fixedEntryRule, expeditions, surpriseChance);
 
     private bool Show(int nextSector)
     {
@@ -75,10 +68,9 @@ public sealed class LevelChoiceManager : MonoBehaviour
         }
 
         bool opening = nextSector == RunRoute.FirstSector;
-        run.RouteGraph ??= RunRouteGraph.Generate(availableWorldRules, nodeTypes,
-            opening ? run.CurrentSector.WorldRule : null, opening && run.CurrentConfig.WorldRule != null);
+        run.RouteGraph ??= CreateGraph(run.CurrentSector.WorldRule, run.CurrentConfig.WorldRule != null);
         var current = opening ? null : run.CurrentSector.RouteNode;
-        choices = current == null ? run.RouteGraph.NodesAt(RunRoute.LevelOf(nextSector)) : current.Next;
+        choices = current == null ? run.RouteGraph.NodesAt(nextSector) : current.Next;
         if (choices.Count == 0) { choices = null; return false; }
         characters.PrepareForSceneTransition();
         Time.timeScale = 0f;
@@ -90,8 +82,10 @@ public sealed class LevelChoiceManager : MonoBehaviour
     {
         if (!IsChoosing || !CanChoose || !ContainsChoice(node)) return false;
         var run = RunStateManager.Instance;
+        var current = run.CurrentSector;
+        bool sameWasteland = current != null && RunRoute.LevelOf(current.SectorNumber) == node.Level;
         var sector = new RunSector(node.SectorNumber, ProfileFor(node.SectorNumber), node.WorldRule,
-            startFirstSector != null ? run.CurrentSector.LocalAnomaly : defaultLocalAnomaly, node);
+            sameWasteland ? current.LocalAnomaly : defaultLocalAnomaly, node);
         if (startFirstSector == null) return TransitionToSector(sector);
 
         Action begin = startFirstSector;
@@ -113,7 +107,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
     private StageProfileData ProfileFor(int sector) => stageProfiles[Mathf.Min(sector, stageProfiles.Length) - 1];
 
-    private bool TransitionToSector(RunSector sector, Action onDeparting = null)
+    private bool TransitionToSector(RunSector sector)
     {
         var runState = RunStateManager.Instance;
         RunSector current = runState?.CurrentSector;
@@ -122,7 +116,6 @@ public sealed class LevelChoiceManager : MonoBehaviour
 
         return SceneTransitionOverlay.Load(gameplaySceneName, () =>
         {
-            onDeparting?.Invoke();
             choices = null;
             runState.CommitCurrentSceneStats();
             runState.SaveExperienceState();

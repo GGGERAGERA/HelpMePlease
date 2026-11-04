@@ -101,7 +101,9 @@ public sealed class LevelModifiersApplier : MonoBehaviour
     {
         characters.CharacterSpawned -= InitializeForPlayer;
         worldRuleController.BindPlayer(player);
-        var sector = RunStateManager.Instance.CurrentSector;
+        var run = RunStateManager.Instance;
+        var sector = run.CurrentSector;
+        run.RouteGraph ??= runFlowController.LevelChoice.CreateGraph(sector.WorldRule, run.CurrentConfig.WorldRule != null);
         if (sector.SectorNumber == RunRoute.FirstSector && sector.RouteNode == null)
         {
             enemySpawner.StopSpawning();

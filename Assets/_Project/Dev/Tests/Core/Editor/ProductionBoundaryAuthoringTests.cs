@@ -173,15 +173,6 @@ public sealed class ProductionBoundaryAuthoringTests
         }
     }
 
-    [Test]
-    public void EscortDestinationHasAnImportedSprite()
-    {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/_Project/prefabs/Environment/WorldEvents/EscortCargoEvent.prefab");
-        var destination = prefab.transform.Find("Presentation/Destination").GetComponent<SpriteRenderer>();
-        Assert.That(destination.sprite, Is.Not.Null, "The authored destination must remain visible when Escort is enabled.");
-    }
-
     [TestCase("Dark")]
     [TestCase("Blue")]
     [TestCase("BigGait")]

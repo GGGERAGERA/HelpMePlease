@@ -60,7 +60,7 @@ public sealed class SurfaceMapFog : MaskableGraphic
             var offset = new Vector2((point.x - center.x) / 365f, (point.y - center.y) / 235f);
             nearest = Mathf.Min(nearest, offset.sqrMagnitude);
         }
-        return (byte)Mathf.RoundToInt(original * Mathf.Lerp(.38f, .84f, Mathf.Ceil(nearest * 5f) / 5f));
+        return (byte)Mathf.RoundToInt(original * Mathf.Lerp(.32f, .73f, Mathf.Ceil(nearest * 5f) / 5f));
     }
     protected override void OnPopulateMesh(VertexHelper mesh)
     {

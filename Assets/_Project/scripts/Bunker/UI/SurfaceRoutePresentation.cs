@@ -7,12 +7,15 @@ using UnityEngine.UI;
 internal sealed class SurfaceRoutePresentation
 {
     private const float LocationSpacing = 310f;
+    private const int PreviewColumns = 3;
+    private enum Intel { Hidden, Preview, Surveyed }
     private static readonly Color Available = new(.34f, .95f, .83f);
     private static readonly Color Selected = new(1f, .72f, .28f);
     private static readonly Color SelectedText = new(1f, .95f, .69f);
     private static readonly Color Visited = new(.36f, .91f, .52f);
-    private static readonly Color Muted = new(.48f, .54f, .54f);
     private static readonly Color Preview = new(.72f, .83f, .80f);
+    private static readonly Color Missed = new(.48f, .54f, .54f);
+    private static readonly Color Silhouette = new(.55f, .64f, .67f);
     private static readonly Color Text = new(.87f, .90f, .83f);
     private static readonly Color Ink = new(.056f, .081f, .093f, .98f);
 
@@ -27,6 +30,7 @@ internal sealed class SurfaceRoutePresentation
     private readonly Sprite bunkerSprite;
     private readonly SurfaceMapView.LocationIcon[] siteIcons;
     private readonly Dictionary<RouteNode, (Graphic border, Graphic glow, TMP_Text symbol, int road)> pins = new();
+    private readonly Dictionary<RouteNode, List<int>> branchRoads = new();
     private readonly List<Vector2> clearings = new();
     private readonly List<(Vector2 from, Vector2 to)> surveyedRoads = new();
     private readonly List<Vector2> outlooks = new();
@@ -53,7 +57,7 @@ internal sealed class SurfaceRoutePresentation
         this.siteIcons = siteIcons;
         navigation.ScrollAlongRoute = true;
 
-        float right = Position(RunRoute.LevelCount + 1, 1).x + 1100f;
+        float right = Position(RunRoute.TotalSectors + 1, 1).x + 1100f;
         terrain.anchoredPosition = new Vector2((right - 1000f) / 2f, 0f);
         terrain.sizeDelta = new Vector2(right + 1000f, 2100f);
         var ground = terrain.GetComponent<Image>();
@@ -84,15 +88,15 @@ internal sealed class SurfaceRoutePresentation
         back = Control("Route close", chrome, new Vector2(742f, 396f), new Vector2(46f, 42f), "×", out _);
         alternateButton = Control("Route variant", chrome, new Vector2(540f, 338f), new Vector2(312f, 42f), "", out alternateLabel);
 
-        card = Plate("Route briefing", chrome, new Vector2(572f, -327f), new Vector2(380f, 144f), Ink);
+        card = Plate("Route briefing", chrome, new Vector2(572f, -338f), new Vector2(380f, 140f), Ink);
         var cardRect = card.rectTransform;
-        Plate("Briefing accent", cardRect, new Vector2(0f, 70f), new Vector2(368f, 4f), Selected);
-        facts = Label("Node intel", cardRect, new Vector2(0f, 22f), new Vector2(332f, 58f), 17f, Text);
-        facts.lineSpacing = 9f;
+        Plate("Briefing accent", cardRect, new Vector2(0f, 68f), new Vector2(368f, 4f), Selected);
+        facts = Label("Node intel", cardRect, new Vector2(0f, 25f), new Vector2(350f, 65f), 16f, Text);
+        facts.lineSpacing = 5f;
         facts.enableAutoSizing = true;
-        facts.fontSizeMin = 16f;
-        facts.fontSizeMax = 17f;
-        launch = Control("Route confirm", cardRect, new Vector2(0f, -33f), new Vector2(332f, 43f), "", out launchLabel);
+        facts.fontSizeMin = 14f;
+        facts.fontSizeMax = 16f;
+        launch = Control("Route confirm", cardRect, new Vector2(0f, -34f), new Vector2(332f, 43f), "", out launchLabel);
         launch.onClick.AddListener(() =>
         {
             if (selected != null && confirm?.Invoke(selected) == true)
@@ -118,6 +122,7 @@ internal sealed class SurfaceRoutePresentation
             UnityEngine.Object.Destroy(old.gameObject);
         }
         pins.Clear();
+        branchRoads.Clear();
         clearings.Clear();
         surveyedRoads.Clear();
         outlooks.Clear();
@@ -130,48 +135,53 @@ internal sealed class SurfaceRoutePresentation
         RouteNode last = null;
         var travelled = new HashSet<(RouteNode from, RouteNode to)>();
         var visited = new HashSet<RouteNode>(path);
+        var reachable = new HashSet<RouteNode>(available);
+        var incoming = new Dictionary<RouteNode, int>();
+        int column = available[0].SectorNumber;
         foreach (var node in path)
         {
             travelled.Add((last, node));
             last = node;
         }
 
-        var open = new HashSet<RouteNode>(available);
-        var upcoming = new HashSet<RouteNode>();
-        foreach (var node in available) CollectUpcoming(node, upcoming);
-        var incoming = new Dictionary<RouteNode, int>();
-
         foreach (var entry in route.Entries) DrawRoad(null, entry);
-        for (int level = 1; level <= RunRoute.LevelCount; level++)
-        {
-            foreach (var node in route.NodesAt(level))
-                foreach (var next in node.Next)
-                    DrawRoad(node, next);
-        }
+        for (int sector = 1; sector <= RunRoute.TotalSectors; sector++)
+            foreach (var node in route.NodesAt(sector))
+                foreach (var next in node.Next) DrawRoad(node, next);
 
-        for (int level = 1; level <= RunRoute.LevelCount; level++)
-            foreach (var node in route.NodesAt(level))
+        for (int sector = 1; sector <= RunRoute.TotalSectors; sector++)
+        {
+            Intel intel = RevealAt(sector, column);
+            foreach (var node in route.NodesAt(sector))
             {
                 bool cleared = visited.Contains(node);
-                bool enter = open.Contains(node);
-                bool forecast = upcoming.Contains(node) && !enter;
+                bool enter = reachable.Contains(node);
                 if (cleared || enter) clearings.Add(Position(node));
-                else if (forecast) outlooks.Add(Position(node));
-                AddPin(node, cleared ? Visited : enter ? Available : forecast ? Preview : Muted,
-                    enter, cleared ? null : forecast || enter ? Symbol(TypeOf(node)) : "·",
-                    incoming.TryGetValue(node, out int road) ? road : -1, forecast);
+                else if (intel == Intel.Preview || sector == column) outlooks.Add(Position(node));
+                AddPin(node, intel, cleared, enter, incoming.TryGetValue(node, out int road) ? road : -1);
             }
+        }
 
-        Vector2 boss = Position(RunRoute.LevelCount + 1, 1);
-        foreach (var node in route.NodesAt(RunRoute.LevelCount))
-            roads.Add(Position(node), boss, upcoming.Contains(node) ? SurfaceRouteRoads.State.Ahead : SurfaceRouteRoads.State.Missed);
-        outlooks.Add(boss);
-        var bossSite = Artwork("Final boss", boss, FindArt(SurfaceLocationFamily.Technogenic), 168f, Preview);
-        var bossPlate = Plate("Boss marker", bossSite, Vector2.zero, new Vector2(74f, 68f), Selected);
+        int bossColumn = RunRoute.TotalSectors + 1;
+        Vector2 boss = Position(bossColumn, 1);
+        bool bossRevealed = RevealAt(bossColumn, column) != Intel.Hidden;
+        foreach (var node in route.NodesAt(RunRoute.FinalSector))
+        {
+            int road = roads.Add(Position(node), boss,
+                bossRevealed ? SurfaceRouteRoads.State.Ahead : SurfaceRouteRoads.State.Uncharted);
+            RecordBranch(node, road);
+        }
+        if (bossRevealed) outlooks.Add(boss);
+        var bossSite = Artwork("Final boss", boss, FindArt(SurfaceLocationFamily.Technogenic), 168f,
+            bossRevealed ? Preview : Silhouette);
+        var bossPlate = Plate("Boss marker", bossSite, Vector2.zero, new Vector2(74f, 68f), bossRevealed ? Selected : Silhouette);
         Plate("Inset", bossPlate.rectTransform, Vector2.zero, new Vector2(64f, 58f), Ink);
-        CreateRect("Boss icon", bossPlate.rectTransform, Vector2.zero, new Vector2(42f, 42f))
-            .gameObject.AddComponent<SurfaceMapGlyph>().Show(SurfaceMapMeaning.Boss);
-        bossLabel = Label("Boss label", bossSite, new Vector2(0f, -63f), new Vector2(310f, 36f), 20f, Text, true);
+        var bossIcon = CreateRect("Boss icon", bossPlate.rectTransform, Vector2.zero, new Vector2(42f, 42f))
+            .gameObject.AddComponent<SurfaceMapGlyph>();
+        bossIcon.Show(SurfaceMapMeaning.Boss);
+        if (!bossRevealed) bossIcon.color = Silhouette;
+        bossLabel = Label("Boss label", bossSite, new Vector2(0f, -63f), new Vector2(310f, 36f), 20f,
+            bossRevealed ? Text : Silhouette, true);
 
         Vector2 current = last == null ? bunker : Position(last);
         Vector2 markerOffset = path.Count == 0 ? new Vector2(-90f, -37f) : new Vector2(-3f, -72f);
@@ -181,9 +191,10 @@ internal sealed class SurfaceRoutePresentation
         Canvas.ForceUpdateCanvases();
         var size = root.rect.size;
         chrome.localScale = Vector3.one * Mathf.Min(size.x / 1600f, size.y / 900f);
-        float zoom = Mathf.Clamp(size.x / 2280f, SurfaceMapNavigation.MinZoom, .90f);
-        float focus = boss.x * .5f;
-        navigation.SetBounds(Rect.MinMaxRect(-570f, -510f, boss.x + 650f, 510f), new Vector2(focus, 0f));
+        float zoom = Mathf.Clamp(size.x / 2080f, SurfaceMapNavigation.MinZoom, .90f);
+        float focus = Position(available[0]).x + LocationSpacing * .5f;
+        navigation.SetBounds(Rect.MinMaxRect(-570f, -510f, boss.x + 470f, 510f),
+            new Vector2(focus, 0f));
         graph.localScale = Vector3.one * zoom;
         graph.anchoredPosition = new Vector2(-focus, -10f) * zoom;
         navigation.Pan(Vector2.zero);
@@ -194,21 +205,26 @@ internal sealed class SurfaceRoutePresentation
         void DrawRoad(RouteNode from, RouteNode to)
         {
             bool onPath = travelled.Contains((from, to));
-            bool enter = from == last && open.Contains(to);
-            bool ahead = from != null && upcoming.Contains(from) && upcoming.Contains(to);
+            bool enter = from == last && reachable.Contains(to);
             var state = onPath ? SurfaceRouteRoads.State.Travelled : enter ? SurfaceRouteRoads.State.Open :
-                ahead ? SurfaceRouteRoads.State.Ahead : SurfaceRouteRoads.State.Missed;
+                RevealAt(to.SectorNumber, column) == Intel.Hidden ? SurfaceRouteRoads.State.Uncharted :
+                to.SectorNumber > column ? SurfaceRouteRoads.State.Ahead : SurfaceRouteRoads.State.Missed;
             int road = roads.Add(from == null ? bunker : Position(from), Position(to), state,
                 onPath || enter ? surveyedRoads : null);
             if (enter) incoming.Add(to, road);
+            RecordBranch(from, road);
+        }
+
+        void RecordBranch(RouteNode from, int road)
+        {
+            if (from == null || !reachable.Contains(from)) return;
+            if (!branchRoads.TryGetValue(from, out var branches)) branchRoads.Add(from, branches = new List<int>());
+            branches.Add(road);
         }
     }
 
-    private static void CollectUpcoming(RouteNode node, HashSet<RouteNode> upcoming)
-    {
-        if (!upcoming.Add(node)) return;
-        foreach (var next in node.Next) CollectUpcoming(next, upcoming);
-    }
+    private static Intel RevealAt(int sector, int column) => sector <= column ? Intel.Surveyed :
+        sector <= column + PreviewColumns ? Intel.Preview : Intel.Hidden;
 
     internal void SetCharacter(CharacterData character)
     {
@@ -230,17 +246,18 @@ internal sealed class SurfaceRoutePresentation
         if (action != null) button.onClick.AddListener(() => action());
     }
 
-    private void AddPin(RouteNode node, Color accent, bool canSelect, string symbol, int road, bool forecast)
+    private void AddPin(RouteNode node, Intel intel, bool cleared, bool canSelect, int road)
     {
         var pos = Position(node);
-        var type = canSelect || forecast || symbol == null ? TypeOf(node) : null;
-        var site = Artwork("Site", pos, FindArt(type switch
+        var family = intel == Intel.Hidden ? SurfaceLocationFamily.Ruins : node.LocationType switch
         {
-            "route.node.anomaly" => SurfaceLocationFamily.Anomalous,
-            "route.node.golden" => SurfaceLocationFamily.AdvancedAnomalous,
-            "route.node.minefield" or "route.node.rare" => SurfaceLocationFamily.Technogenic,
+            LocationType.Minefield => SurfaceLocationFamily.Technogenic,
             _ => SurfaceLocationFamily.Ruins
-        }), 149f, canSelect ? Color.white : new Color(.61f, .67f, .65f));
+        };
+        Color accent = cleared ? Visited : canSelect ? Available : intel == Intel.Preview ? Preview :
+            intel == Intel.Surveyed ? Missed : Silhouette;
+        var site = Artwork("Site", pos, FindArt(family), 149f,
+            canSelect ? Color.white : intel == Intel.Hidden ? Silhouette : new Color(.71f, .76f, .74f));
         Graphic glow = null;
         if (canSelect)
         {
@@ -249,35 +266,39 @@ internal sealed class SurfaceRoutePresentation
             glow.gameObject.SetActive(false);
         }
         Vector2 size = canSelect ? new Vector2(68f, 62f) : new Vector2(57f, 53f);
-        var badge = Plate($"Route location {node.Level}-{node.Row + 1}", site,
+        var badge = Plate($"Route location {node.SectorNumber}-{node.Row + 1}", site,
             Vector2.zero, size, accent);
         Plate("Inset", badge.rectTransform, Vector2.zero, size - new Vector2(10f, 10f), Ink);
-        if (symbol == null)
+        if (intel == Intel.Hidden) return;
+        TMP_Text icon = null;
+        if (cleared)
         {
-            var cleared = CreateRect("Cleared", badge.rectTransform, Vector2.zero, new Vector2(25f, 25f))
+            var check = CreateRect("Cleared", badge.rectTransform, Vector2.zero, new Vector2(25f, 25f))
                 .gameObject.AddComponent<SurfaceMapGlyph>();
-            cleared.Show(SurfaceMapMeaning.Cleared);
-            cleared.color = accent;
-            return;
+            check.Show(SurfaceMapMeaning.Cleared);
+            check.color = accent;
         }
-        var icon = Label("Type mark", badge.rectTransform, Vector2.zero, new Vector2(55f, 49f), 31f, accent, true);
-        icon.text = symbol;
-        if (forecast)
+        else
         {
-            badge.raycastTarget = true;
+            icon = Label("Type mark", badge.rectTransform, Vector2.zero, new Vector2(55f, 49f), 31f, accent, true);
+            icon.text = Symbol(node.LocationType);
+        }
+        badge.raycastTarget = true;
+        if (!canSelect)
+        {
             badge.gameObject.AddComponent<SurfaceMapNodeFeedback>().HoverChanged = over =>
             {
-                inspected = over ? node : null;
+                if (over) inspected = node;
+                else if (inspected == node) inspected = null;
                 RefreshText();
             };
+            return;
         }
-        if (!canSelect) return;
         pins.Add(node, (badge, glow, icon, road));
         var button = badge.gameObject.AddComponent<Button>();
         button.targetGraphic = badge;
         button.transition = Selectable.Transition.None;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
-        badge.raycastTarget = true;
         button.onClick.AddListener(() => Select(node));
     }
 
@@ -295,7 +316,8 @@ internal sealed class SurfaceRoutePresentation
         pin.border.color = SelectedText;
         pin.symbol.color = SelectedText;
         pin.glow.gameObject.SetActive(true);
-        roads.Select(pin.road);
+        branchRoads.TryGetValue(node, out var branches);
+        roads.Select(pin.road, branches);
         RefreshText();
     }
 
@@ -314,27 +336,22 @@ internal sealed class SurfaceRoutePresentation
         if (node == null) return;
         card.raycastTarget = inspected == null;
         launch.gameObject.SetActive(inspected == null);
-        string type = TypeOf(node);
         var rule = node.WorldRule;
-        bool clear = rule == null || rule.RuleType is WorldRuleType.None or WorldRuleType.Golden;
+        bool clear = rule == null || rule.RuleType == WorldRuleType.None;
         string weather = clear ? L("route.weather.clear") : rule.DisplayName;
-        facts.text = $"{F("route.weather", weather)}\n{F("route.location_type", L(type))}";
+        facts.text = $"{L(node.LocationLabelKey)}\n{F("route.weather", weather)}";
     }
 
-    private static string TypeOf(RouteNode node) => node.Type?.LabelKey ?? "route.node.combat";
-    private static string Symbol(string type) => type switch
+    private static string Symbol(LocationType type) => type switch
     {
-        "route.node.unknown" => "?",
-        "route.node.minefield" => "!",
-        "route.node.anomaly" => "~",
-        "route.node.golden" => "$",
-        "route.node.rare" => "+",
+        LocationType.UnknownSignal => "?",
+        LocationType.Minefield => "!",
         _ => "×"
     };
     private static string L(string key) => SurfaceMapBriefing.Text(key);
     private static string F(string key, params object[] args) => SurfaceMapBriefing.Format(key, args);
 
-    private static Vector2 Position(RouteNode node) => Position(node.Level, node.Row, node.RowCount);
+    private static Vector2 Position(RouteNode node) => Position(node.SectorNumber, node.Row, node.RowCount);
     private static Vector2 Position(int level, int row, int rows = 3)
     {
         float x = level * LocationSpacing;

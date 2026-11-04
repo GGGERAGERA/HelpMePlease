@@ -6,14 +6,16 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 internal sealed class SurfaceRouteRoads : MaskableGraphic
 {
-    internal enum State { Open, Travelled, Missed, Ahead, Selected }
+    internal enum State { Open, Travelled, Missed, Ahead, Uncharted, Planned, Selected }
 
     private readonly List<(Vector2[] points, State state)> tracks = new();
+    private readonly HashSet<int> plannedTracks = new();
     private int selectedTrack = -1;
 
     internal void Clear()
     {
         tracks.Clear();
+        plannedTracks.Clear();
         selectedTrack = -1;
     }
 
@@ -35,9 +37,12 @@ internal sealed class SurfaceRouteRoads : MaskableGraphic
         return tracks.Count - 1;
     }
 
-    internal void Select(int index)
+    internal void Select(int index, IReadOnlyList<int> branches)
     {
         selectedTrack = index;
+        plannedTracks.Clear();
+        if (branches != null)
+            foreach (int branch in branches) plannedTracks.Add(branch);
         SetVerticesDirty();
     }
 
@@ -48,7 +53,7 @@ internal sealed class SurfaceRouteRoads : MaskableGraphic
         {
             if (i == selectedTrack) continue;
             var (points, state) = tracks[i];
-            Paint(mesh, points, state);
+            Paint(mesh, points, plannedTracks.Contains(i) ? State.Planned : state);
         }
         if (selectedTrack >= 0) Paint(mesh, tracks[selectedTrack].points, State.Selected);
     }
@@ -63,6 +68,8 @@ internal sealed class SurfaceRouteRoads : MaskableGraphic
             State.Open => new Color32(114, 168, 133, 255),
             State.Travelled => new Color32(61, 121, 94, 255),
             State.Ahead => new Color32(147, 138, 101, 255),
+            State.Uncharted => new Color32(114, 128, 127, 255),
+            State.Planned => new Color32(231, 173, 90, 255),
             _ => new Color32(72, 78, 69, 255)
         };
         var gravel = Color.Lerp(soil, new Color32(249, 232, 176, 255), highlighted ? .62f : .26f);

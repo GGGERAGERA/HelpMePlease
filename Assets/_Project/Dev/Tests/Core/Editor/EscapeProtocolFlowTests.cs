@@ -140,12 +140,9 @@ public sealed class EscapeProtocolFlowTests
             int nextSector=run.CurrentSector.SectorNumber+1;
             flow=RunFlowController.Instance;
             typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.Duration);
-            if (RunRoute.CompletesLevel(nextSector - 1))
-            {
-                var choices=Object.FindFirstObjectByType<LevelChoiceManager>();
-                yield return CoreTestSupport.Await(()=>choices.IsChoosing);
-                Assert.That(choices.DebugSelectFirstRule(),Is.True);
-            }
+            var choices=Object.FindFirstObjectByType<LevelChoiceManager>();
+            yield return CoreTestSupport.Await(()=>choices.IsChoosing);
+            Assert.That(choices.DebugSelectFirstRule(),Is.True);
             yield return CoreTestSupport.Await(()=>!SceneTransitionOverlay.IsTransitioning&&run.CurrentSector.SectorNumber==nextSector&&
                 Object.FindFirstObjectByType<OrbitalStationRuntime>() is {IsInitialized:true});
             Assert.That(run.CurrentConfig.IsEscapeFinal,Is.True);Assert.That(run.FinalObjectiveSatisfied,Is.True);

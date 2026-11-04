@@ -55,6 +55,9 @@ public class ExperienceManager : MonoBehaviour
     private RarePickup SpawnRarePickup(RarePickup prefab, Vector3 position) =>
         prefab != null ? Instantiate(prefab, position, Quaternion.identity) : null;
 
+    internal RarePickup SpawnSectorMedKit(Vector3 position) =>
+        CanUseRarePickups(gameObject.scene) ? SpawnRarePickup(medKitPrefab, position) : null;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool DebugHasRarePickup(RarePickup.PickupKind kind) =>
         (kind == RarePickup.PickupKind.MedKit ? medKitPrefab : magnetPrefab) != null;

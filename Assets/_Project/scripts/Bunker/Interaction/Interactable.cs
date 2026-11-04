@@ -10,6 +10,7 @@ public abstract class Interactable : MonoBehaviour, IBunkerInteractable
     public string InteractionText => HasInteractionPrompt ? PromptText : string.Empty;
     public virtual bool CanInteract => isActiveAndEnabled;
     public virtual KeyCode InteractionKey => KeyCode.E;
+    protected void SetPromptKey(string key) => promptText = key;
 
     public abstract void Interact();
 }
