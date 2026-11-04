@@ -13,10 +13,14 @@ public static class Subject42UITheme
     public static readonly Color32 Green = new(0x79, 0xD5, 0xA4, 255);
     public static readonly Color32 Coral = new(0xF1, 0x78, 0x69, 255);
     public static readonly Color32 Purple = new(0xB6, 0x9A, 0xF0, 255);
+    public static readonly Color32 ActionSurface = new(0x31, 0x50, 0x56, 255);
+    public static readonly Color32 ActionBorder = new(0x58, 0x7D, 0x84, 255);
+    public static readonly Color32 MeterTrack = new(0x35, 0x43, 0x4B, 255);
+    public static readonly Color32 Divider = new(0x34, 0x45, 0x4C, 255);
 
     public static Color32 WorldRule(WorldRuleType rule) => rule switch
     {
-        WorldRuleType.Snow => PrimaryText,
+        WorldRuleType.Snow => new Color32(0xA6, 0xC9, 0xEE, 255),
         WorldRuleType.Rain => new Color32(0x8C, 0xB9, 0xFA, 255),
         WorldRuleType.Darkness => Purple,
         WorldRuleType.Wind => Cyan,

@@ -40,8 +40,7 @@ public sealed class BotController : IDisposable
         }
         avoidance = Vector2.ClampMagnitude(avoidance, 3f);
 
-        // Ordinary exploration has no timed win. After 60 gameplay seconds seek the real exit.
-        bool exiting = elapsed >= 60f;
+        bool exiting = ProductionSectorExit.ActiveExits.Any(exit => exit != null && exit.IsAvailable);
         Vector2 attraction = Vector2.zero;
         float nearest = 12f * 12f;
         if (!exiting)
@@ -59,7 +58,7 @@ public sealed class BotController : IDisposable
             nearest = float.PositiveInfinity;
             foreach (var exit in ProductionSectorExit.ActiveExits)
             {
-                if (exit == null || !exit.IsMapVisible) continue;
+                if (exit == null || !exit.IsAvailable) continue;
                 Vector2 delta = (Vector2)exit.transform.position - position;
                 if (delta.sqrMagnitude < nearest)
                 { nearest = delta.sqrMagnitude; attraction = delta.normalized * 2f; }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Subject42.Combat.Telekinetic
@@ -24,20 +25,17 @@ namespace Subject42.Combat.Telekinetic
             reserve.Add(item);
             return item;
         }
-        internal void AwardRouteLevel(bool weapon)
+        internal IEnumerable<TelekineticItem> RouteRewardTargets(bool weapon) =>
+            items.Concat(reserve)
+                .Where(item => (weapon ? item.IsWeapon : item.CanMerge) && item.Level < 3)
+                .OrderBy(item => item.Level);
+
+        internal void AwardRouteLevel(bool weapon, TelekineticItem selected)
         {
-            TelekineticItem target = null;
-            FindTarget(items);
-            FindTarget(reserve);
+            var eligible = RouteRewardTargets(weapon);
+            var target = selected != null && eligible.Contains(selected) ? selected : eligible.FirstOrDefault();
             target ??= Grant(weapon ? TelekineticPart.Pistol : TelekineticPart.DMG);
             target.Level++;
-
-            void FindTarget(List<TelekineticItem> inventory)
-            {
-                foreach (var item in inventory)
-                    if ((weapon ? item.IsWeapon : item.CanMerge) && item.Level < 3 &&
-                        (target == null || item.Level < target.Level)) target = item;
-            }
         }
 
         public bool Install(TelekineticItem item, Vector2Int anchor, int turns = 0)

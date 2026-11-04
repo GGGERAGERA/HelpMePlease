@@ -79,6 +79,25 @@ public static class CoreTestSupport
         Assert.That(choice.DebugSelectFirstRule(), Is.True);
     }
 
+    public static IEnumerator LeaveSectorViaExit()
+    {
+        var run = RunStateManager.Instance;
+        var flow = RunFlowController.Instance;
+        typeof(RunFlowController).GetProperty(nameof(RunFlowController.SectorElapsedTime))
+            .SetValue(flow, run.CurrentSector.Duration);
+        yield return Await(() => flow.IsExitUnlocked);
+        var exit = ProductionSectorExit.ActiveExits.Single();
+        var player = Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer;
+        player.transform.position = exit.transform.position;
+        Physics2D.SyncTransforms();
+        yield return Await(() => flow.IsLevelCompleted);
+        if (run.CurrentSector.RouteNode != null && run.OrbitalStationState.UsesTelekineticRig)
+        {
+            yield return Await(() => UpgradeManager.Instance.IsChoosingUpgrade);
+            Assert.That(UpgradeManager.Instance.DebugSelectCurrentChoice(0), Is.True);
+        }
+    }
+
     public static IEnumerator LoadBunker()
     {
         yield return SceneManager.LoadSceneAsync(RunEndService.BunkerSceneName);

@@ -22,6 +22,7 @@ public sealed class OrbitalRelayEvent : WorldEvent
     private Transform player;
     private OrbitalStationRuntime station;
     public OrbitalRelaySnapshot Snapshot => state != null ? state.Snapshot : default;
+    internal float StabilizationDuration => settings.StabilizationDuration;
     public OrbitalRelayNode ActiveNode => Snapshot.ActiveNodeIndex >= 0 && nodes != null && Snapshot.ActiveNodeIndex < nodes.Length
         ? nodes[Snapshot.ActiveNodeIndex] : null;
     public float ArenaRadius => arenaBounds != null ? arenaBounds.radius * Mathf.Abs(arenaBounds.transform.lossyScale.x) : 0;

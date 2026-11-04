@@ -22,9 +22,8 @@ public sealed class ProductionSectorExit : MonoBehaviour
 
     public static IReadOnlyList<ProductionSectorExit> ActiveExits =>
         activeExits;
-    public bool IsMapVisible => initialized && isActiveAndEnabled;
-    public bool IsAvailable => IsMapVisible && runFlow != null &&
-        runFlow.IsExitUnlocked && !runFlow.IsLevelCompleted && runFlow.Phase == RunPhase.NormalSector;
+    public bool IsMapVisible => initialized && isActiveAndEnabled && runFlow != null && !runFlow.IsLevelCompleted;
+    public bool IsAvailable => IsMapVisible && runFlow.IsExitUnlocked && runFlow.Phase == RunPhase.NormalSector;
 
     private void OnEnable()
     {
@@ -178,11 +177,15 @@ public sealed class ProductionSectorExit : MonoBehaviour
         if (other.GetComponentInParent<PlayerHealth>() == null)
             return;
 
-        if (IsAvailable && runFlow.HandleExitReached())
-            enabled = false;
+        if (IsAvailable)
+            runFlow.HandleExitReached();
     }
 
-    private void OnTriggerStay2D(Collider2D other) => OnTriggerEnter2D(other);
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (TutorialController.IsTutorialSector)
+            OnTriggerEnter2D(other);
+    }
 
     private void OnDestroy()
     {

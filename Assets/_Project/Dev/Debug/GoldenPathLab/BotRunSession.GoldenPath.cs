@@ -230,7 +230,7 @@ public sealed partial class BotRunSession
         if (!CheckGoldenObjects()) return;
         if (!CheckGoldenPersistence(goldenSnapshot)) return;
         goldenSnapshot = CopyGoldenState(station.State);
-        if (flow.IsLevelCompleted && golden.SectorsCompleted < goldenSector)
+        if (activeRun.CompletedLevels > golden.SectorsCompleted)
         {
             if (!GoldenCheck("Run.CompletedSectorOnce", RunStateManager.Instance.CompletedLevels == goldenSector, "Completion counter mismatch")) return;
             golden.SectorsCompleted = goldenSector;
@@ -265,7 +265,7 @@ public sealed partial class BotRunSession
         }
         goldenDeadline = Time.realtimeSinceStartup + 45f;
         if (!GoldenCheck("Rewards.SelectionReleased", !station.RewardFlow.PendingReward.HasValue && station.InputOwner.CanTransition, "Queue idle with unfinished arena selection")) return;
-        if (flow.IsLevelCompleted && goldenSector < RunRoute.FinalSector)
+        if (golden.SectorsCompleted == goldenSector && goldenSector < RunRoute.FinalSector)
         {
             if (!GoldenCheck("Progression.SectorChoiceDeadline", Time.realtimeSinceStartup - goldenCompletedAt < 45f, "Location choices did not become available")) return;
             var choices = FindFirstObjectByType<LevelChoiceManager>();

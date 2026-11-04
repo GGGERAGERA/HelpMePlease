@@ -126,7 +126,7 @@ public class WorldEventSpawner : MonoBehaviour
         ReleaseRunScene();
     }
 
-    // A timed departure ends gameplay. Resolve earned event results before scene teardown.
+    // Entering the sector exit is a gameplay departure. Resolve earned event results before teardown.
     internal void CancelActiveEventsForDeparture()
     {
         foreach (var worldEvent in spawnedEvents.ToArray())

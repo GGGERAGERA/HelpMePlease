@@ -1020,12 +1020,19 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
                 bounds.center;
         Vector2 playerPosition = layoutSpawnPosition.Value;
 
-        // Keep the existing physical exit placement; territories may reach its location.
+        // Reserve a clear footprint inside the arena, within travel distance of the spawn.
         Physics2D.SyncTransforms();
+        Rect exitArea = InsetRect(playable, config.EdgePadding + config.ExitRadius + 0.5f);
+        float arenaReach = GetMaximumCornerDistance(exitArea, playerPosition);
+        float minimumDistance = Mathf.Max(14f, arenaReach * 0.3f);
+        float maximumDistance = Mathf.Max(minimumDistance + 1f, arenaReach * 0.7f);
         bool exitFound = false;
         for (int attempt = 0; attempt < LayoutAttempts; attempt++)
         {
-            exitPosition = hasBreakableLayout ? breakableExitPosition : SelectExitPosition(playable, playerPosition);
+            exitPosition = hasBreakableLayout ? breakableExitPosition : new Vector2(
+                Random.Range(exitArea.xMin, exitArea.xMax), Random.Range(exitArea.yMin, exitArea.yMax));
+            float distance = Vector2.Distance(exitPosition, playerPosition);
+            if (distance < minimumDistance || distance > maximumDistance) continue;
             if (!IsFootprintClear(exitPosition, Vector2.one * (config.ExitRadius * 2f), true)) continue;
             exitFound = true;
             break;
@@ -1191,41 +1198,6 @@ public sealed class ProductionExplorationSectorController : MonoBehaviour
         }
 
         return normalSamples / (float)SpecialLineSamples;
-    }
-
-    private Vector2 SelectExitPosition(Rect playable, Vector2 playerPosition)
-    {
-        float clearance = config.EdgePadding + config.ExitRadius + 0.5f;
-        Rect exitArea = InsetRect(playable, clearance);
-        float minimumDistance = Mathf.Max(
-            14f,
-            GetMaximumCornerDistance(exitArea, playerPosition) * 0.3f
-        );
-
-        for (int attempt = 0; attempt < 96; attempt++)
-        {
-            Vector2 candidate = new(
-                Random.Range(exitArea.xMin, exitArea.xMax),
-                Random.Range(exitArea.yMin, exitArea.yMax)
-            );
-
-            if (Vector2.Distance(candidate, playerPosition) >= minimumDistance)
-                return candidate;
-        }
-
-        Vector2[] corners = GetCorners(exitArea);
-        Vector2 farthest = corners[0];
-
-        for (int i = 1; i < corners.Length; i++)
-        {
-            if (Vector2.SqrMagnitude(corners[i] - playerPosition) >
-                Vector2.SqrMagnitude(farthest - playerPosition))
-            {
-                farthest = corners[i];
-            }
-        }
-
-        return farthest;
     }
 
     private static void ApplyLayout(

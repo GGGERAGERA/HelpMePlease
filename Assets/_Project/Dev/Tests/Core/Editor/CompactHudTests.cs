@@ -11,6 +11,26 @@ using UnityEngine;
 
 public sealed class CompactHudTests
 {
+    [Test]
+    public void CombatVitalsAreAuthoredAndVisibleInEditMode()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CompactHudTestData.Folder + "GameplayHUD.prefab");
+        var hud = prefab.GetComponentInChildren<HUDManager>(true);
+        var data = new SerializedObject(hud);
+        var vitals = (Component)data.FindProperty("combatVitals").objectReferenceValue;
+        Assert.That(vitals, Is.Not.Null);
+        Assert.That(vitals.gameObject.activeSelf, Is.True);
+        Assert.That(vitals.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1f));
+        Assert.That(((RectTransform)vitals.transform).sizeDelta, Is.EqualTo(new Vector2(310f, 74f)));
+        foreach (string field in new[] { "healthText", "timerText", "currencyText" })
+        {
+            var text = (TMP_Text)data.FindProperty(field).objectReferenceValue;
+            Assert.That(text.transform.IsChildOf(vitals.transform), Is.True, field);
+        }
+        Assert.That(vitals.transform.Find("Relay stabilization").gameObject.activeSelf, Is.False);
+        Assert.That(((GameObject)data.FindProperty("bossHpPanel").objectReferenceValue).activeSelf, Is.False);
+    }
+
     [TestCase(NoDamageChallengeState.Completed)]
     [TestCase(NoDamageChallengeState.Failed)]
     public void MechanicNoticeHidesEntirePanelAfterTimeoutAndCanShowAgain(NoDamageChallengeState state)

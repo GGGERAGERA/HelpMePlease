@@ -145,6 +145,9 @@ MonoBehaviour:
   - key: hud.objective.exit
     ru: "ДОБЕРИТЕСЬ ДО ВЫХОДА"
     en: "REACH THE EXIT"
+  - key: hud.exit.opened
+    ru: "ВЫХОД ОТКРЫТ"
+    en: "EXIT OPEN"
   - key: hud.objective.survive
     ru: "ПЕРЕЖИВИТЕ СЕКТОР"
     en: "SURVIVE THE SECTOR"
@@ -848,23 +851,38 @@ MonoBehaviour:
     ru: "Золото {0}"
     en: "Gold {0}"
   - key: route.weather
-    ru: "Правило · {0}"
-    en: "Rule · {0}"
+    ru: "Модификатор"
+    en: "Modifier"
   - key: route.duration
-    ru: "Время прохождения · {0} с"
-    en: "Clear time · {0} s"
+    ru: "До открытия выхода"
+    en: "Time until exit opens"
+  - key: route.duration.value
+    ru: "{0} с"
+    en: "{0} s"
   - key: route.reward
-    ru: "Награда · {0}"
-    en: "Reward · {0}"
+    ru: "Награда за прохождение"
+    en: "Completion reward"
   - key: route.reward.weapon
-    ru: "Уровень оружия +1"
-    en: "Weapon level +1"
+    ru: "Оружие +1 ур. или пистолет II в запас"
+    en: "Weapon +1 level or a level II pistol in reserve"
   - key: route.reward.module
-    ru: "Уровень модуля +1"
-    en: "Module level +1"
+    ru: "Модуль/ENERGY +1 ур. или DMG II в запас"
+    en: "Module/ENERGY +1 level or a level II DMG in reserve"
+  - key: reward.route.title
+    ru: "НАГРАДА ЗА СЕКТОР"
+    en: "SECTOR REWARD"
+  - key: reward.route.reserve
+    ru: "В запасе"
+    en: "In reserve"
+  - key: reward.route.installed
+    ru: "Установлено ({0}, {1})"
+    en: "Installed ({0}, {1})"
   - key: route.difficulty
-    ru: "Сложность · {0}"
-    en: "Difficulty · {0}"
+    ru: "Сложность"
+    en: "Difficulty"
+  - key: route.node.name
+    ru: "Сектор {0}"
+    en: "Sector {0}"
   - key: route.difficulty.easy
     ru: "Лёгкая"
     en: "Easy"
@@ -1738,6 +1756,12 @@ MonoBehaviour:
   - key: event.relay.stabilize
     ru: "СТАБИЛИЗИРУЙТЕ"
     en: "STABILIZE"
+  - key: hud.relay.stabilization
+    ru: "Стабилизация"
+    en: "Stabilization"
+  - key: hud.relay.time
+    ru: "{0}/{1} с"
+    en: "{0}/{1} s"
   - key: event.relay.stabilized
     ru: "СТАБИЛИЗИРОВАНО"
     en: "STABILIZED"

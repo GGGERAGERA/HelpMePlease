@@ -181,7 +181,7 @@ public sealed partial class BotRunSession : MonoBehaviour
         telemetry.Sample(Time.deltaTime);
         if (health.IsDead) { Finish(BotRunOutcome.PlayerDead, "Player died"); return; }
         // Drain any rewards from the same trigger before ending, but never choose the next sector.
-        if (flow.IsLevelCompleted && rewards.IsRewardQueueIdle)
+        if (flow.IsLevelCompleted && rewards.IsRewardQueueIdle && flow.LevelChoice?.IsChoosing == true)
         { Finish(BotRunOutcome.SectorCompleted, "Production sector exit reached"); return; }
         if (SceneTransitionOverlay.IsTransitioning)
         { Finish(BotRunOutcome.Aborted, "External scene transition"); return; }

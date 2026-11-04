@@ -10,6 +10,8 @@ public sealed class SurfaceMapView : MonoBehaviour
     [SerializeField] private Button nodeTemplate;
     [SerializeField] private Image lineTemplate;
     [SerializeField] private TMP_Text details;
+    [SerializeField] private TMP_FontAsset routeCardFont;
+    [SerializeField] private Material routeCardTextMaterial;
     [SerializeField] private Button startButton;
     [SerializeField] private Button closeButton;
     [SerializeField] private ExpeditionTaskPicker taskPicker;
@@ -136,7 +138,7 @@ public sealed class SurfaceMapView : MonoBehaviour
             card.gameObject.SetActive(false);
             closeButton.gameObject.SetActive(false);
             routePresentation = new SurfaceRoutePresentation((RectTransform)transform, graph, world,
-                navigation, fog, details, Art("BUNKER")?.Sprite, locationIcons);
+                navigation, fog, details, routeCardFont, routeCardTextMaterial, Art("BUNKER")?.Sprite, locationIcons);
         }
         var character = run?.SelectedCharacter ?? characterSelection?.SelectedCharacter ?? defaultCharacter;
         routePresentation.Show(route, path, available, confirm, close, alternate, alternateKey, character);

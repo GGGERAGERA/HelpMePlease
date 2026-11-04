@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
+using Subject42.Combat.Telekinetic;
 
 [RequireComponent(typeof(UpgradeApplier))]
 public sealed partial class UpgradeManager : MonoBehaviour
@@ -72,6 +73,7 @@ public sealed partial class UpgradeManager : MonoBehaviour
     private bool hasCurrentRequest;
     private bool levelUpAudioAnnounced;
     private System.Action<UpgradeData> directRewardCommitted;
+    private System.Action<UpgradeData> selectRouteReward;
 
     public float TimeScaleAfterRewards => previousTimeScale;
 
@@ -102,6 +104,56 @@ public sealed partial class UpgradeManager : MonoBehaviour
     private bool CustomDrawingPending => orbitalStation != null && orbitalStation.HasPendingCustomRings;
 
     public bool IsChoosingUpgrade => isChoosingUpgrade;
+
+    internal bool TryShowRouteReward(TelekineticBuild build, RewardProfile profile,
+        System.Action<TelekineticItem> onSelected)
+    {
+        if (shuttingDown || upgradePanelView == null || !IsRewardQueueIdle)
+            return false;
+
+        bool weapon = profile == RewardProfile.WeaponLevel;
+        var targets = build.RouteRewardTargets(weapon).Take(upgradePanelView.CardViews.Count).ToList();
+        if (targets.Count == 0) targets.Add(null);
+        var cards = new List<UpgradeData>(targets.Count);
+        var icons = OrbitalPresentationConfig.Active.TelekineticRigPrefab;
+        var localization = LocalizationService.EnsureExists();
+        foreach (var target in targets)
+        {
+            var part = target?.Kind ?? (weapon ? TelekineticPart.Pistol : TelekineticPart.DMG);
+            int rank = target?.Level ?? 1;
+            var card = ScriptableObject.CreateInstance<UpgradeData>();
+            card.hideFlags = HideFlags.HideAndDontSave;
+            card.upgradeName = TelekineticBuild.Label(part);
+            card.icon = icons != null ? icons.Icon(part) : null;
+            string change = target == null ? "II" : $"{TelekineticBuild.Roman(rank)} → {TelekineticBuild.Roman(rank + 1)}";
+            string slot = target == null || build.Reserve.Contains(target)
+                ? localization.Get("reward.route.reserve")
+                : string.Format(localization.Get("reward.route.installed"), target.Position.x, target.Position.y);
+            card.description = $"{change}\n{slot}";
+            cards.Add(card);
+        }
+
+        orbitalStation?.InputOwner?.PrepareForExternalPause();
+        previousTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        isChoosingUpgrade = true;
+        currentChoices = cards;
+        currentOnClosed = () =>
+        {
+            selectRouteReward = null;
+            currentChoices = null;
+            foreach (var card in cards) Destroy(card);
+        };
+        selectRouteReward = card =>
+        {
+            AudioService.Instance?.Play(AudioCueId.RewardSelect);
+            onSelected(targets[cards.IndexOf(card)]);
+            CloseUpgradeSelection();
+        };
+        upgradePanelView.Show("reward.route.title", "reward.panel.chooseUpgrade", cards, SelectUpgrade);
+        RewardOpened?.Invoke(upgradePanelView);
+        return true;
+    }
 
     public IReadOnlyList<UpgradeData> GetEligibleNormalRewards() =>
         orbitalRewardProvider?.GetEligibleNormalRewards() ??
@@ -605,6 +657,12 @@ public sealed partial class UpgradeManager : MonoBehaviour
         if (!isChoosingUpgrade || currentChoices == null || !currentChoices.Contains(upgrade) ||
             orbitalRewardFlow != null)
             return;
+
+        if (selectRouteReward != null)
+        {
+            selectRouteReward(upgrade);
+            return;
+        }
 
         if (upgrade is OrbitalRewardData orbitalReward)
         {

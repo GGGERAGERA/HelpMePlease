@@ -11,6 +11,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using Subject42.Combat.Telekinetic;
 using Object = UnityEngine.Object;
 
 public sealed class SurfaceSectorTransitionTests
@@ -40,6 +41,145 @@ public sealed class SurfaceSectorTransitionTests
         PrepareProductionBunker();
         yield return new EnterPlayMode();
         yield return ExerciseRoute(false);
+    }
+
+    [UnityTest, Timeout(70000)]
+    public IEnumerator ProductionDeadlineOpensPhysicalExitBeforeRewardAndRoute()
+    {
+        PrepareProductionBunker();
+        yield return new EnterPlayMode();
+        yield return ExercisePhysicalExit();
+    }
+
+    private static IEnumerator ExercisePhysicalExit()
+    {
+        yield return CoreTestSupport.Await(() => ProductionSceneComposition.Active is { IsReady: true });
+        LocalizationService.Instance.SetLanguage(GameLanguage.Russian);
+        var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
+        starter.StartRun(starter.transform);
+        yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == "MVP" &&
+            ProductionSceneComposition.Active is { IsReady: true } && !SceneTransitionOverlay.IsTransitioning);
+        yield return CoreTestSupport.SelectInitialRouteNode();
+        yield return CoreTestSupport.Await(() => !SceneTransitionOverlay.IsTransitioning &&
+            RunFlowController.Instance != null && RunFlowController.Instance.Phase == RunPhase.NormalSector &&
+            Object.FindFirstObjectByType<CharacterSpawner>()?.SpawnedPlayer != null);
+
+        var run = RunStateManager.Instance;
+        var flow = RunFlowController.Instance;
+        var choice = Object.FindFirstObjectByType<LevelChoiceManager>();
+        var player = Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer;
+        var health = player.GetComponent<PlayerHealth>();
+        health.DebugInvulnerable = true;
+        health.SetCurrentHealth(Mathf.FloorToInt(health.MaxHealth) - 10);
+        var exit = ProductionSectorExit.ActiveExits.Single();
+        Assert.That(exit.IsAvailable, Is.False);
+        Assert.That(Vector2.Distance(player.transform.position, exit.transform.position), Is.GreaterThan(3f));
+        Assert.That(GameplayAreaService.Instance.IsInsidePlayableArea(exit.transform.position, 3f), Is.True);
+        var build = run.OrbitalStationState.Telekinetic;
+        bool weapon = run.CurrentSector.RouteNode.RewardProfile == RewardProfile.WeaponLevel;
+        var first = build.Grant(weapon ? TelekineticPart.Pistol : TelekineticPart.DMG);
+        var second = build.Grant(weapon ? TelekineticPart.Shotgun : TelekineticPart.FR);
+        var spawner = Object.FindFirstObjectByType<EnemySpawner>();
+        var events = Object.FindFirstObjectByType<WorldEventSpawner>();
+        WorldEvent relay = events.SpawnedEvents.OfType<OrbitalRelayEvent>().FirstOrDefault();
+        if (relay == null)
+        {
+            events.ConfigureDebugConcurrentEventCapacity(16);
+            var relayPrefab = events.EventPrefabs.OfType<OrbitalRelayEvent>().Single();
+            Assert.That(events.SpawnDebugEventAt(relayPrefab, player.transform.position, false, out relay), Is.True);
+        }
+        MovePlayer(player, relay.transform.position);
+        yield return new WaitForFixedUpdate();
+        relay.Interact();
+        Assert.That(relay.IsStarted && !relay.IsCompleted, Is.True);
+
+        MovePlayer(player, exit.transform.position);
+        yield return new WaitForFixedUpdate();
+        Assert.That(flow.IsLevelCompleted, Is.False, "Contact with a locked exit has no effect.");
+
+        FinishSector();
+        yield return CoreTestSupport.Await(() => flow.IsExitUnlocked);
+        yield return new WaitForFixedUpdate();
+        Assert.That(choice.IsChoosing, Is.False, "The deadline must leave the player in combat until physical contact.");
+        Assert.That(flow.Phase, Is.EqualTo(RunPhase.NormalSector));
+        Assert.That(exit.IsAvailable, Is.True);
+        Assert.That(run.CompletedLevels, Is.Zero);
+        Assert.That(Time.timeScale, Is.GreaterThan(0f));
+        Assert.That(spawner.IsSpawningEnabled, Is.True);
+        Assert.That(relay.IsStarted && !relay.IsCompleted, Is.True, "The deadline must not cancel an active event.");
+        Assert.That(RunMessageService.Instance.View.GetComponentsInChildren<TMP_Text>(true)
+            .Any(label => label.text == "ВЫХОД ОТКРЫТ"), Is.True);
+        var minimap = Object.FindFirstObjectByType<TacticalMapHUD>();
+        var marker = (TacticalMapMarker)typeof(TacticalMapHUD).GetField("exitMarker", InstanceMembers).GetValue(minimap);
+        Assert.That(marker.Rect.gameObject.activeSelf, Is.True);
+
+        int entered = 0;
+        flow.ExitReached += () => entered++;
+        Vector2 away = ((Vector2)GameplayAreaService.Instance.PlayableArea.bounds.center - (Vector2)exit.transform.position).normalized;
+        MovePlayer(player, (Vector2)exit.transform.position + away * 4f);
+        yield return new WaitForFixedUpdate();
+        var movement = player.GetComponent<CharacterMovement2D>();
+        movement.MovementIntent = () => -away;
+        var rewards = UpgradeManager.Instance;
+        yield return CoreTestSupport.Await(() => rewards.IsChoosingUpgrade);
+        movement.MovementIntent = () => Vector2.zero;
+        Assert.That(entered, Is.EqualTo(1));
+        Assert.That(relay.IsCompleted, Is.True, "Actual departure resolves the event through its cancellation rules.");
+        Assert.That(choice.IsChoosing, Is.False, "The route waits for the sector reward.");
+        Assert.That(run.CompletedLevels, Is.Zero);
+        Assert.That(first.Level, Is.EqualTo(1));
+        Assert.That(second.Level, Is.EqualTo(1));
+        var panel = Object.FindFirstObjectByType<UpgradePanelView>();
+        var selected = panel.CardViews.Single(card => card.gameObject.activeInHierarchy &&
+            card.GetComponentsInChildren<TMP_Text>().Any(label => label.text == TelekineticBuild.Label(second.Kind)));
+        var rewardButton = selected.GetComponent<Button>();
+        yield return CoreTestSupport.Await(rewardButton.IsInteractable);
+        Click(rewardButton);
+        yield return CoreTestSupport.Await(() => choice.IsChoosing);
+        Assert.That(flow.HandleExitReached(), Is.False);
+        Assert.That(entered, Is.EqualTo(1));
+        Assert.That(run.CompletedLevels, Is.EqualTo(1));
+        Assert.That(first.Level, Is.EqualTo(1));
+        Assert.That(second.Level, Is.EqualTo(2));
+        float carriedHealth = health.CurrentHealth;
+        int carriedGold = run.GetCurrentGoldReward(RunEndReason.ReturnedToBunker);
+        Assert.That(choice.DebugSelectFirstRule(), Is.True);
+        yield return CoreTestSupport.Await(() => IsPlayingSector(run, 2));
+        Assert.That(run.OrbitalStationState.Telekinetic.Reserve.Single(item => item.Id == second.Id).Level, Is.EqualTo(2));
+        var carriedPlayer = Object.FindFirstObjectByType<CharacterSpawner>().SpawnedPlayer;
+        Assert.That(carriedPlayer.GetComponent<PlayerHealth>().CurrentHealth, Is.EqualTo(carriedHealth));
+        Assert.That(run.GetCurrentGoldReward(RunEndReason.ReturnedToBunker), Is.GreaterThanOrEqualTo(carriedGold));
+
+        // Skip the middle sectors and use the production exit and boss spawner on the final one.
+        var finalNode = run.RouteGraph.NodesAt(RunRoute.FinalSector)[0];
+        var profile = UnityEditor.AssetDatabase.LoadAssetAtPath<StageProfileData>(
+            "Assets/_Project/Data/Stages/StageProfiles/StageProfile_03.asset");
+        run.SetCurrentSector(new RunSector(finalNode.SectorNumber, profile, finalNode.WorldRule, run.CurrentSector.LocalAnomaly, finalNode));
+        flow = RunFlowController.Instance;
+        flow.InitializeSector(profile);
+        carriedPlayer.GetComponent<PlayerHealth>().DebugInvulnerable = true;
+        FinishSector();
+        yield return CoreTestSupport.Await(() => flow.IsExitUnlocked);
+        Assert.That(flow.Phase, Is.EqualTo(RunPhase.NormalSector));
+        Assert.That(flow.FinalBoss, Is.Null);
+        MovePlayer(carriedPlayer, ProductionSectorExit.ActiveExits.Single().transform.position);
+        yield return CoreTestSupport.Await(() => UpgradeManager.Instance.IsChoosingUpgrade);
+        Assert.That(flow.FinalBoss, Is.Null);
+        Assert.That(UpgradeManager.Instance.DebugSelectCurrentChoice(0), Is.True);
+        yield return CoreTestSupport.Await(() => flow.Phase == RunPhase.FinalBossCombat);
+        var boss = flow.FinalBoss;
+        Assert.That(boss.IsBoss, Is.True);
+        Assert.That(Object.FindFirstObjectByType<LevelChoiceManager>().IsChoosing, Is.False);
+        Assert.That(run.CompletedLevels, Is.EqualTo(2));
+        boss.TakeDamage(boss.CurrentHealth * 2f, boss.transform.position);
+        yield return CoreTestSupport.Await(() => run.IsRunEnded &&
+            SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
+    }
+
+    private static void MovePlayer(GameObject player, Vector2 position)
+    {
+        player.transform.position = position;
+        Physics2D.SyncTransforms();
     }
 
     [UnityTest, Timeout(50000)]
@@ -84,10 +224,12 @@ public sealed class SurfaceSectorTransitionTests
         Assert.That(flow.IsLevelCompleted, Is.True);
         Assert.That(flow.ExitMinimumTimeRemaining, Is.Zero);
         Assert.That(run.IsDevelopmentRun, Is.True);
-        Assert.That(choice.IsChoosing, Is.True);
         Assert.That(exits, Is.EqualTo(1));
         Assert.That(flow.TryDebugCompleteCurrentLevel(), Is.False);
         Assert.That(exits, Is.EqualTo(1));
+        yield return CoreTestSupport.Await(() => UpgradeManager.Instance.IsChoosingUpgrade);
+        Assert.That(UpgradeManager.Instance.DebugSelectCurrentChoice(0), Is.True);
+        yield return CoreTestSupport.Await(() => choice.IsChoosing);
         Assert.That(choice.DebugSelectFirstRule(), Is.True);
         yield return CoreTestSupport.Await(() => run.CurrentSector.SectorNumber == 2 && !SceneTransitionOverlay.IsTransitioning);
         Assert.That(RunFlowController.Instance.IsLevelCompleted, Is.False);
@@ -193,17 +335,18 @@ public sealed class SurfaceSectorTransitionTests
         Assert.That(preview.GetComponent<Button>(), Is.Null);
         var pointer = new PointerEventData(EventSystem.current);
         ExecuteEvents.Execute(preview, pointer, ExecuteEvents.pointerEnterHandler);
-        Assert.That(GameObject.Find("Node intel").GetComponent<TMP_Text>().text, Does.StartWith("Правило"));
+        Assert.That(GameObject.Find("Modifier label").GetComponent<TMP_Text>().text, Is.EqualTo("Модификатор"));
         Assert.That(GameObject.Find("Route confirm"), Is.Null, "Preview has no launch action.");
         ExecuteEvents.Execute(preview, pointer, ExecuteEvents.pointerExitHandler);
         Click(GameObject.Find("Route location 1-2").GetComponent<Button>());
         Assert.That(GameObject.Find("Route selection outline"), Is.Not.Null);
-        var intel = GameObject.Find("Node intel").GetComponent<TMP_Text>();
-        intel.ForceMeshUpdate();
-        string briefing = intel.GetParsedText();
-        Assert.That(briefing.Split('\n').Select(line => line.Split('·')[0].Trim()),
-            Is.EqualTo(new[] { "Правило", "Время прохождения", "Награда", "Сложность" }));
-        Assert.That(briefing, Does.Contain($"{entryGraph.Entries[1].DurationSeconds} с"));
+        var labels = GameObject.Find("Route briefing").GetComponentsInChildren<TMP_Text>()
+            .Where(text => text.name.EndsWith(" label", System.StringComparison.Ordinal))
+            .Select(text => text.text);
+        Assert.That(labels, Is.EqualTo(new[] { "Модификатор", "До открытия выхода", "Награда за прохождение", "Сложность" }));
+        Assert.That(GameObject.Find("Node title").GetComponent<TMP_Text>().text, Is.EqualTo("Сектор 2"));
+        Assert.That(GameObject.Find("Duration value").GetComponent<TMP_Text>().text,
+            Is.EqualTo($"{entryGraph.Entries[1].DurationSeconds} с"));
         var branches = (ICollection<int>)roads.GetType().GetField("plannedTracks", InstanceMembers).GetValue(roads);
         Assert.That(branches.Count, Is.EqualTo(entryGraph.Entries[1].Next.Count));
 
@@ -248,7 +391,11 @@ public sealed class SurfaceSectorTransitionTests
         health.DebugInvulnerable = true;
         run.SetThreatForDebug(52f);
         yield return null;
-        Assert.That(GameObject.Find("Combat pressure").GetComponent<TMP_Text>().text, Is.EqualTo("Давление III / IV"));
+        Assert.That(GameObject.Find("Combat pressure"), Is.Null);
+        var pressureMeter = (HudSegments)typeof(HUDManager).GetField("threatSegments", InstanceMembers).GetValue(HUDManager.Instance);
+        var segments = (Image[])typeof(HudSegments).GetField("segments", InstanceMembers).GetValue(pressureMeter);
+        var activeColor = (Color)typeof(HudSegments).GetField("activeColor", InstanceMembers).GetValue(pressureMeter);
+        Assert.That(segments.Count(segment => segment.color == activeColor), Is.EqualTo(3));
 
         for (int sector = 1; sector <= (full ? RunRoute.FinalSector : 2); sector++)
         {
@@ -263,7 +410,7 @@ public sealed class SurfaceSectorTransitionTests
                 run.SetCurrentSector(new RunSector(final.SectorNumber, profile, final.WorldRule, run.CurrentSector.LocalAnomaly, final));
                 var flow = RunFlowController.Instance;
                 flow.InitializeSector(profile);
-                FinishSector();
+                yield return CoreTestSupport.LeaveSectorViaExit();
                 yield return CoreTestSupport.Await(() => flow.Phase == RunPhase.FinalBossCombat);
                 Assert.That(flow.FinalBoss, Is.Not.Null);
                 Assert.That(flow.FinalBoss.IsBoss, Is.True);
@@ -275,7 +422,7 @@ public sealed class SurfaceSectorTransitionTests
             int RewardRank() => build.Items.Concat(build.Reserve).Where(item => weapon ? item.IsWeapon : item.CanMerge)
                 .Sum(item => item.Level - 1);
             int rankBefore = RewardRank();
-            FinishSector();
+            yield return CoreTestSupport.LeaveSectorViaExit();
             if (sector == RunRoute.FinalSector) break;
 
             var manager = Object.FindFirstObjectByType<LevelChoiceManager>();

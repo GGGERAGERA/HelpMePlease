@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
+using Subject42.Combat.Telekinetic;
 
 public enum RunPhase { NormalSector, WaitingForRewards, FinalBossIntro, FinalBossCombat, Victory, Stopped }
 
@@ -18,6 +19,7 @@ public sealed class RunFlowController : MonoBehaviour
     [Header("Level Choice")]
     [SerializeField] private LevelChoiceManager levelChoiceManager;
     internal LevelChoiceManager LevelChoice => levelChoiceManager;
+    internal OrbitalRelayEvent ActiveRelay => worldEventSpawner != null ? worldEventSpawner.ActiveEvent as OrbitalRelayEvent : null;
 
     [Header("Level Mechanics")]
     [SerializeField] private WorldEventSpawner worldEventSpawner;
@@ -74,20 +76,17 @@ public sealed class RunFlowController : MonoBehaviour
     private void Update()
     {
         if (Phase == RunPhase.NormalSector && !levelCompleted)
-        {
             UpdateSectorClock(SectorElapsedTime + Time.deltaTime);
-            if (IsExitUnlocked && !TutorialController.IsTutorialSector && Time.timeScale > 0f)
-                HandleExitReached();
-        }
     }
 
     private void UpdateSectorClock(float elapsedTime)
     {
-        SectorElapsedTime = TutorialController.IsTutorialSector ? elapsedTime : Mathf.Min(sectorDuration, elapsedTime);
-        // The countdown is the complete availability contract; waves never extend it.
+        SectorElapsedTime = elapsedTime;
         if (!IsExitUnlocked && CanUnlockExit)
         {
             IsExitUnlocked = true;
+            if (!TutorialController.IsTutorialSector)
+                RunMessageService.Instance?.ShowCustom("hud.exit.opened", string.Empty, 2f);
             ExitUnlocked?.Invoke();
         }
     }
@@ -211,51 +210,62 @@ public sealed class RunFlowController : MonoBehaviour
             return false;
         }
 
-        if (RunRoute.IsFinalSector(sectorNumber))
+        bool finalSector = RunRoute.IsFinalSector(sectorNumber);
+        if (finalSector)
         {
             if (!runState.FinalObjectiveSatisfied) return false;
-            if (!CanContinue || bossSpawner == null || enemySpawner == null ||
+            if (bossSpawner == null || enemySpawner == null ||
                 RunEndService.Instance == null || !bossSpawner.CanSpawn(runState.CurrentSector))
             {
                 Debug.LogError("[RunFlowController] Final boss phase dependencies are missing.", this);
                 return false;
             }
-
-            levelCompleted = true;
-            Phase = RunPhase.WaitingForRewards;
-            enemySpawner.StopSpawning();
-            EndSectorActivities();
-            RegisterCurrentLevelCompletion();
-            runState.RegisterCompletedLevel();
-            StartCoroutine(FinalBossRoutine());
-            return true;
         }
-
-        LevelChoiceManager manager = levelChoiceManager;
-
-        if (manager == null)
+        else if (levelChoiceManager == null || !levelChoiceManager.CanLeaveTutorial)
         {
-            Debug.LogError(
-                "[RunFlowController] LevelChoiceManager not found."
-            );
+            Debug.LogError("[RunFlowController] Next sector transition is unavailable.", this);
             return false;
         }
 
-        if (!RewardsResolved) return false;
-        worldEventSpawner?.CancelActiveEventsForDeparture();
         levelCompleted = true;
+        Phase = RunPhase.WaitingForRewards;
+        worldEventSpawner?.CancelActiveEventsForDeparture();
+        enemySpawner?.StopSpawning();
+        EndSectorActivities();
+        ExitReached?.Invoke();
+        StartCoroutine(CompleteSector(runState, finalSector));
+        return true;
+    }
 
-        if (!manager.TryShowChoices())
+    private IEnumerator CompleteSector(RunStateManager run, bool finalSector)
+    {
+        // A gameplay departure can resolve an active event and enqueue its earned reward.
+        yield return null;
+        while (CanContinue && !RewardsResolved) yield return null;
+        if (!CanContinue) yield break;
+
+        TelekineticItem rewardTarget = null;
+        if (run.CurrentSector.RouteNode is { } node && run.OrbitalStationState?.Telekinetic is { } build)
         {
-            levelCompleted = false;
-            return false;
+            var rewards = UpgradeManager.Instance;
+            if (rewards == null || !rewards.TryShowRouteReward(build, node.RewardProfile, item => rewardTarget = item))
+            {
+                Debug.LogError("[RunFlowController] Sector reward presentation is unavailable.", this);
+                levelCompleted = false;
+                Phase = RunPhase.NormalSector;
+                enemySpawner?.ResumeSpawning();
+                yield break;
+            }
+            while (CanContinue && !RewardsResolved) yield return null;
+            if (!CanContinue) yield break;
         }
 
         RegisterCurrentLevelCompletion();
-        EndSectorActivities();
-        runState.RegisterCompletedLevel();
-        ExitReached?.Invoke();
-        return true;
+        run.RegisterCompletedLevel(rewardTarget);
+        if (finalSector)
+            yield return FinalBossRoutine();
+        else if (!levelChoiceManager.TryShowChoices())
+            Debug.LogError("[RunFlowController] Could not show the next route choices.", this);
     }
 
     public void ApplyLevelMechanics()

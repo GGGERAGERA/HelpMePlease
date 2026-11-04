@@ -139,7 +139,7 @@ public sealed class EscapeProtocolFlowTests
         {
             int nextSector=run.CurrentSector.SectorNumber+1;
             flow=RunFlowController.Instance;
-            typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.Duration);
+            yield return CoreTestSupport.LeaveSectorViaExit();
             var choices=Object.FindFirstObjectByType<LevelChoiceManager>();
             yield return CoreTestSupport.Await(()=>choices.IsChoosing);
             Assert.That(choices.DebugSelectFirstRule(),Is.True);
@@ -150,7 +150,7 @@ public sealed class EscapeProtocolFlowTests
             Object.FindFirstObjectByType<EnemySpawner>().StopSpawning();
         }
         flow=RunFlowController.Instance;
-        typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.Duration);
+        yield return CoreTestSupport.LeaveSectorViaExit();
         yield return CoreTestSupport.Await(()=>flow.FinalBoss!=null&&flow.Phase==RunPhase.FinalBossCombat);
         flow.FinalBoss.TakeDamage(flow.FinalBoss.CurrentHealth*2,flow.FinalBoss.transform.position);yield return Ready(RunEndService.BunkerSceneName);
         Assert.That(meta.EscapeProtocolCompleted,Is.True);Assert.That(map.GetStatus("F1"),Is.EqualTo(SurfaceSectorStatus.Completed));

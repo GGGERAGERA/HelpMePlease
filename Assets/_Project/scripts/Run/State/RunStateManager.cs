@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Subject42.Combat.OrbitalStation;
+using Subject42.Combat.Telekinetic;
 
 public enum RunSceneCleanupPhase { Rewards, Gameplay }
 
@@ -645,7 +646,7 @@ public sealed class RunStateManager : MonoBehaviour
         }
     }
 
-    public void RegisterCompletedLevel()
+    public void RegisterCompletedLevel(TelekineticItem rewardTarget = null)
     {
         if (runEnded)
             return;
@@ -676,7 +677,7 @@ public sealed class RunStateManager : MonoBehaviour
             CurrentSector.CompletionGoldMultiplier * (CurrentSector.Duration / 180f);
         lastCompletedSectorNumber = sectorNumber;
         if (CurrentSector.RouteNode is { } node)
-            OrbitalStationState?.AwardRouteLevel(node.RewardProfile == RewardProfile.WeaponLevel);
+            OrbitalStationState?.AwardRouteLevel(node.RewardProfile == RewardProfile.WeaponLevel, rewardTarget);
         RefreshExpeditionProgress();
         CurrentRewardChanged?.Invoke();
 

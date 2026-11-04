@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Subject42.Combat.OrbitalStation;
 
 public class HUDManager : MonoBehaviour
 {
@@ -27,7 +28,7 @@ public class HUDManager : MonoBehaviour
             return;
         }
         // Only authored gameplay presentation; leave pause/rewards and danger markers alone.
-        Component[] views = { informationGroup, healthBar, healthSlider, healthText,
+        Component[] views = { informationGroup, combatVitals, healthBar, healthSlider, healthText,
             experienceBar, experienceSlider, experienceText, levelText, killsCounter,
             goldCounter, killsText, currencyText, timerText, threatPanel, bulletTimeView,
             dashCooldownView, routeProgressView, interactionPrompt, constructorHint,
@@ -66,6 +67,8 @@ public class HUDManager : MonoBehaviour
 
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private CombatVitalsHud combatVitals;
+    private OrbitalStationRuntime boundStation;
 
     [Header("Threat")]
     [SerializeField] private RectTransform threatPanel;
@@ -224,7 +227,7 @@ public class HUDManager : MonoBehaviour
             return;
         }
 
-        if (timerText != null)
+        if (timerText != null && combatVitals == null)
         {
             pressureText = new GameObject("Combat pressure", typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
             var rect = pressureText.rectTransform;
@@ -238,7 +241,17 @@ public class HUDManager : MonoBehaviour
             pressureText.alignment = TextAlignmentOptions.MidlineLeft;
             pressureText.raycastTarget = false;
         }
+        combatVitals?.SetVisible(false);
         HideLowHpVignette();
+    }
+
+    private void OffsetCombatContext(float heightChange)
+    {
+        var offset = Vector2.down * heightChange;
+        threatPanel.anchoredPosition += offset;
+        ((RectTransform)killsCounter.transform).anchoredPosition += offset;
+        if (constructorHint != null)
+            ((RectTransform)constructorHint.transform).anchoredPosition += offset;
     }
 
     private void Start()
@@ -291,6 +304,7 @@ public class HUDManager : MonoBehaviour
     private void ReleaseRunScene()
     {
         UnbindRunSubscriptions();
+        combatVitals?.SetVisible(false);
         HideBossHp();
         ClearWorldEventMarker();
         HideLowHpVignette();
@@ -309,8 +323,15 @@ public class HUDManager : MonoBehaviour
     private void LateUpdate()
     {
         if (damagePulseEndsAt > 0f) RefreshDamageVignette();
-        informationGroup.alpha = IsInformationVisible ? 1f : 0f;
+        bool visible = IsInformationVisible;
+        informationGroup.alpha = visible ? 1f : 0f;
         RefreshRunCounters();
+        if (combatVitals != null)
+        {
+            combatVitals.SetVisible(visible);
+            float heightChange = combatVitals.Refresh(healthSlider, boundStation, runFlow.ActiveRelay);
+            if (heightChange != 0f) OffsetCombatContext(heightChange);
+        }
         if (runStateManager == null || runStateManager.CurrentSector == null || runFlow == null)
             return;
 
@@ -384,6 +405,7 @@ public class HUDManager : MonoBehaviour
     public void BindPlayer(GameObject player)
     {
         IsPlayerBound = player != null;
+        boundStation = combatVitals != null && player != null ? player.GetComponentInChildren<OrbitalStationRuntime>() : null;
         bulletTimeView.Bind(player);
         constructorHint?.Bind(player);
         if (boundPlayer != null) { boundPlayer.HealthChanged -= SetHealth; boundPlayer.DamageTaken -= PulsePlayerDamage; }
