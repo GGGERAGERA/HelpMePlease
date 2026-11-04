@@ -20,7 +20,7 @@ MonoBehaviour:
     speedMultiplier: 1
     enemies:
     - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-      weight: 20
+      weight: 25
       maxAliveOfType: 14
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -44,23 +44,18 @@ MonoBehaviour:
       maxAliveOfType: 0
       useExactAliveLimit: 0
       minimumRunLevel: 3
-    - enemyPrefab: {fileID: 271443408238426894, guid: 01b97e238f73cc5478e23db9eab34d00, type: 3}
-      weight: 20
-      maxAliveOfType: 14
-      useExactAliveLimit: 0
-      minimumRunLevel: 1
     - enemyPrefab: {fileID: 481729627446576498, guid: 2496d54b04ac5f348b2849f4eb8eba18, type: 3}
-      weight: 20
+      weight: 25
       maxAliveOfType: 14
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 919981803637764755, guid: 17fe5a6d89e13e244a7685523968c665, type: 3}
-      weight: 20
+      weight: 25
       maxAliveOfType: 14
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 5016059592784206368, guid: c5fa71409bcdef24995c4f601e59c9e5, type: 3}
-      weight: 20
+      weight: 25
       maxAliveOfType: 14
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -71,7 +66,7 @@ MonoBehaviour:
     speedMultiplier: 1
     enemies:
     - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-      weight: 15.2
+      weight: 19
       maxAliveOfType: 17
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -110,23 +105,18 @@ MonoBehaviour:
       maxAliveOfType: 0
       useExactAliveLimit: 0
       minimumRunLevel: 3
-    - enemyPrefab: {fileID: 271443408238426894, guid: 01b97e238f73cc5478e23db9eab34d00, type: 3}
-      weight: 15.2
-      maxAliveOfType: 17
-      useExactAliveLimit: 0
-      minimumRunLevel: 1
     - enemyPrefab: {fileID: 481729627446576498, guid: 2496d54b04ac5f348b2849f4eb8eba18, type: 3}
-      weight: 15.2
+      weight: 19
       maxAliveOfType: 17
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 919981803637764755, guid: 17fe5a6d89e13e244a7685523968c665, type: 3}
-      weight: 15.2
+      weight: 19
       maxAliveOfType: 17
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 5016059592784206368, guid: c5fa71409bcdef24995c4f601e59c9e5, type: 3}
-      weight: 15.2
+      weight: 19
       maxAliveOfType: 17
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -137,7 +127,7 @@ MonoBehaviour:
     speedMultiplier: 1
     enemies:
     - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-      weight: 16.2
+      weight: 20.25
       maxAliveOfType: 19
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -176,23 +166,18 @@ MonoBehaviour:
       maxAliveOfType: 0
       useExactAliveLimit: 0
       minimumRunLevel: 3
-    - enemyPrefab: {fileID: 271443408238426894, guid: 01b97e238f73cc5478e23db9eab34d00, type: 3}
-      weight: 16.2
-      maxAliveOfType: 19
-      useExactAliveLimit: 0
-      minimumRunLevel: 1
     - enemyPrefab: {fileID: 481729627446576498, guid: 2496d54b04ac5f348b2849f4eb8eba18, type: 3}
-      weight: 16.2
+      weight: 20.25
       maxAliveOfType: 19
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 919981803637764755, guid: 17fe5a6d89e13e244a7685523968c665, type: 3}
-      weight: 16.2
+      weight: 20.25
       maxAliveOfType: 19
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 5016059592784206368, guid: c5fa71409bcdef24995c4f601e59c9e5, type: 3}
-      weight: 16.2
+      weight: 20.25
       maxAliveOfType: 19
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -203,7 +188,7 @@ MonoBehaviour:
     speedMultiplier: 1
     enemies:
     - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-      weight: 11.2
+      weight: 14
       maxAliveOfType: 22
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -247,23 +232,18 @@ MonoBehaviour:
       maxAliveOfType: 0
       useExactAliveLimit: 0
       minimumRunLevel: 3
-    - enemyPrefab: {fileID: 271443408238426894, guid: 01b97e238f73cc5478e23db9eab34d00, type: 3}
-      weight: 11.2
-      maxAliveOfType: 22
-      useExactAliveLimit: 0
-      minimumRunLevel: 1
     - enemyPrefab: {fileID: 481729627446576498, guid: 2496d54b04ac5f348b2849f4eb8eba18, type: 3}
-      weight: 11.2
+      weight: 14
       maxAliveOfType: 22
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 919981803637764755, guid: 17fe5a6d89e13e244a7685523968c665, type: 3}
-      weight: 11.2
+      weight: 14
       maxAliveOfType: 22
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 5016059592784206368, guid: c5fa71409bcdef24995c4f601e59c9e5, type: 3}
-      weight: 11.2
+      weight: 14
       maxAliveOfType: 22
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -274,7 +254,7 @@ MonoBehaviour:
     speedMultiplier: 1
     enemies:
     - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-      weight: 13.2
+      weight: 16.5
       maxAliveOfType: 24
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -318,23 +298,18 @@ MonoBehaviour:
       maxAliveOfType: 0
       useExactAliveLimit: 0
       minimumRunLevel: 3
-    - enemyPrefab: {fileID: 271443408238426894, guid: 01b97e238f73cc5478e23db9eab34d00, type: 3}
-      weight: 13.2
-      maxAliveOfType: 24
-      useExactAliveLimit: 0
-      minimumRunLevel: 1
     - enemyPrefab: {fileID: 481729627446576498, guid: 2496d54b04ac5f348b2849f4eb8eba18, type: 3}
-      weight: 13.2
+      weight: 16.5
       maxAliveOfType: 24
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 919981803637764755, guid: 17fe5a6d89e13e244a7685523968c665, type: 3}
-      weight: 13.2
+      weight: 16.5
       maxAliveOfType: 24
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 5016059592784206368, guid: c5fa71409bcdef24995c4f601e59c9e5, type: 3}
-      weight: 13.2
+      weight: 16.5
       maxAliveOfType: 24
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -345,7 +320,7 @@ MonoBehaviour:
     speedMultiplier: 1
     enemies:
     - enemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
-      weight: 9.2
+      weight: 11.5
       maxAliveOfType: 26
       useExactAliveLimit: 0
       minimumRunLevel: 1
@@ -389,23 +364,18 @@ MonoBehaviour:
       maxAliveOfType: 0
       useExactAliveLimit: 0
       minimumRunLevel: 3
-    - enemyPrefab: {fileID: 271443408238426894, guid: 01b97e238f73cc5478e23db9eab34d00, type: 3}
-      weight: 9.2
-      maxAliveOfType: 26
-      useExactAliveLimit: 0
-      minimumRunLevel: 1
     - enemyPrefab: {fileID: 481729627446576498, guid: 2496d54b04ac5f348b2849f4eb8eba18, type: 3}
-      weight: 9.2
+      weight: 11.5
       maxAliveOfType: 26
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 919981803637764755, guid: 17fe5a6d89e13e244a7685523968c665, type: 3}
-      weight: 9.2
+      weight: 11.5
       maxAliveOfType: 26
       useExactAliveLimit: 0
       minimumRunLevel: 1
     - enemyPrefab: {fileID: 5016059592784206368, guid: c5fa71409bcdef24995c4f601e59c9e5, type: 3}
-      weight: 9.2
+      weight: 11.5
       maxAliveOfType: 26
       useExactAliveLimit: 0
       minimumRunLevel: 1

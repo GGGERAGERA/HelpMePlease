@@ -6,9 +6,8 @@ public sealed class RunSector
     internal void ApplyRunConfig(RunConfig value) => config = value ?? RunConfig.Default;
     public int SectorNumber { get; }
     public RouteNode RouteNode { get; }
-    public LocationType LocationType => RouteNode?.LocationType ?? LocationType.Clearance;
     public float Duration => SectorNumber == RunRoute.TutorialSector
-        ? StageProfile.ExitActivationTime : RunRoute.SectorDuration;
+        ? StageProfile.ExitActivationTime : RouteNode?.DurationSeconds ?? RunRoute.SectorDuration;
     public StageProfileData StageProfile { get; }
     private readonly WorldRuleData stageWorldRule;
     public WorldRuleData WorldRule => RouteNode != null ? RouteNode.WorldRule :
@@ -28,7 +27,7 @@ public sealed class RunSector
         ? StageProfile.EnemySpeedMultiplier
         : 1f;
     public float SpawnPressureMultiplier => StageProfile != null
-        ? StageProfile.SpawnPressureMultiplier * config.SpawnPressure
+        ? StageProfile.SpawnPressureMultiplier * config.SpawnPressure * (RouteNode?.SpawnPressureMultiplier ?? 1f)
         : 1f;
     public float ExperienceGainMultiplier => StageProfile != null
         ? StageProfile.ExperienceGainMultiplier * config.Experience *

@@ -3,33 +3,24 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Subject42UITheme;
 
 internal sealed class SurfaceRoutePresentation
 {
     private const float LocationSpacing = 310f;
     private const int PreviewColumns = 3;
     private enum Intel { Hidden, Preview, Surveyed }
-    private static readonly Color Available = new(.34f, .95f, .83f);
-    private static readonly Color Selected = new(1f, .72f, .28f);
-    private static readonly Color SelectedText = new(1f, .95f, .69f);
-    private static readonly Color Visited = new(.36f, .91f, .52f);
-    private static readonly Color Preview = new(.72f, .83f, .80f);
-    private static readonly Color Missed = new(.48f, .54f, .54f);
-    private static readonly Color Silhouette = new(.55f, .64f, .67f);
-    private static readonly Color Text = new(.87f, .90f, .83f);
-    private static readonly Color Ink = new(.056f, .081f, .093f, .98f);
-
     private readonly RectTransform root, graph, landmarks;
     private readonly SurfaceMapFog fog;
     private readonly SurfaceMapNavigation navigation;
-    private readonly TMP_Text fontSource, header, goldLabel, facts, launchLabel, alternateLabel;
+    private readonly TMP_Text fontSource, header, goldLabel, pressureLabel, facts, launchLabel, alternateLabel;
     private readonly RectTransform chrome;
     private readonly SurfaceMapPlate card;
     private readonly Button launch, back, alternateButton;
     private readonly SurfaceRouteRoads roads;
     private readonly Sprite bunkerSprite;
     private readonly SurfaceMapView.LocationIcon[] siteIcons;
-    private readonly Dictionary<RouteNode, (Graphic border, Graphic glow, TMP_Text symbol, int road)> pins = new();
+    private readonly Dictionary<RouteNode, (Graphic selection, int road)> pins = new();
     private readonly Dictionary<RouteNode, List<int>> branchRoads = new();
     private readonly List<Vector2> clearings = new();
     private readonly List<(Vector2 from, Vector2 to)> surveyedRoads = new();
@@ -41,6 +32,7 @@ internal sealed class SurfaceRoutePresentation
     private Func<RouteNode, bool> confirm;
     private string alternateKey;
     private int runGold;
+    private ThreatTier pressureTier;
     private int displayedLevel;
     private RouteNode selected, inspected;
 
@@ -71,32 +63,38 @@ internal sealed class SurfaceRoutePresentation
         roads.raycastTarget = false;
 
         chrome = CreateRect("Route controls", root, Vector2.zero, new Vector2(1600f, 900f));
-        var heading = Plate("Route stage HUD", chrome, new Vector2(0f, 392f), new Vector2(382f, 58f), Ink);
-        header = Label("Route stage name", heading.rectTransform, Vector2.zero, new Vector2(344f, 42f), 28f, Text, true);
+        var heading = Frame("Route stage HUD", chrome, new Vector2(0f, 392f), new Vector2(382f, 58f), Border, Surface);
+        header = Label("Route stage name", heading.rectTransform, Vector2.zero, new Vector2(344f, 42f), 28f, PrimaryText, true);
         header.textWrappingMode = TextWrappingModes.NoWrap;
         header.enableAutoSizing = true;
         header.fontSizeMin = 20f;
         header.fontSizeMax = 30f;
-        var wallet = Plate("Route gold HUD", chrome, new Vector2(598f, 396f), new Vector2(196f, 42f), Ink);
+        var wallet = Frame("Route gold HUD", chrome, new Vector2(598f, 396f), new Vector2(196f, 42f), Border, Surface);
         CreateRect("Coin", wallet.rectTransform, new Vector2(-73f, 0f), new Vector2(21f, 21f))
             .gameObject.AddComponent<SurfaceMapGlyph>().Show(SurfaceMapMeaning.Reward);
-        goldLabel = Label("Route gold", wallet.rectTransform, new Vector2(17f, 0f), new Vector2(140f, 30f), 16f, SelectedText);
+        goldLabel = Label("Route gold", wallet.rectTransform, new Vector2(17f, 0f), new Vector2(140f, 30f), 16f, SecondaryText);
         goldLabel.textWrappingMode = TextWrappingModes.NoWrap;
         goldLabel.enableAutoSizing = true;
         goldLabel.fontSizeMin = 12f;
         goldLabel.fontSizeMax = 16f;
+        var pressure = Frame("Route pressure HUD", chrome, new Vector2(395f, 396f), new Vector2(198f, 42f), Border, Surface);
+        pressureLabel = Label("Route pressure", pressure.rectTransform, Vector2.zero, new Vector2(184f, 30f), 16f, SecondaryText);
+        pressureLabel.textWrappingMode = TextWrappingModes.NoWrap;
+        pressureLabel.enableAutoSizing = true;
+        pressureLabel.fontSizeMin = 12f;
+        pressureLabel.fontSizeMax = 16f;
         back = Control("Route close", chrome, new Vector2(742f, 396f), new Vector2(46f, 42f), "×", out _);
         alternateButton = Control("Route variant", chrome, new Vector2(540f, 338f), new Vector2(312f, 42f), "", out alternateLabel);
 
-        card = Plate("Route briefing", chrome, new Vector2(572f, -338f), new Vector2(380f, 140f), Ink);
+        card = Frame("Route briefing", chrome, new Vector2(506f, -308f), new Vector2(512f, 200f), Border, Surface, 3f);
         var cardRect = card.rectTransform;
-        Plate("Briefing accent", cardRect, new Vector2(0f, 68f), new Vector2(368f, 4f), Selected);
-        facts = Label("Node intel", cardRect, new Vector2(0f, 25f), new Vector2(350f, 65f), 16f, Text);
+        facts = Label("Node intel", cardRect, new Vector2(0f, 28f), new Vector2(464f, 118f), 17f, SecondaryText);
         facts.lineSpacing = 5f;
         facts.enableAutoSizing = true;
-        facts.fontSizeMin = 14f;
-        facts.fontSizeMax = 16f;
-        launch = Control("Route confirm", cardRect, new Vector2(0f, -34f), new Vector2(332f, 43f), "", out launchLabel);
+        facts.fontSizeMin = 15f;
+        facts.fontSizeMax = 17f;
+        launch = Control("Route confirm", cardRect, new Vector2(0f, -64f), new Vector2(464f, 43f), "", out launchLabel,
+            primaryAction: true);
         launch.onClick.AddListener(() =>
         {
             if (selected != null && confirm?.Invoke(selected) == true)
@@ -111,7 +109,7 @@ internal sealed class SurfaceRoutePresentation
         this.available = available;
         this.confirm = confirm;
         this.alternateKey = alternateKey;
-        displayedLevel = available[0].Level;
+        displayedLevel = available[0].SectorNumber;
         selected = inspected = null;
         card.gameObject.SetActive(false);
         Bind(back, close);
@@ -130,7 +128,7 @@ internal sealed class SurfaceRoutePresentation
 
         Vector2 bunker = Position(0, 1);
         var start = Artwork("Bunker", bunker, bunkerSprite, 174f, Color.white);
-        bunkerLabel = Label("Bunker label", start, new Vector2(0f, -61f), new Vector2(190f, 32f), 23f, Text, true);
+        bunkerLabel = Label("Bunker label", start, new Vector2(0f, -61f), new Vector2(190f, 32f), 23f, PrimaryText, true);
         clearings.Add(bunker);
         RouteNode last = null;
         var travelled = new HashSet<(RouteNode from, RouteNode to)>();
@@ -173,15 +171,15 @@ internal sealed class SurfaceRoutePresentation
         }
         if (bossRevealed) outlooks.Add(boss);
         var bossSite = Artwork("Final boss", boss, FindArt(SurfaceLocationFamily.Technogenic), 168f,
-            bossRevealed ? Preview : Silhouette);
-        var bossPlate = Plate("Boss marker", bossSite, Vector2.zero, new Vector2(74f, 68f), bossRevealed ? Selected : Silhouette);
-        Plate("Inset", bossPlate.rectTransform, Vector2.zero, new Vector2(64f, 58f), Ink);
+            bossRevealed ? SecondaryText : Border);
+        var bossPlate = Frame("Boss marker", bossSite, Vector2.zero, new Vector2(74f, 68f),
+            bossRevealed ? Coral : Border, Background, 5f);
         var bossIcon = CreateRect("Boss icon", bossPlate.rectTransform, Vector2.zero, new Vector2(42f, 42f))
             .gameObject.AddComponent<SurfaceMapGlyph>();
         bossIcon.Show(SurfaceMapMeaning.Boss);
-        if (!bossRevealed) bossIcon.color = Silhouette;
+        if (!bossRevealed) bossIcon.color = SecondaryText;
         bossLabel = Label("Boss label", bossSite, new Vector2(0f, -63f), new Vector2(310f, 36f), 20f,
-            bossRevealed ? Text : Silhouette, true);
+            bossRevealed ? PrimaryText : SecondaryText, true);
 
         Vector2 current = last == null ? bunker : Position(last);
         Vector2 markerOffset = path.Count == 0 ? new Vector2(-90f, -37f) : new Vector2(-3f, -72f);
@@ -233,10 +231,17 @@ internal sealed class SurfaceRoutePresentation
         characterMarker.enabled = characterMarker.sprite != null;
     }
 
-    internal void SetGold(int gold)
+    internal void SetRunStatus(int gold, float pressure)
     {
         runGold = gold;
-        goldLabel.text = F("route.gold", runGold);
+        pressureTier = ThreatTierPresentation.FromPressure(pressure);
+        RefreshRunStatus();
+    }
+
+    private void RefreshRunStatus()
+    {
+        goldLabel.text = F("route.gold", Tint(runGold, PrimaryText));
+        pressureLabel.text = F("route.pressure", Tint(ThreatTierPresentation.Format(pressureTier), PrimaryText));
     }
 
     private static void Bind(Button button, Action action)
@@ -249,40 +254,24 @@ internal sealed class SurfaceRoutePresentation
     private void AddPin(RouteNode node, Intel intel, bool cleared, bool canSelect, int road)
     {
         var pos = Position(node);
-        var family = intel == Intel.Hidden ? SurfaceLocationFamily.Ruins : node.LocationType switch
-        {
-            LocationType.Minefield => SurfaceLocationFamily.Technogenic,
-            _ => SurfaceLocationFamily.Ruins
-        };
-        Color accent = cleared ? Visited : canSelect ? Available : intel == Intel.Preview ? Preview :
-            intel == Intel.Surveyed ? Missed : Silhouette;
-        var site = Artwork("Site", pos, FindArt(family), 149f,
-            canSelect ? Color.white : intel == Intel.Hidden ? Silhouette : new Color(.71f, .76f, .74f));
-        Graphic glow = null;
+        Color accent = cleared ? Green : canSelect ? Cyan : Border;
+        var site = Artwork("Site", pos, FindArt(SurfaceLocationFamily.Ruins), 149f,
+            canSelect ? Color.white : intel == Intel.Hidden ? Border : SecondaryText);
+        SurfaceMapPlate selection = null;
         if (canSelect)
         {
-            glow = Plate("Route selection glow", site, Vector2.zero, new Vector2(99f, 91f), new Color(1f, .59f, .12f, .44f));
-            Plate("Route selection edge", glow.rectTransform, Vector2.zero, new Vector2(83f, 77f), Selected);
-            glow.gameObject.SetActive(false);
+            selection = Frame("Route selection outline", site, Vector2.zero, new Vector2(88f, 82f), Amber, Background, 5f);
+            selection.gameObject.SetActive(false);
         }
         Vector2 size = canSelect ? new Vector2(68f, 62f) : new Vector2(57f, 53f);
-        var badge = Plate($"Route location {node.SectorNumber}-{node.Row + 1}", site,
-            Vector2.zero, size, accent);
-        Plate("Inset", badge.rectTransform, Vector2.zero, size - new Vector2(10f, 10f), Ink);
+        var badge = Frame($"Route location {node.SectorNumber}-{node.Row + 1}", site,
+            Vector2.zero, size, accent, Background, 4f);
+        var symbol = CreateRect("Route status", badge.rectTransform, Vector2.zero, Vector2.one * 38f)
+            .gameObject.AddComponent<SurfaceMapGlyph>();
+        symbol.Show(cleared ? SurfaceMapMeaning.Cleared :
+            intel == Intel.Hidden ? SurfaceMapMeaning.Expedition : SurfaceMapMeaning.Combat);
+        if (!cleared && !canSelect) symbol.color = SecondaryText;
         if (intel == Intel.Hidden) return;
-        TMP_Text icon = null;
-        if (cleared)
-        {
-            var check = CreateRect("Cleared", badge.rectTransform, Vector2.zero, new Vector2(25f, 25f))
-                .gameObject.AddComponent<SurfaceMapGlyph>();
-            check.Show(SurfaceMapMeaning.Cleared);
-            check.color = accent;
-        }
-        else
-        {
-            icon = Label("Type mark", badge.rectTransform, Vector2.zero, new Vector2(55f, 49f), 31f, accent, true);
-            icon.text = Symbol(node.LocationType);
-        }
         badge.raycastTarget = true;
         if (!canSelect)
         {
@@ -294,7 +283,7 @@ internal sealed class SurfaceRoutePresentation
             };
             return;
         }
-        pins.Add(node, (badge, glow, icon, road));
+        pins.Add(node, (selection, road));
         var button = badge.gameObject.AddComponent<Button>();
         button.targetGraphic = badge;
         button.transition = Selectable.Transition.None;
@@ -305,17 +294,11 @@ internal sealed class SurfaceRoutePresentation
     private void Select(RouteNode node)
     {
         if (selected != null)
-        {
-            pins[selected].border.color = Available;
-            pins[selected].symbol.color = Available;
-            pins[selected].glow.gameObject.SetActive(false);
-        }
+            pins[selected].selection.gameObject.SetActive(false);
         selected = node;
         inspected = null;
         var pin = pins[node];
-        pin.border.color = SelectedText;
-        pin.symbol.color = SelectedText;
-        pin.glow.gameObject.SetActive(true);
+        pin.selection.gameObject.SetActive(true);
         branchRoads.TryGetValue(node, out var branches);
         roads.Select(pin.road, branches);
         RefreshText();
@@ -325,7 +308,7 @@ internal sealed class SurfaceRoutePresentation
     {
         if (displayedLevel == 0) return;
         header.text = F("route.stage.name", displayedLevel, RunRoute.LevelCount);
-        goldLabel.text = F("route.gold", runGold);
+        RefreshRunStatus();
         bunkerLabel.text = L("map.home");
         if (bossLabel != null) bossLabel.text = L("route.node.boss");
         launchLabel.text = L("route.confirm");
@@ -339,15 +322,22 @@ internal sealed class SurfaceRoutePresentation
         var rule = node.WorldRule;
         bool clear = rule == null || rule.RuleType == WorldRuleType.None;
         string weather = clear ? L("route.weather.clear") : rule.DisplayName;
-        facts.text = $"{L(node.LocationLabelKey)}\n{F("route.weather", weather)}";
+        string reward = L(node.RewardProfile == RewardProfile.WeaponLevel ? "route.reward.weapon" : "route.reward.module");
+        string difficulty = L(node.Difficulty switch
+        {
+            RouteDifficulty.Easy => "route.difficulty.easy",
+            RouteDifficulty.Hard => "route.difficulty.hard",
+            _ => "route.difficulty.medium"
+        });
+        facts.text = F("route.weather", Tint(weather, WorldRule(rule?.RuleType ?? WorldRuleType.None))) + "\n" +
+            F("route.duration", Tint(node.DurationSeconds, PrimaryText)) + "\n" +
+            F("route.reward", Tint(reward, Amber)) + "\n" +
+            F("route.difficulty", Tint(difficulty, node.Difficulty == RouteDifficulty.Hard ? Coral : PrimaryText));
     }
 
-    private static string Symbol(LocationType type) => type switch
-    {
-        LocationType.UnknownSignal => "?",
-        LocationType.Minefield => "!",
-        _ => "×"
-    };
+    private static string Tint(object value, Color color) =>
+        $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{value}</color>";
+
     private static string L(string key) => SurfaceMapBriefing.Text(key);
     private static string F(string key, params object[] args) => SurfaceMapBriefing.Format(key, args);
 
@@ -395,6 +385,15 @@ internal sealed class SurfaceRoutePresentation
         return plate;
     }
 
+    private static SurfaceMapPlate Frame(string name, RectTransform parent, Vector2 pos, Vector2 size,
+        Color border, Color fill, float width = 2f)
+    {
+        var frame = Plate(name, parent, pos, size, border);
+        var inset = Plate("Inset", frame.rectTransform, Vector2.zero, size - Vector2.one * (width * 2f), fill);
+        inset.Cut = Mathf.Max(0f, frame.Cut - width);
+        return frame;
+    }
+
     private TMP_Text Label(string name, RectTransform parent, Vector2 pos, Vector2 size, float pointSize, Color color,
         bool center = false)
     {
@@ -408,13 +407,14 @@ internal sealed class SurfaceRoutePresentation
         return label;
     }
 
-    private Button Control(string name, RectTransform parent, Vector2 pos, Vector2 size, string title, out TMP_Text label)
+    private Button Control(string name, RectTransform parent, Vector2 pos, Vector2 size, string title, out TMP_Text label,
+        bool primaryAction = false)
     {
-        var plate = Plate(name, parent, pos, size, new Color(.20f, .28f, .29f));
+        var plate = primaryAction ? Plate(name, parent, pos, size, Cyan) : Frame(name, parent, pos, size, Border, Surface);
         var button = plate.gameObject.AddComponent<Button>();
         button.targetGraphic = plate;
         plate.raycastTarget = true;
-        label = Label("Label", plate.rectTransform, Vector2.zero, size - new Vector2(12f, 4f), 22f, Text, true);
+        label = Label("Label", plate.rectTransform, Vector2.zero, size - new Vector2(12f, 4f), 22f, primaryAction ? Background : PrimaryText, true);
         label.text = title;
         return button;
     }

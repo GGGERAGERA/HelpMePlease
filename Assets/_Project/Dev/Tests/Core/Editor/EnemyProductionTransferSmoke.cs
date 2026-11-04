@@ -48,7 +48,7 @@ public sealed class EnemyProductionTransferSmoke
         var seen = new HashSet<string>();
         var kept = new List<EnemyHealth>();
         var configuredHealth = new Dictionary<EnemyHealth, float>();
-        string[] required = { "p_Enemy_classic", "p_Enemy_SpiderWhite", "p_Enemy_SpiderDark", "p_Enemy_SpiderBigGait", "p_Enemy_SpiderBlue", "p_Enemy_Flanker", "p_Enemy_Breacher" };
+        string[] required = { "p_Enemy_classic", "p_Enemy_SpiderDark", "p_Enemy_SpiderBigGait", "p_Enemy_SpiderBlue", "p_Enemy_Flanker", "p_Enemy_Breacher" };
         GameplayRandom.Begin(42);
         // Exercise the actual weighted cycle, position finder and spawn initialization.
         // Cadence alone is shortened; no roster/weights/data are substituted.
@@ -75,6 +75,7 @@ public sealed class EnemyProductionTransferSmoke
             if (required.All(seen.Contains) && kept.Count(k => Kind(k) == "p_Enemy_Breacher") >= 2 && kept.Count(k => k.GetComponent<EnemyTacticalTimedShield>() is { ActivationDelay: > 0 }) >= 2) break;
         }
         Assert.That(required.All(seen.Contains), Is.True, string.Join(", ", seen));
+        Assert.That(seen, Does.Not.Contain("p_Enemy_SpiderWhite"));
         TestContext.WriteLine("Ordinary SpawnCycle produced: " + string.Join(", ", seen));
         var shieldActors = kept.Where(k => k.GetComponent<EnemyTacticalTimedShield>() is { ActivationDelay: > 0 }).Take(2).ToArray();
         Assert.That(shieldActors.Length, Is.EqualTo(2));
@@ -176,10 +177,10 @@ public sealed class EnemyProductionTransferSmoke
         {
             var actor = kept.First(a => Kind(a) == kind); Move(actor, new Vector2(6, 0));
             var animator = actor.GetComponentInChildren<Animator>();
-            float animationAt = animator != null ? animator.GetCurrentAnimatorStateInfo(0).normalizedTime : 0;
+            Assert.That(animator, Is.Not.Null, kind);
+            float animationAt = animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
             yield return Observe(.15f);
-            if (animator != null) Assert.That(animator.GetCurrentAnimatorStateInfo(0).normalizedTime, Is.GreaterThan(animationAt));
-            else Assert.That(kind, Is.EqualTo("p_Enemy_SpiderWhite"), "white author source is a static sprite");
+            Assert.That(animator.GetCurrentAnimatorStateInfo(0).normalizedTime, Is.GreaterThan(animationAt));
             var flash = actor.GetComponentInChildren<EnemyWhiteFlash>(); Assert.That(flash.TargetRenderer.enabled, Is.True);
             hp = actor.CurrentHealth; Shot(actor, Vector2.left, OrbitalWeaponSettings.Pistol(), 1);
             Assert.That(actor.CurrentHealth, Is.EqualTo(hp - 1));
@@ -192,7 +193,7 @@ public sealed class EnemyProductionTransferSmoke
         Assert.That(Object.FindFirstObjectByType<EnemyOrbitalLabController>(), Is.Null);
         Assert.That(Object.FindFirstObjectByType<EnemyOrbitalLabLaserTurret>(), Is.Null);
         Assert.That(run.IsDevelopmentRun, Is.False);
-        TestContext.WriteLine("Three original spider walk animations and static white source; all four take real projectile hits and die; production orbital adapter intact; no lab controller/Interception.");
+        TestContext.WriteLine("All three combat spider variants animate, take projectile hits and die; production orbital adapter intact; no lab controller/Interception.");
         GameplayRandom.End();
 
         void Clear() { foreach (var actor in EnemyHealth.ActiveInstances.ToArray()) Object.DestroyImmediate(actor.gameObject); Call(spawner, "RemoveDestroyedEnemies"); }

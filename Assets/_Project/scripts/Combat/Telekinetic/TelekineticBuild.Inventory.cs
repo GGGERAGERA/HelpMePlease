@@ -24,6 +24,22 @@ namespace Subject42.Combat.Telekinetic
             reserve.Add(item);
             return item;
         }
+        internal void AwardRouteLevel(bool weapon)
+        {
+            TelekineticItem target = null;
+            FindTarget(items);
+            FindTarget(reserve);
+            target ??= Grant(weapon ? TelekineticPart.Pistol : TelekineticPart.DMG);
+            target.Level++;
+
+            void FindTarget(List<TelekineticItem> inventory)
+            {
+                foreach (var item in inventory)
+                    if ((weapon ? item.IsWeapon : item.CanMerge) && item.Level < 3 &&
+                        (target == null || item.Level < target.Level)) target = item;
+            }
+        }
+
         public bool Install(TelekineticItem item, Vector2Int anchor, int turns = 0)
         {
             if (item == null || !reserve.Contains(item)) return false;

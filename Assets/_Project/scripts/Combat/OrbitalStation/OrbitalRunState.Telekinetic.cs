@@ -10,6 +10,14 @@ namespace Subject42.Combat.OrbitalStation
         public bool UsesTelekineticRig => Telekinetic != null;
         public float TelekineticAngle;
         public bool TelekineticAutoRotate = true;
+
+        internal void AwardRouteLevel(bool weapon)
+        {
+            if (Telekinetic == null) return;
+            Telekinetic.AwardRouteLevel(weapon);
+            Revision++;
+        }
+
         public void EnableTelekineticRig()
         {
             if (Telekinetic != null)

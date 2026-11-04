@@ -11,7 +11,6 @@ public sealed class RocketAttackRunner : IDisposable
     private sealed class Shot
     {
         public float age, delay, duration;
-        public bool ground;
         public Vector3 target, launchStart, fallStart;
         public PooledGameObject marker, launch, falling;
     }
@@ -46,13 +45,12 @@ public sealed class RocketAttackRunner : IDisposable
         impacts.Capacity = Mathf.Max(impacts.Capacity, prewarmImpacts);
     }
 
-    public bool Launch(Vector3 target, Vector3? origin, float delay, float duration, float radius, Sprite groundMine = null)
+    public bool Launch(Vector3 target, Vector3? origin, float delay, float duration, float radius)
     {
         using var profilerScope = LaunchProfile.Auto();
         if (!IsReady) return false;
-        bool ground = groundMine != null;
-        var shot = new Shot { target = target, delay = Mathf.Max(.01f, delay), ground = ground,
-            duration = ground ? 0f : Mathf.Max(.05f, duration), launchStart = origin ?? target };
+        var shot = new Shot { target = target, delay = Mathf.Max(.01f, delay),
+            duration = Mathf.Max(.05f, duration), launchStart = origin ?? target };
         shot.marker = markers.Get(target, Quaternion.identity, configurePresentation: item =>
         {
             ExplosionWarningVisual.Configure(item.gameObject, radius, shot.delay + shot.duration, pixelWarnings);
@@ -62,18 +60,6 @@ public sealed class RocketAttackRunner : IDisposable
                 var main = ps.main;
                 main.startLifetime = main.duration + .1f;
                 main.startSpeed = 0f;
-            }
-            if (ground)
-            {
-                var mine = item.transform.Find("Ground mine")?.GetComponent<SpriteRenderer>();
-                if (mine == null)
-                {
-                    mine = new GameObject("Ground mine").AddComponent<SpriteRenderer>();
-                    mine.transform.SetParent(item.transform, false);
-                    var warning = item.GetComponentInChildren<ParticleSystemRenderer>();
-                    if (warning != null) { mine.sortingLayerID = warning.sortingLayerID; mine.sortingOrder = warning.sortingOrder + 1; }
-                }
-                mine.sprite = groundMine;
             }
         });
         foreach (var ps in shot.marker.GetComponentsInChildren<ParticleSystem>(true)) ps.Play(false);
@@ -131,21 +117,18 @@ public sealed class RocketAttackRunner : IDisposable
                 if (shot.age >= launchDuration) { Release(shot.launch); shot.launch = null; }
             }
             if (shot.age < shot.delay) continue;
-            if (!shot.ground)
+            if (shot.falling == null)
             {
-                if (shot.falling == null)
-                {
-                    float spawnY = shot.target.y + Mathf.Max(1f, spawnHeight);
-                    var camera = Camera.main;
-                    if (camera != null && camera.orthographic)
-                        spawnY = Mathf.Max(spawnY, camera.transform.position.y + camera.orthographicSize + 2f);
-                    shot.fallStart = new Vector3(shot.target.x, spawnY, shot.target.z);
-                    shot.falling = SpawnRocket(shot.fallStart, true);
-                }
-                float progress = Mathf.Clamp01((shot.age - shot.delay) / shot.duration);
-                shot.falling.transform.position = Vector3.Lerp(shot.fallStart, shot.target, progress);
-                if (progress < 1f) continue;
+                float spawnY = shot.target.y + Mathf.Max(1f, spawnHeight);
+                var camera = Camera.main;
+                if (camera != null && camera.orthographic)
+                    spawnY = Mathf.Max(spawnY, camera.transform.position.y + camera.orthographicSize + 2f);
+                shot.fallStart = new Vector3(shot.target.x, spawnY, shot.target.z);
+                shot.falling = SpawnRocket(shot.fallStart, true);
             }
+            float progress = Mathf.Clamp01((shot.age - shot.delay) / shot.duration);
+            shot.falling.transform.position = Vector3.Lerp(shot.fallStart, shot.target, progress);
+            if (progress < 1f) continue;
             shots.RemoveAt(i); // Damage callbacks may cancel/restart this owner.
             ReleaseShot(shot);
             if (!combatAllowed()) { Cancel(); return; }

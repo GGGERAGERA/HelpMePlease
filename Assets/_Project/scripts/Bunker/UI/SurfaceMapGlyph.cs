@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using static Subject42UITheme;
 
-public enum SurfaceMapMeaning { Danger, Reward, Anomaly, Event, Rule, Expedition, Cleared, Boss }
+public enum SurfaceMapMeaning { Danger, Reward, Anomaly, Event, Rule, Expedition, Cleared, Boss, Combat }
 
 /// <summary>Shared condition symbols plus a neutral expedition marker; owns no gameplay profile.</summary>
 [RequireComponent(typeof(CanvasRenderer))]
@@ -17,18 +18,22 @@ public sealed class SurfaceMapGlyph : MaskableGraphic
         new[]{"001111100","011000110","110010011","100111001","100010001","100111001","110010011","011000110","001111100"},
         new[]{"000111000","011000110","110000011","100000001","100000001","110000011","011000110","001111100","000000000"},
         new[]{"000000000","000000011","000000110","000001100","110011000","011110000","001100000","000000000","000000000"},
-        new[]{"001111100","011111110","111111111","110111011","100111001","111101111","011111110","001010100","000000000"}
+        new[]{"001111100","011111110","111111111","110111011","100111001","111101111","011111110","001010100","000000000"},
+        new[]
+        {
+            "1100000000011", "1110000000111", "0111000001110", "0011100011100",
+            "0001110111000", "0000111110000", "0000011100000", "0000110110000",
+            "0101100011010", "0011000001100", "0110100010110", "1100000000011", "1000000000001"
+        }
     };
     public static Color Tint(SurfaceMapMeaning value) => value switch
     {
-        SurfaceMapMeaning.Danger => new Color32(220,111,97,255),
-        SurfaceMapMeaning.Reward => new Color32(222,192,106,255),
-        SurfaceMapMeaning.Anomaly => new Color32(178,149,203,255),
-        SurfaceMapMeaning.Event => new Color32(214,158,91,255),
-        SurfaceMapMeaning.Rule => new Color32(126,184,187,255),
-        SurfaceMapMeaning.Cleared => new Color32(153,196,166,255),
-        SurfaceMapMeaning.Boss => new Color32(255,209,130,255),
-        _ => new Color32(162,174,163,255)
+        SurfaceMapMeaning.Danger or SurfaceMapMeaning.Boss => Coral,
+        SurfaceMapMeaning.Reward => Amber,
+        SurfaceMapMeaning.Anomaly => Purple,
+        SurfaceMapMeaning.Rule or SurfaceMapMeaning.Combat => Cyan,
+        SurfaceMapMeaning.Cleared => Green,
+        _ => SecondaryText
     };
     public void Show(SurfaceMapMeaning value)
     {
@@ -37,13 +42,14 @@ public sealed class SurfaceMapGlyph : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper mesh)
     {
         mesh.Clear(); var rect=GetPixelAdjustedRect();
-        float pixel=Mathf.Max(1,Mathf.Round(Mathf.Min(rect.width,rect.height)/9));
-        Vector2 origin=rect.center-new Vector2(pixel*4.5f,pixel*4.5f);
         var rows=Pixels[(int)meaning];
-        for(int y=0;y<9;y++) for(int x=0;x<9;x++)
+        int grid = rows.Length;
+        float pixel = Mathf.Max(1, Mathf.Round(Mathf.Min(rect.width, rect.height) / grid));
+        Vector2 origin = rect.center - Vector2.one * (pixel * grid * .5f);
+        for(int y=0;y<grid;y++) for(int x=0;x<grid;x++)
         {
             if(rows[y][x]!='1')continue;
-            float left=origin.x+x*pixel,bottom=origin.y+(8-y)*pixel; int start=mesh.currentVertCount;
+            float left=origin.x+x*pixel,bottom=origin.y+(grid-1-y)*pixel; int start=mesh.currentVertCount;
             mesh.AddVert(new Vector3(left,bottom),color,Vector2.zero);
             mesh.AddVert(new Vector3(left,bottom+pixel),color,Vector2.zero);
             mesh.AddVert(new Vector3(left+pixel,bottom+pixel),color,Vector2.zero);

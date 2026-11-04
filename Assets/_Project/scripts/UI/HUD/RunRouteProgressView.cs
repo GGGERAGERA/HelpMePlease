@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>Projects route state into authored gameplay and selection prefabs.</summary>
 public sealed class RunRouteProgressView : MonoBehaviour
@@ -9,10 +8,6 @@ public sealed class RunRouteProgressView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI objectiveText;
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private GameObject specialIcon;
-    [SerializeField] private Image[] points;
-    [SerializeField] private Color currentColor;
-    [SerializeField] private Color completedColor;
-    [SerializeField] private Color futureColor;
     private int displayedSector, displayedTotal;
     private string displayedObjectiveKey;
     private bool displayedSpecial;
@@ -56,7 +51,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
         if (sectorText != null)
         {
             if (tutorial) sectorText.text = string.Empty;
-            else sectorText.SetText("{0}/{1}", RunRoute.LevelOf(displayedSector), RunRoute.LevelOf(displayedTotal));
+            else sectorText.SetText("{0}/{1}", displayedSector, displayedTotal);
         }
         if (objectiveText != null)
         {
@@ -67,12 +62,5 @@ public sealed class RunRouteProgressView : MonoBehaviour
             objectiveText.alignment = tutorial ? TextAlignmentOptions.Center : objectiveAlignment;
         }
         if (specialIcon != null) specialIcon.SetActive(displayedSpecial);
-        int column = RunRoute.ColumnOf(displayedSector);
-        for (int i = 0; i < points.Length; i++)
-        {
-            points[i].gameObject.SetActive(!tutorial && i < RunRoute.SectorsPerLevel);
-            points[i].color = i < column ? completedColor :
-                i == column ? currentColor : futureColor;
-        }
     }
 }

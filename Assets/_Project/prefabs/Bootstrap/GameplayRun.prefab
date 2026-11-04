@@ -69,7 +69,6 @@ MonoBehaviour:
   bossSpawner: {fileID: 0}
   characterSpawner: {fileID: 0}
   worldHazardDirector: {fileID: 0}
-  minefieldHazards: {fileID: 11400000, guid: 2b4c6cf833fe4bebbd0e8c68c20d6dbb, type: 2}
 --- !u!114 &5356876793088033655
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,32 +224,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d8ee0b8363c04ec3d9543b71eccc3044, type: 2}
   - {fileID: 11400000, guid: c016d34b1d8f4fe797a9483ca0d30016, type: 2}
   - {fileID: 11400000, guid: f1012da158e24a20bb764c93aeee5266, type: 2}
-  locationWeights:
-  - locationType: 0
-    weightsByWasteland:
-    - 4
-    - 3
-    - 3
-    - 2
-    - 2
-    incompatibleWeather:
-  - locationType: 1
-    weightsByWasteland:
-    - 1
-    - 2
-    - 2
-    - 2
-    - 2
-    incompatibleWeather:
-  - locationType: 5
-    weightsByWasteland:
-    - 1
-    - 1
-    - 1
-    - 2
-    - 2
-    incompatibleWeather:
-  surpriseChance: 0.2
   defaultLocalAnomaly: {fileID: 11400000, guid: 3e7a23f4bc9f4e65a021dd9d286ca001, type: 2}
   stageProfiles:
   - {fileID: 11400000, guid: d387815bd32a4a639c4ac0f811ee3251, type: 2}

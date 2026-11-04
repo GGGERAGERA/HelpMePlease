@@ -27,11 +27,10 @@ public sealed class RunFlowController : MonoBehaviour
     [SerializeField] private RunBossSpawner bossSpawner;
     [SerializeField] private CharacterSpawner characterSpawner;
     [SerializeField] private WorldHazardDirector worldHazardDirector;
-    [SerializeField] private WorldHazardPreset minefieldHazards;
 
     private EnemySpawner enemySpawner;
     private EnemyHealth finalBoss;
-    private bool levelCompleted, routeDeadlineReached;
+    private bool levelCompleted;
     private StageProfileData sectorProfile;
     private float sectorDuration;
     private int runId;
@@ -62,16 +61,14 @@ public sealed class RunFlowController : MonoBehaviour
         runId = RunStateManager.Instance.RunId;
         Phase = RunPhase.NormalSector;
         levelCompleted = false;
-        routeDeadlineReached = false;
         finalBoss = null;
         sectorProfile = profile;
         sectorDuration = RunStateManager.Instance.CurrentSector.Duration;
         SectorElapsedTime = 0f;
         IsExitUnlocked = false;
         TutorialController.Prepare(this);
-        bool minefield = RunStateManager.Instance.CurrentSector.LocationType == LocationType.Minefield;
-        worldHazardDirector?.Initialize(minefield ? minefieldHazards : profile != null ? profile.WorldHazards : null,
-            this, characterSpawner, GameplayAreaService.Instance, stopAtDeadline: minefield);
+        worldHazardDirector?.Initialize(profile != null ? profile.WorldHazards : null,
+            this, characterSpawner, GameplayAreaService.Instance);
     }
 
     private void Update()
@@ -86,16 +83,7 @@ public sealed class RunFlowController : MonoBehaviour
 
     private void UpdateSectorClock(float elapsedTime)
     {
-        if (TutorialController.IsTutorialSector) SectorElapsedTime = elapsedTime;
-        else
-        {
-            SectorElapsedTime = Mathf.Min(sectorDuration, elapsedTime);
-            if (!routeDeadlineReached && SectorElapsedTime >= sectorDuration)
-            {
-                routeDeadlineReached = true;
-                RouteExploration?.EndRouteContent();
-            }
-        }
+        SectorElapsedTime = TutorialController.IsTutorialSector ? elapsedTime : Mathf.Min(sectorDuration, elapsedTime);
         // The countdown is the complete availability contract; waves never extend it.
         if (!IsExitUnlocked && CanUnlockExit)
         {
@@ -124,15 +112,7 @@ public sealed class RunFlowController : MonoBehaviour
         enemySpawner?.StopSpawning();
     }
 
-    private void EndSectorActivities()
-    {
-        worldHazardDirector?.Cancel();
-        RouteExploration?.EndRouteContent();
-    }
-
-    private ProductionExplorationSectorController RouteExploration =>
-        ProductionExplorationSectorController.ActiveInstance is { } exploration && exploration != null &&
-        exploration.gameObject.scene == gameObject.scene ? exploration : null;
+    private void EndSectorActivities() => worldHazardDirector?.Cancel();
 
     private void OnEnable() => RunStateManager.EnsureExists().RegisterSceneCleanup(ReleaseRunScene);
     private void OnDisable()
@@ -231,8 +211,6 @@ public sealed class RunFlowController : MonoBehaviour
             return false;
         }
 
-        if (RouteExploration is { HasOpeningRouteChest: true }) return false;
-
         if (RunRoute.IsFinalSector(sectorNumber))
         {
             if (!runState.FinalObjectiveSatisfied) return false;
@@ -275,7 +253,7 @@ public sealed class RunFlowController : MonoBehaviour
 
         RegisterCurrentLevelCompletion();
         EndSectorActivities();
-        if (RunRoute.CompletesLevel(sectorNumber)) runState.RegisterCompletedLevel();
+        runState.RegisterCompletedLevel();
         ExitReached?.Invoke();
         return true;
     }
@@ -459,7 +437,7 @@ public sealed class RunFlowController : MonoBehaviour
             var sector = run?.CurrentSector;
             if (sector == null || !RunRoute.IsExplorationSector(sector.SectorNumber) || sectorProfile == null ||
                 levelCompleted || Phase != RunPhase.NormalSector || !CanContinue || !RewardsResolved ||
-                SceneTransitionOverlay.IsTransitioning || RouteExploration is { HasOpeningRouteChest: true })
+                SceneTransitionOverlay.IsTransitioning)
                 return false;
 
             if (RunRoute.IsFinalSector(sector.SectorNumber))

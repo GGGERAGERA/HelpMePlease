@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using static Subject42UITheme;
 
 /// <summary>Paints the graph's connections as worn tracks, in the same coordinates as the fog.</summary>
 [RequireComponent(typeof(CanvasRenderer))]
@@ -61,19 +62,18 @@ internal sealed class SurfaceRouteRoads : MaskableGraphic
     private static void Paint(VertexHelper mesh, Vector2[] points, State state)
     {
         bool highlighted = state == State.Selected;
-        var shoulder = highlighted ? new Color32(131, 75, 35, 255) : new Color32(28, 32, 29, 255);
-        var soil = state switch
+        Color soil = state switch
         {
-            State.Selected => new Color32(255, 180, 69, 255),
-            State.Open => new Color32(114, 168, 133, 255),
-            State.Travelled => new Color32(61, 121, 94, 255),
-            State.Ahead => new Color32(147, 138, 101, 255),
-            State.Uncharted => new Color32(114, 128, 127, 255),
-            State.Planned => new Color32(231, 173, 90, 255),
-            _ => new Color32(72, 78, 69, 255)
+            State.Selected => Amber,
+            State.Open => Color.Lerp(Border, Cyan, .45f),
+            State.Travelled => Color.Lerp(Border, Green, .55f),
+            State.Ahead => Border,
+            State.Uncharted => Color.Lerp(Surface, Border, .6f),
+            State.Planned => Color.Lerp(Border, Amber, .5f),
+            _ => Color.Lerp(Surface, Border, .35f)
         };
-        var gravel = Color.Lerp(soil, new Color32(249, 232, 176, 255), highlighted ? .62f : .26f);
-        for (int i = 1; i < points.Length; i++) Segment(mesh, points[i - 1], points[i], highlighted ? 30f : 21f, shoulder);
+        var gravel = Color.Lerp(soil, PrimaryText, highlighted ? .35f : .18f);
+        for (int i = 1; i < points.Length; i++) Segment(mesh, points[i - 1], points[i], highlighted ? 30f : 21f, Background);
         for (int i = 1; i < points.Length; i++)
         {
             var a = points[i - 1];

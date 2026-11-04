@@ -6,8 +6,6 @@ public sealed class LevelChoiceManager : MonoBehaviour
 {
     [SerializeField] private LevelChoicePanelView panelView;
     [SerializeField] private WorldRuleData[] availableWorldRules;
-    [SerializeField] private RouteLocationWeight[] locationWeights;
-    [SerializeField, Range(0f, 1f)] private float surpriseChance = .2f;
     [SerializeField] private LocalAnomalyData defaultLocalAnomaly;
     [SerializeField] private StageProfileData[] stageProfiles;
     [SerializeField] private string gameplaySceneName = "MVP";
@@ -55,7 +53,7 @@ public sealed class LevelChoiceManager : MonoBehaviour
     internal RunRouteGraph CreateGraph(WorldRuleData initialRule, bool fixedEntryRule = false,
         IReadOnlyList<SurfaceSectorDefinition> expeditions = null) =>
         RunRouteGraph.Generate(GameplayRandom.IsActive ? GameplayRandom.Seed : GameplayRandom.NextAuto(),
-            availableWorldRules, locationWeights, initialRule, fixedEntryRule, expeditions, surpriseChance);
+            availableWorldRules, initialRule, fixedEntryRule, expeditions);
 
     private bool Show(int nextSector)
     {
@@ -82,10 +80,10 @@ public sealed class LevelChoiceManager : MonoBehaviour
     {
         if (!IsChoosing || !CanChoose || !ContainsChoice(node)) return false;
         var run = RunStateManager.Instance;
-        var current = run.CurrentSector;
-        bool sameWasteland = current != null && RunRoute.LevelOf(current.SectorNumber) == node.Level;
+        var anomaly = node.SectorNumber == RunRoute.FirstSector
+            ? run.CurrentSector?.LocalAnomaly ?? defaultLocalAnomaly : defaultLocalAnomaly;
         var sector = new RunSector(node.SectorNumber, ProfileFor(node.SectorNumber), node.WorldRule,
-            sameWasteland ? current.LocalAnomaly : defaultLocalAnomaly, node);
+            anomaly, node);
         if (startFirstSector == null) return TransitionToSector(sector);
 
         Action begin = startFirstSector;

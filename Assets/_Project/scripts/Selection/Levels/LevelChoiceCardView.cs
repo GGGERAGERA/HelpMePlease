@@ -25,7 +25,7 @@ public sealed class LevelChoiceCardView : MonoBehaviour
     internal void RefreshText()
     {
         var localization = LocalizationService.Instance;
-        titleText.text = localization.Get(node.LocationLabelKey);
+        titleText.text = string.Format(localization.Get("route.stage.name"), node.SectorNumber, RunRoute.LevelCount);
         var rule = node.WorldRule;
         bool clear = rule == null || rule.RuleType == WorldRuleType.None;
         weatherText.text = clear ? localization.Get("route.weather.clear") : rule.DisplayName;

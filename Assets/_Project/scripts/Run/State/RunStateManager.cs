@@ -39,7 +39,7 @@ public sealed class RunStateManager : MonoBehaviour
     public AnomalyStabilizerData CurrentAnomalyStabilizer { get; private set; }
     public AnomalyRunModifiers AnomalyModifiers { get; private set; } =
         AnomalyRunModifiers.None;
-    public int CurrentLevel => RunRoute.LevelOf(CurrentSector?.SectorNumber ?? RunRoute.FirstSector);
+    public int CurrentLevel => CurrentSector?.SectorNumber ?? RunRoute.FirstSector;
     public int CurrentDepthId { get; private set; } = DepthCatalog.SurfaceId;
 
     public RunSector CurrentSector { get; private set; }
@@ -671,9 +671,12 @@ public sealed class RunStateManager : MonoBehaviour
         }
 
         completedLevels++;
+        // Preserve the completion gold budget per minute as the HUD counts each battle.
         completedLevelRewardMultiplierTotal +=
-            CurrentSector.CompletionGoldMultiplier;
+            CurrentSector.CompletionGoldMultiplier * (CurrentSector.Duration / 180f);
         lastCompletedSectorNumber = sectorNumber;
+        if (CurrentSector.RouteNode is { } node)
+            OrbitalStationState?.AwardRouteLevel(node.RewardProfile == RewardProfile.WeaponLevel);
         RefreshExpeditionProgress();
         CurrentRewardChanged?.Invoke();
 

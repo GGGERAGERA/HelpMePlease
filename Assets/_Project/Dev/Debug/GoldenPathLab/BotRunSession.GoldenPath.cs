@@ -214,10 +214,10 @@ public sealed partial class BotRunSession
             CaptureGoldenFinal(); ReleaseGoldenScene(); SetGoldenStage("Victory Bunker"); return;
         }
         var activeRun = RunStateManager.Instance;
-        if (activeRun?.CurrentSector?.SectorNumber == goldenSector + 1 && !RunRoute.CompletesLevel(goldenSector))
+        if (activeRun?.CurrentSector?.SectorNumber == goldenSector + 1)
         {
-            if (!GoldenCheck("Run.CompletedSectorOnce", activeRun.CompletedLevels == goldenSector / RunRoute.SectorsPerLevel,
-                "Internal sector advanced the location counter")) return;
+            if (!GoldenCheck("Run.CompletedSectorOnce", activeRun.CompletedLevels == goldenSector,
+                "Level completion counter mismatch")) return;
             golden.SectorsCompleted = goldenSector;
             ReleaseGoldenScene();
             SetGoldenStage("Sector Startup");
@@ -232,7 +232,7 @@ public sealed partial class BotRunSession
         goldenSnapshot = CopyGoldenState(station.State);
         if (flow.IsLevelCompleted && golden.SectorsCompleted < goldenSector)
         {
-            if (!GoldenCheck("Run.CompletedSectorOnce", RunStateManager.Instance.CompletedLevels == goldenSector / RunRoute.SectorsPerLevel, "Completion counter mismatch")) return;
+            if (!GoldenCheck("Run.CompletedSectorOnce", RunStateManager.Instance.CompletedLevels == goldenSector, "Completion counter mismatch")) return;
             golden.SectorsCompleted = goldenSector;
             goldenCompletedAt = Time.realtimeSinceStartup;
         }

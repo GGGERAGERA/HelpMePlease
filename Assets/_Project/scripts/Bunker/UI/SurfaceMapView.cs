@@ -141,18 +141,18 @@ public sealed class SurfaceMapView : MonoBehaviour
         var character = run?.SelectedCharacter ?? characterSelection?.SelectedCharacter ?? defaultCharacter;
         routePresentation.Show(route, path, available, confirm, close, alternate, alternateKey, character);
         BindRouteReward(run);
-        RefreshRouteGold();
+        RefreshRouteStatus();
     }
 
     private void BindRouteReward(RunStateManager run)
     {
-        if (routeRun != null) routeRun.CurrentRewardChanged -= RefreshRouteGold;
+        if (routeRun != null) routeRun.CurrentRewardChanged -= RefreshRouteStatus;
         routeRun = run;
-        if (routeRun != null) routeRun.CurrentRewardChanged += RefreshRouteGold;
+        if (routeRun != null) routeRun.CurrentRewardChanged += RefreshRouteStatus;
     }
 
-    private void RefreshRouteGold() =>
-        routePresentation.SetGold(routeRun != null ? routeRun.GetCurrentGoldReward(RunEndReason.ReturnedToBunker) : 0);
+    private void RefreshRouteStatus() => routePresentation.SetRunStatus(
+        routeRun?.GetCurrentGoldReward(RunEndReason.ReturnedToBunker) ?? 0, routeRun?.ThreatValue ?? 0f);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     internal bool DebugConfirmFirstRouteNode() => routePresentation?.ConfirmFirst() == true;
@@ -275,7 +275,7 @@ public sealed class SurfaceMapView : MonoBehaviour
             var symbols=new Dictionary<SurfaceMapMeaning,SurfaceMapGlyph>();
             foreach(SurfaceMapMeaning meaning in System.Enum.GetValues(typeof(SurfaceMapMeaning)))
             {
-                if(meaning==SurfaceMapMeaning.Expedition || meaning==SurfaceMapMeaning.Danger)continue;
+                if(meaning is SurfaceMapMeaning.Expedition or SurfaceMapMeaning.Danger or SurfaceMapMeaning.Combat)continue;
                 var go=new GameObject(meaning.ToString(),typeof(RectTransform),typeof(SurfaceMapGlyph));
                 go.layer=button.gameObject.layer; go.transform.SetParent(button.transform,false);
                 Place((RectTransform)go.transform,Vector2.zero,new Vector2(18,18));

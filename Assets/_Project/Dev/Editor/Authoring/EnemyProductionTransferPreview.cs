@@ -70,7 +70,7 @@ public static partial class EnemyProductionTransferPreview
             var timer = actor.GetComponent<EnemyTacticalTimedShield>();
             Require(timer.SpawnChance == (name == "Flanker" ? .20f : .25f) && timer.Shield != null && !timer.Shield.enabled && !timer.Shield.ShieldCollider.enabled && timer.Shield.MaximumBlockedHits == 2, name + " authored one-shot directional shield");
         }
-        foreach (string kind in new[] { "White", "Dark", "BigGait", "Blue" })
+        foreach (string kind in new[] { "Dark", "BigGait", "Blue" })
         {
             var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Dev/Labs/OrbitalLab/ArtistComparison/LabSpider" + kind + ".prefab");
             var actor = AssetDatabase.LoadAssetAtPath<GameObject>(Enemies + "p_Enemy_Spider" + kind + ".prefab");
@@ -95,7 +95,8 @@ public static partial class EnemyProductionTransferPreview
                 foreach (var entry in new[] { flanker, breacher }.Where(e => e != null))
                     Require(entry.maxAliveOfType == 0 && !entry.useExactAliveLimit && entry.weight == (entry == flanker ? 6 : 4), "unchanged weight; no tactical cap");
                 var family = phase.enemies.Where(e => e.enemyPrefab.name.StartsWith("p_Enemy_classic") || e.enemyPrefab.name.StartsWith("p_Enemy_Spider")).ToArray();
-                Require(family.Length == 5 && family.All(e => Mathf.Approximately(e.weight, family[0].weight)), "five equally weighted ordinary chaser visuals");
+                Require(family.All(e => e.enemyPrefab.name != "p_Enemy_SpiderWhite"), "white debug spider excluded from ordinary spawn");
+                Require(family.Length == 4 && family.All(e => Mathf.Approximately(e.weight, family[0].weight)), "four equally weighted ordinary chaser visuals");
                 Require(family.Select(e => e.enemyPrefab.GetComponent<EnemyIdentity>().EnemyId).Distinct().Count() == 1, "shared existing class cap");
                 Require(phase.enemies.All(e => e.enemyPrefab.name != "p_Boss2"), "boss excluded from ordinary spawn");
             }

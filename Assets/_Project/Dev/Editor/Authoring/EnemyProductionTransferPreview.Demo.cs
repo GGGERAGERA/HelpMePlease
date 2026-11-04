@@ -68,7 +68,7 @@ public static partial class EnemyProductionTransferPreview
         Invoke(spawner, "RemoveDestroyedEnemies");
         // Retain one of each normal weighted outcome to avoid a long random wait for the review frame.
         var keep = new List<EnemyHealth>();
-        string[] wanted = { "p_Enemy_classic", "p_Enemy_SpiderWhite", "p_Enemy_SpiderDark", "p_Enemy_SpiderBigGait", "p_Enemy_SpiderBlue", "p_Enemy_Flanker", "p_Enemy_Breacher" };
+        string[] wanted = { "p_Enemy_classic", "p_Enemy_SpiderDark", "p_Enemy_SpiderBigGait", "p_Enemy_SpiderBlue", "p_Enemy_Flanker", "p_Enemy_Breacher" };
         string Kind(EnemyHealth e) => e.name.Replace("(Clone)", "");
         for (int cycle = 0; cycle < 200; cycle++)
         {
@@ -83,7 +83,7 @@ public static partial class EnemyProductionTransferPreview
             if (wanted.All(kind => keep.Any(e => Kind(e) == kind)) && keep.Count(e => Kind(e) == "p_Enemy_Breacher") >= 2) break;
             yield return .01f;
         }
-        Require(wanted.All(kind => keep.Any(e => Kind(e) == kind)), "all five mass visuals and both tactical variants spawned by ordinary cycle");
+        Require(wanted.All(kind => keep.Any(e => Kind(e) == kind)), "all four mass visuals and both tactical variants spawned by ordinary cycle");
         foreach (var enemy in keep) enemy.GetComponent<EnemyMovement>().enabled = true;
         station.enabled = true; spawner.enabled = true;
         yield return 2.2f;

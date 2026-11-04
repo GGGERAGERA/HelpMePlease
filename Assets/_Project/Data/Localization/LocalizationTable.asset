@@ -835,75 +835,54 @@ MonoBehaviour:
   - key: route.map.title
     ru: "МАРШРУТ  /  УРОВЕНЬ {0:00} ИЗ {1:00}"
     en: "ROUTE  /  LEVEL {0:00} OF {1:00}"
-  - key: route.node.combat
-    ru: "ЗАЧИСТКА"
-    en: "CLEARANCE"
-  - key: route.node.unknown
-    ru: "НЕИЗВЕСТНЫЙ СИГНАЛ"
-    en: "UNKNOWN SIGNAL"
-  - key: route.node.minefield
-    ru: "МИННОЕ ПОЛЕ"
-    en: "MINEFIELD"
   - key: route.weather.clear
-    ru: "ЯСНО"
-    en: "CLEAR"
+    ru: "—"
+    en: "—"
   - key: route.surface
     ru: "МАРШРУТ"
     en: "SURFACE ROUTE"
   - key: route.stage.name
-    ru: "Пустошь {0}/{1}"
-    en: "Wasteland {0}/{1}"
+    ru: "Уровень {0}/{1}"
+    en: "Level {0}/{1}"
   - key: route.gold
     ru: "Золото {0}"
     en: "Gold {0}"
   - key: route.weather
-    ru: "Погода · {0}"
-    en: "Weather · {0}"
-  - key: route.wave.unavailable
-    ru: "Группа пока не может появиться."
-    en: "The group cannot spawn yet."
-  - key: route.incident.cache
-    ru: "Забытый контейнер"
-    en: "Forgotten cache"
-  - key: route.incident.cache.info
-    ru: "Поблизости обнаружен дополнительный сундук."
-    en: "An extra chest was found nearby."
-  - key: route.incident.ambush
-    ru: "Вражеская засада"
-    en: "Enemy ambush"
-  - key: route.incident.ambush.info
-    ru: "Группа врагов приближается к вашей позиции."
-    en: "An enemy group is approaching your position."
-  - key: route.incident.protocol
-    ru: "Аварийный протокол"
-    en: "Emergency protocol"
-  - key: route.incident.protocol.wait
-    ru: "Во время события доступен добровольный вызов ради бонуса."
-    en: "An optional bonus challenge becomes available during a world event."
-  - key: route.incident.protocol.offer
-    ru: "Принять усиленную фазу ради сундука"
-    en: "Accept reinforcements for a bonus chest"
-  - key: route.incident.protocol.started
-    ru: "Устраните подкрепление и завершите текущее событие."
-    en: "Defeat the reinforcements and complete the current event."
-  - key: route.incident.field
-    ru: "Сбой поля"
-    en: "Field fault"
-  - key: route.incident.field.info
-    ru: "Рядом возникла временная аномальная зона."
-    en: "A temporary anomaly zone has appeared nearby."
-  - key: route.incident.med
-    ru: "Заброшенный медпункт"
-    en: "Abandoned aid station"
-  - key: route.incident.med.info
-    ru: "Поблизости обнаружена аптечка."
-    en: "A medkit was found nearby."
+    ru: "Правило · {0}"
+    en: "Rule · {0}"
+  - key: route.duration
+    ru: "Время прохождения · {0} с"
+    en: "Clear time · {0} s"
+  - key: route.reward
+    ru: "Награда · {0}"
+    en: "Reward · {0}"
+  - key: route.reward.weapon
+    ru: "Уровень оружия +1"
+    en: "Weapon level +1"
+  - key: route.reward.module
+    ru: "Уровень модуля +1"
+    en: "Module level +1"
+  - key: route.difficulty
+    ru: "Сложность · {0}"
+    en: "Difficulty · {0}"
+  - key: route.difficulty.easy
+    ru: "Лёгкая"
+    en: "Easy"
+  - key: route.difficulty.medium
+    ru: "Средняя"
+    en: "Medium"
+  - key: route.difficulty.hard
+    ru: "Сложная"
+    en: "Hard"
+  - key: route.pressure
+    ru: "Давление {0}"
+    en: "Pressure {0}"
   - key: route.node.boss
     ru: "ФИНАЛЬНЫЙ БОСС"
     en: "FINAL BOSS"
   - key: route.confirm
-    ru: "В ЛОКАЦИЮ"
-    en: "ENTER LOCATION"
+    ru: "НАЧАТЬ УРОВЕНЬ"
+    en: "START LEVEL"
   - key: world.rule.darkness.displayName
     ru: "ТЕМНОТА"
     en: "DARKNESS"

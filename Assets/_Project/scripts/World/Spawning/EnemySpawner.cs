@@ -1285,31 +1285,6 @@ public partial class EnemySpawner : MonoBehaviour
         }
     }
 
-    // Event-owned spawn: production initialization and tracking, without ordinary
-    // experiment cadence. The caller owns cancellation of the returned actor.
-    internal void SpawnRouteWave(Vector2 origin, int count, bool preferAttackers, List<EnemyHealth> actors)
-    {
-        if (!spawningEnabled) return;
-        if (gameplayArea == null) ResolveGameplayArea();
-        if (player == null) player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
-        if (gameplayArea == null || player == null) return;
-        RemoveDestroyedEnemies();
-        count = Mathf.Min(count, GetCurrentMaxAlive() - activeEnemies.Count);
-        for (int i = 0; i < count; i++)
-        {
-            GameObject prefab = null;
-            if (preferAttackers && activePhase?.enemies != null)
-                prefab = System.Array.Find(activePhase.enemies, entry => CanSpawn(entry) &&
-                    (entry.enemyPrefab.GetComponent<EnemyShooterMovement>() != null ||
-                     entry.enemyPrefab.GetComponent<EnemyBomberMovement>() != null))?.enemyPrefab;
-            prefab ??= activePhase != null ? SelectWeightedEnemy(activePhase) : SelectLegacyEnemy();
-            if (prefab == null || !TryGetAdditionalWaveSpawnPosition(origin, 3f, 8f, 4f, .5f, out var position))
-                break;
-            var enemy = SpawnEnemyAtInternal(prefab, position, true, false, false).GetComponent<EnemyHealth>();
-            if (enemy != null) actors.Add(enemy);
-        }
-    }
-
     private bool TryGetAdditionalWaveSpawnPosition(
         Vector3 origin,
         float minDistance,

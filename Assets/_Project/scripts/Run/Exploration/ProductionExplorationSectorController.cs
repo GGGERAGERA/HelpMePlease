@@ -2,7 +2,7 @@ using Random = GameplayRandom.WorldRandom;
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed partial class ProductionExplorationSectorController : MonoBehaviour
+public sealed class ProductionExplorationSectorController : MonoBehaviour
 {
     private const int NormalSiteCount = 6;
     private const int TotalSiteCount = NormalSiteCount + 1;
@@ -105,7 +105,6 @@ public sealed partial class ProductionExplorationSectorController : MonoBehaviou
 
     private void ReleaseRunScene()
     {
-        EndRouteContent();
         ClearOwnedSites();
         if (tutorialRelay != null)
         {
@@ -120,7 +119,6 @@ public sealed partial class ProductionExplorationSectorController : MonoBehaviou
         }
         ClearResourceNodes();
         ClearOwnedRewardChests();
-        routeChests.Clear();
         ClearSpawnedBreakables();
         propScatter?.Clear();
         propScatter = null;
@@ -316,7 +314,6 @@ public sealed partial class ProductionExplorationSectorController : MonoBehaviou
         propScatter.Regenerate();
 
         SpawnPortalPair();
-        InitializeRouteContent();
         threatController.Initialize(config.ThreatConfig, enemySpawner);
 
         Debug.Log(
