@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 namespace Subject42.Combat.Telekinetic { public sealed partial class TelekineticRig {
         // Local bands inside the rig; authored gun groups retain their own internal ordering.
-        private const int ChassisOrder=0, ModuleOrder=1, ChargeOrder=2, WeaponOrder=3;
+        private const int ChassisOrder=0, ModuleOrder=1, WeaponOrder=3;
         private readonly Dictionary<int,ParticleSystem[]> shotParticles=new();
         private readonly Dictionary<int,float> shotEffectEnds=new();
         private void PrepareWeaponEffects(int id,Subject42.Combat.OrbitalStation.OrbitalModuleView view)
@@ -63,16 +63,10 @@ namespace Subject42.Combat.Telekinetic { public sealed partial class Telekinetic
             int visualLayer=Construction.GetComponent<SortingGroup>().sortingLayerID;
             var ids=new HashSet<int>(Build.Items.Select(c=>c.Id));
             foreach (var id in views.Keys.Where(id=>!ids.Contains(id)).ToArray())
-            { views[id].SetActive(false); Destroy(views[id]); views.Remove(id); chargeBars.Remove(id); weaponBodies.Remove(id); shotParticles.Remove(id); shotEffectEnds.Remove(id); }
+            { views[id].SetActive(false); Destroy(views[id]); views.Remove(id); weaponBodies.Remove(id); shotParticles.Remove(id); shotEffectEnds.Remove(id); }
             presentationRadius=CellSpacing*.65f;
             foreach (var c in Build.Items)
             {
-                if (c.IsModule)
-                {
-                    float cooldown=Modules.Cooldown(c,Build);
-                    c.Remaining=c.LastCooldown>0 ? cooldown*Mathf.Clamp01(c.Remaining/c.LastCooldown) : cooldown;
-                    c.LastCooldown=cooldown;
-                }
                 if (!views.TryGetValue(c.Id,out var go))
                 {
                     go=new GameObject(TelekineticBuild.Label(c.Kind)+" #"+c.Id); go.transform.SetParent(Construction,false); views.Add(c.Id,go);
@@ -92,13 +86,6 @@ namespace Subject42.Combat.Telekinetic { public sealed partial class Telekinetic
                         var node=body.gameObject.AddComponent<SpriteRenderer>(); ApplyIcon(node,c.Kind);
                         node.sortingLayerID=visualLayer; node.sortingOrder=ModuleOrder;
                         body.localScale=Vector3.one*.4f;
-                    }
-                    if (c.IsModule)
-                    {
-                        var barGo=new GameObject("Independent cooldown charge"); barGo.transform.SetParent(go.transform,false);
-                        barGo.transform.localPosition=new Vector3(0,-.28f,0);
-                        var bar=barGo.AddComponent<SpriteRenderer>(); bar.sprite=ModuleSprite; bar.sharedMaterial=SpriteMaterial;
-                        bar.sortingLayerID=visualLayer; bar.sortingOrder=ChargeOrder; chargeBars.Add(c.Id,bar);
                     }
                 }
                 go.transform.localPosition=c.Center*CellSpacing;

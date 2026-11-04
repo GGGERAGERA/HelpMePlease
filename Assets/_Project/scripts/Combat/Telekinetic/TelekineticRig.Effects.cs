@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Subject42.Combat.Telekinetic
@@ -8,17 +7,17 @@ namespace Subject42.Combat.Telekinetic
     {
         private sealed class ImpactCharge
         {
-            internal float Damage,Splash,Chain,SplashRadius,ChainRadius,Slow=1,SlowSeconds;
+            internal float SplashDamage,ChainDamage,SplashRadius,ChainRadius,Slow=1,SlowSeconds;
             internal bool SecondarySpent;
             internal readonly HashSet<EnemyHealth> Targets=new();
-            internal ImpactCharge Copy() => new() { Damage=Damage,Splash=Splash,Chain=Chain,SplashRadius=SplashRadius,ChainRadius=ChainRadius,Slow=Slow,SlowSeconds=SlowSeconds };
-            internal bool HasImpact => Splash>0 || Chain>0 || Slow<1;
+            internal ImpactCharge Copy() => new() { SplashDamage=SplashDamage,ChainDamage=ChainDamage,SplashRadius=SplashRadius,ChainRadius=ChainRadius,Slow=Slow,SlowSeconds=SlowSeconds };
+            internal bool HasImpact => SplashDamage>0 || ChainDamage>0 || Slow<1;
         }
         private sealed class CapturedAttack
         {
             internal TelekineticItem Item;
             internal OrbitalWeaponSettings Profile;
-            internal float Damage;
+            internal float Damage, AttacksPerSecond;
             internal int Ricochets,Volleys,Echoes;
             internal ImpactCharge Impact;
         }
@@ -36,10 +35,7 @@ namespace Subject42.Combat.Telekinetic
         public int EchoShots { get; private set; }
         public int ActiveSlows => slowed.Count;
         public float SlowFactor(EnemyHealth target) => slowed.TryGetValue(target,out var state)?state.Multiplier:1;
-        public IEnumerable<TelekineticPart> PendingEffects(TelekineticItem item) => item.Effects.Values.Select(e=>e.Kind).Distinct();
-        public float PendingStrength(TelekineticItem item,TelekineticPart kind)
-        { if (Suppressed) return 0; float sum=0; foreach (var e in item.Effects.Values) if (e.Kind==kind) sum+=e.Strength; return sum; }
-        public float CriticalFactor(TelekineticItem item) => 1+(Modules.CritMultiplier-1)*PendingStrength(item,TelekineticPart.Crit);
+        public float CriticalFactor(TelekineticItem item) => ActiveModifiers(item).CritMultiplier;
         public float BaseDamage(TelekineticItem item) => Settings(item).Damage*station.GetModuleMetaDamageMultiplier(Settings(item).Kind)*
             (item.Kind==TelekineticPart.Saw ? station.State.ContactDamageMultiplier : station.State.ShootingDamageMultiplier)*(1+.25f*(item.Level-1));
         public static bool Affects(TelekineticPart module,TelekineticItem weapon) => weapon.IsWeapon &&
@@ -64,11 +60,11 @@ namespace Subject42.Combat.Telekinetic
             var target=lastBodyTarget;
             ApplyImpact(charge,target,target.transform.position);
         }
-        private CapturedAttack CaptureAttack(TelekineticItem item)
+        private CapturedAttack CaptureAttack(TelekineticItem item) => DescribeAttack(item, ActiveModifiers(item));
+
+        private CapturedAttack DescribeAttack(TelekineticItem item, WeaponModifiers modifiers)
         {
             var s=Settings(item);
-            float pierce=PendingStrength(item,TelekineticPart.Pierce),knock=PendingStrength(item,TelekineticPart.Knock);
-            bool shred=PendingStrength(item,TelekineticPart.Shred)>0;
             // Copy only this attack. Shared authored settings and live projectiles are never changed.
             var profile=new OrbitalWeaponSettings
             {
@@ -76,20 +72,20 @@ namespace Subject42.Combat.Telekinetic
                 Presentation=s.Presentation,ProjectileVisualScale=s.ProjectileVisualScale,ProjectileTrailSeconds=s.ProjectileTrailSeconds,
                 Damage=s.Damage,FireInterval=s.FireInterval,Range=s.Range,ProjectileSpeed=s.ProjectileSpeed,ProjectileRadius=s.ProjectileRadius,
                 BurstShots=s.BurstShots,BurstInterval=s.BurstInterval,Pellets=s.Pellets,SpreadDegrees=s.SpreadDegrees,
-                BodyPierces=s.BodyPierces+Mathf.RoundToInt(Modules.PierceBodies*pierce),BypassShields=s.BypassShields || shred,
-                Knockback=s.Knockback+Modules.KnockBonus*knock,Color=s.Color,ContactRadius=s.ContactRadius,
+                BodyPierces=s.BodyPierces+Mathf.RoundToInt(Modules.PierceBodies*modifiers.PierceStrength),
+                BypassShields=s.BypassShields || modifiers.BypassShields,
+                Knockback=Mathf.Min(5f,s.Knockback+modifiers.Knockback),Color=s.Color,ContactRadius=s.ContactRadius,
                 ContactHitInterval=s.ContactHitInterval,SpinDegreesPerSecond=s.SpinDegreesPerSecond
             };
-            float damage=BaseDamage(item)*DamageFactor(item)*CriticalFactor(item);
-            float slow=PendingStrength(item,TelekineticPart.Slow);
+            float damage = BaseDamage(item) * modifiers.DamageMultiplier * modifiers.CritMultiplier;
             return new CapturedAttack
             {
-                Item=item,Profile=profile,Damage=damage,Ricochets=Ricochets(item),Volleys=1+ExtraShots(item),
-                Echoes=Suppressed ? 0 : item.Effects.Values.Count(e=>e.Kind==TelekineticPart.Echo),
-                Impact=new ImpactCharge { Damage=damage,Splash=Modules.SplashDamageFraction*PendingStrength(item,TelekineticPart.Splash),
-                    Chain=Modules.ChainDamageFraction*PendingStrength(item,TelekineticPart.Chain),
+                Item=item,Profile=profile,Damage=damage,AttacksPerSecond=modifiers.RateMultiplier/BaseAttackInterval(item),
+                Ricochets=modifiers.Ricochets,Volleys=1+modifiers.ExtraAttacks,Echoes=modifiers.Echoes,
+                Impact=new ImpactCharge { SplashDamage=damage*modifiers.SplashFraction,
+                    ChainDamage=damage*modifiers.ChainFraction,
                     SplashRadius=Modules.SplashRadius,ChainRadius=Modules.ChainRadius,
-                    Slow=slow>0 ? Mathf.Max(.1f,1-(1-Modules.SlowMultiplier)*slow) : 1,SlowSeconds=Modules.SlowSeconds }
+                    Slow=Mathf.Max(.1f,1-modifiers.SlowReduction),SlowSeconds=Modules.SlowSeconds }
             };
         }
         private bool GatherContactTargets(Vector2 point)
@@ -123,10 +119,10 @@ namespace Subject42.Combat.Telekinetic
                     }
                     if (target.CurrentHealth<before) ApplyImpact(impact,target,point);
                     if (target.CurrentHealth<before && profile.Knockback>0 && !target.IsDead && target.TryGetComponent<EnemyMovement>(out var movement))
-                        movement.ApplyKnockback(((Vector2)target.transform.position-point).normalized,Mathf.Min(5,profile.Knockback));
+                        movement.ApplyKnockback(((Vector2)target.transform.position-point).normalized,profile.Knockback);
                 }
                 if (Time.time>=nextContactAudio) { audioSource.PlayOneShot(SawClip,.16f); nextContactAudio=Time.time+.08f; }
-                return true; // A blocked contact still spends the normal saw interval and charges.
+                return true; // A blocked contact still spends the normal saw interval.
             }
             for (int shot=0;shot<volleys;shot++)
             {
@@ -151,18 +147,18 @@ namespace Subject42.Combat.Telekinetic
             if (charge.Slow<1 && target!=null && !target.IsDead) ApplySlow(target,charge.Slow,charge.SlowSeconds);
             if (charge.SecondarySpent) return;
             charge.SecondarySpent=true; // Secondary damage cannot trigger another charge or a chain network.
-            if (charge.Splash>0)
+            if (charge.SplashDamage>0)
             {
                 SplashBursts++; RingEffect(point,charge.SplashRadius,PartColor(TelekineticPart.Splash));
                 foreach (var other in combat.FindNearestMany(point,charge.SplashRadius,int.MaxValue))
-                    if (other!=target && other.gameObject.scene==gameObject.scene) combat.ApplyDamage(other,charge.Damage*charge.Splash,point);
+                    if (other!=target && other.gameObject.scene==gameObject.scene) combat.ApplyDamage(other,charge.SplashDamage,point);
             }
-            if (charge.Chain>0)
+            if (charge.ChainDamage>0)
             {
                 foreach (var other in combat.FindNearestMany(point,charge.ChainRadius,int.MaxValue))
                 {
                     if (other==target || other.gameObject.scene!=gameObject.scene) continue;
-                    if (combat.ApplyDamage(other,charge.Damage*charge.Chain,point))
+                    if (combat.ApplyDamage(other,charge.ChainDamage,point))
                     { ChainJumps++; LineEffect(point,other.transform.position,PartColor(TelekineticPart.Chain)); }
                     break;
                 }

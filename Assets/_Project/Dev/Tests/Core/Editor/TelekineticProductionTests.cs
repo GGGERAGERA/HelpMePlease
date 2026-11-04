@@ -13,6 +13,127 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Object=UnityEngine.Object;
 
+public sealed class TelekineticWeaponTooltipTests
+{
+    private const BindingFlags InstanceFields = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    private static TelekineticRig CreateRig(GameObject owner)
+    {
+        var station = owner.AddComponent<OrbitalStationRuntime>();
+        var state = OrbitalRunState.CreateDefault(42);
+        state.Telekinetic = new TelekineticBuild();
+        typeof(OrbitalStationRuntime).GetProperty("State").SetValue(station, state);
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TelekineticProductionAuthoring.PrefabPath);
+        var rig = Object.Instantiate(prefab, owner.transform).GetComponent<TelekineticRig>();
+        typeof(TelekineticRig).GetField("station", InstanceFields).SetValue(rig, station);
+        return rig;
+    }
+
+    [Test]
+    public void DamageModulesStackOnlyOnDirectWeaponNeighbours()
+    {
+        var owner = new GameObject("Two DMG modules");
+        try
+        {
+            var rig = CreateRig(owner);
+            var pistol = rig.Build.Grant(TelekineticPart.Pistol);
+            var side = rig.Build.Grant(TelekineticPart.DMG);
+            var above = rig.Build.Grant(TelekineticPart.DMG);
+            Assert.That(rig.Build.Install(pistol, Vector2Int.down), Is.True);
+            Assert.That(rig.Build.Install(side, new Vector2Int(1, -1)), Is.True);
+            Assert.That(rig.Build.Install(above, Vector2Int.up, 1), Is.True);
+            Assert.That(TelekineticBuild.Adjacent(above, side), Is.True);
+            Assert.That(TelekineticBuild.Adjacent(above, pistol), Is.False);
+
+            void AssertDamage(float multiplier, int connectedModules)
+            {
+                float expected = rig.BaseDamage(pistol) * multiplier;
+                var attack = typeof(TelekineticRig).GetMethod("CaptureAttack", InstanceFields).Invoke(rig, new object[] { pistol });
+                float actual = (float)attack.GetType().GetField("Damage", InstanceFields).GetValue(attack);
+                Assert.That(actual, Is.EqualTo(expected).Within(.001f));
+                var tooltip = (string)typeof(TelekineticRig).GetMethod("CompactEffect", InstanceFields).Invoke(rig, new object[] { pistol });
+                Assert.That(tooltip.Split('\n'), Does.Contain($"Урон: {expected:0.##}"));
+                Assert.That(tooltip.Split('\n').Count(line => line == "DMG I"), Is.EqualTo(connectedModules));
+            }
+
+            AssertDamage(1.75f, 1);
+            Assert.That(rig.Build.Move(above, new Vector2Int(-1, -1), 0), Is.True);
+            AssertDamage(2.5f, 2);
+        }
+        finally { Object.DestroyImmediate(owner); }
+    }
+
+    [TestCase(TelekineticPart.DMG)]
+    [TestCase(TelekineticPart.FR)]
+    [TestCase(TelekineticPart.Double)]
+    [TestCase(TelekineticPart.RIC)]
+    [TestCase(TelekineticPart.Pierce)]
+    [TestCase(TelekineticPart.Splash)]
+    [TestCase(TelekineticPart.Chain)]
+    [TestCase(TelekineticPart.Crit)]
+    [TestCase(TelekineticPart.Slow)]
+    [TestCase(TelekineticPart.Shred)]
+    [TestCase(TelekineticPart.Knock)]
+    [TestCase(TelekineticPart.Echo)]
+    public void InstalledModuleImmediatelyAffectsTooltipAndAttack(TelekineticPart kind)
+    {
+        var owner = new GameObject("Weapon tooltip fixture");
+        try
+        {
+            const BindingFlags instance = InstanceFields;
+            var rig = CreateRig(owner);
+            var weapon = rig.Build.Grant(TelekineticPart.Pistol);
+            var module = rig.Build.Grant(kind);
+            module.Level = 3;
+            Assert.That(rig.Build.Install(weapon, Vector2Int.right), Is.True);
+            string Tooltip() => (string)typeof(TelekineticRig).GetMethod("CompactEffect", instance).Invoke(rig, new object[] { weapon });
+            string baseline = Tooltip();
+            Assert.That(rig.Build.Install(module, new Vector2Int(1, 1)), Is.True);
+            string linked = Tooltip();
+            Assert.That(linked, Is.Not.EqualTo(baseline));
+            if (kind == TelekineticPart.DMG)
+            {
+                Assert.That(rig.DamageFactor(weapon), Is.EqualTo(2.5f).Within(.001f), "DMG III applies as soon as the module is connected");
+                Assert.That(linked, Does.Contain($"Урон: {rig.BaseDamage(weapon) * 2.5f:0.##}"));
+                var energy = rig.Build.Grant(TelekineticPart.Energy);
+                Assert.That(rig.Build.Install(energy, new Vector2Int(2, 1)), Is.True);
+                Assert.That(rig.DamageFactor(weapon), Is.EqualTo(2.875f).Within(.001f), "ENERGY strengthens the adjacent DMG");
+                Assert.That(Tooltip(), Does.Contain($"Урон: {rig.BaseDamage(weapon) * 2.875f:0.##}"));
+                Assert.That(rig.Build.Stow(energy), Is.True);
+            }
+
+            var attack = typeof(TelekineticRig).GetMethod("CaptureAttack", instance).Invoke(rig, new object[] { weapon });
+            T Read<T>(object value, string field) => (T)value.GetType().GetField(field, instance).GetValue(value);
+            var profile = Read<OrbitalWeaponSettings>(attack, "Profile");
+            var impact = Read<object>(attack, "Impact");
+            string effect = kind switch
+            {
+                TelekineticPart.DMG or TelekineticPart.Crit => $"Урон: {Read<float>(attack, "Damage"):0.##}",
+                TelekineticPart.FR => $"Скорость атаки: {Read<float>(attack, "AttacksPerSecond"):0.##}/с",
+                TelekineticPart.Double => $"Залпов за атаку: {Read<int>(attack, "Volleys")}",
+                TelekineticPart.RIC => $"Рикошеты: +{Read<int>(attack, "Ricochets")}",
+                TelekineticPart.Pierce => $"Пробитие целей: {profile.BodyPierces}",
+                TelekineticPart.Splash => $"Урон по области: {Read<float>(impact, "SplashDamage"):0.##}",
+                TelekineticPart.Chain => $"Урон по цепи: {Read<float>(impact, "ChainDamage"):0.##}",
+                TelekineticPart.Slow => $"Замедление: {1 - Read<float>(impact, "Slow"):P0}",
+                TelekineticPart.Shred when profile.BypassShields => "Обход щитов",
+                TelekineticPart.Knock => $"Отталкивание: {profile.Knockback:0.##}",
+                TelekineticPart.Echo => $"Повторов: {Read<int>(attack, "Echoes")}",
+                _ => throw new InvalidOperationException($"Missing effect for {kind}")
+            };
+            Assert.That(linked, Does.Contain(effect), "Tooltip must describe the current attack");
+            Assert.That(baseline, Does.Not.Contain(effect), "A module must change its own stat or add its effect");
+            Assert.That(linked, Does.Not.Contain("КД").And.Not.Contain("заряд"));
+
+            Assert.That(rig.Build.Move(module, Vector2Int.left, 2), Is.True);
+            Assert.That(Tooltip(), Is.EqualTo(baseline), "A module across the core no longer buffs this weapon");
+            Assert.That(rig.DamageFactor(weapon), Is.EqualTo(1));
+            Assert.That(rig.RateFactor(weapon), Is.EqualTo(1));
+        }
+        finally { Object.DestroyImmediate(owner); }
+    }
+}
+
 public sealed class TelekineticProductionTests
 {
     [Test] public void WholeItemGlitchPreservesValidLayoutAndRejectsInvalidPairs()
@@ -186,8 +307,7 @@ public sealed class TelekineticProductionTests
         Assert.That(rig.Angle,Is.EqualTo(angle));
         var weapon=rig.Build.Items.First(c=>c.IsWeapon); var dmg=rig.Build.Items.First(c=>c.Kind==TelekineticPart.DMG);
         Assert.That(TelekineticBuild.Adjacent(dmg,weapon),Is.True);
-        weapon.ShotRemaining=1; dmg.Remaining=0; rig.Tick(.02f,false,false,true);
-        Assert.That(dmg.Activations,Is.GreaterThan(0)); Assert.That(rig.DamageFactor(weapon),Is.GreaterThan(1));
+        Assert.That(rig.DamageFactor(weapon),Is.GreaterThan(1),"Adjacent DMG applies without a timer");
         var shift=station.GetComponent<OrbitalCenterShift>();
         if (Application.isFocused)
             typeof(OrbitalCenterShift).GetMethod("AdvancePointer",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(shift,
@@ -256,16 +376,13 @@ public sealed class TelekineticProductionTests
         station.Interaction.CloseConstructor();
         yield return CoreTestSupport.Await(()=>!UpgradeManager.Instance.IsChoosingUpgrade && Time.timeScale>0);
         station.enabled=false; rig.ResetAnomaly();
-        var rapid=rig.Build.Items.First(c=>c.Kind==TelekineticPart.FR);
-        rapid.Remaining=0; weapon.ShotRemaining=1; rig.Tick(.01f,false,false,true);
-        Assert.That(rig.RateFactor(weapon),Is.GreaterThan(1));
-        float remaining=rapid.Remaining;
+        float rateBeforeRestore = rig.RateFactor(weapon);
+        Assert.That(rateBeforeRestore,Is.GreaterThan(1));
         var savedBuild=rig.Build;
         Assert.That(station.SimulateSectorRestore(),Is.True);
         rig=station.Rig;
         Assert.That(rig.Build,Is.SameAs(savedBuild));
-        Assert.That(rapid.Remaining,Is.EqualTo(remaining).Within(.001f),"Recreating art preserves module charge");
-        Assert.That(rig.RateFactor(weapon),Is.EqualTo(1),"FR must not keep timestamps from a previous rig clock");
+        Assert.That(rig.RateFactor(weapon),Is.EqualTo(rateBeforeRestore).Within(.001f),"FR follows the restored layout immediately");
         Assert.That(station.Rings,Is.Empty); Assert.That(station.Modules,Is.Empty);
         Assert.That(station.Interaction.OpenConstructor(),Is.True);
         ScreenCapture.CaptureScreenshot(TelekineticProductionAuthoring.Output+"/constructor.png"); yield return null;

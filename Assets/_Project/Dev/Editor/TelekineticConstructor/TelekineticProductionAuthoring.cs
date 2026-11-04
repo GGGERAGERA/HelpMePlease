@@ -125,7 +125,7 @@ public static class TelekineticProductionAuthoring
             go=new GameObject("Telekinetic Rig / production");
             UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go,labScene);
             var rig=go.AddComponent<TelekineticRig>();
-            rig.SpriteMaterial=lab.SpriteMaterial; rig.ModuleSprite=lab.ModuleSprite;
+            rig.SpriteMaterial=lab.SpriteMaterial;
             rig.ItemIcons=new Sprite[lab.ItemIcons.Length]; rig.ShotClip=lab.ShotClip; rig.SawClip=lab.SawClip;
             const string icons="Assets/_Project/art/UI/TelekineticIcons";
             Directory.CreateDirectory(icons); AssetDatabase.Refresh();

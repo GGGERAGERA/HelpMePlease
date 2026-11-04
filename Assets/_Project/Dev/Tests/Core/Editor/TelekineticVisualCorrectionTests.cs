@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -129,20 +130,38 @@ public sealed class TelekineticVisualCorrectionTests
         yield return CaptureProduction(cleanChassis: true);
     }
 
-    private static IEnumerator CaptureProduction(bool cleanChassis = false)
+    [UnityTest, Timeout(60000)]
+    public IEnumerator PassiveDamageMatchesConsecutiveHitsInMvp()
+    {
+        PlayerPrefs.BeginSandbox(false);
+        PlayerPrefs.SetInt(BunkerIntroController.ViewedPreferenceKey, 1);
+        PlayerPrefs.SetInt(TutorialController.CompletionKey, 1);
+        EditorSceneManager.OpenScene("Assets/_Project/Scenes/MainBuild/StartScreen.unity");
+        yield return new EnterPlayMode();
+        yield return CaptureProduction(passiveDamage: true);
+    }
+
+    private static IEnumerator CaptureProduction(bool cleanChassis = false, bool passiveDamage = false)
     {
         Object.FindFirstObjectByType<StartScreenController>().Begin();
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name==RunEndService.BunkerSceneName && Object.FindFirstObjectByType<BunkerRunStarter>()!=null && !SceneTransitionOverlay.IsTransitioning);
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset"));
         var starter=Object.FindFirstObjectByType<BunkerRunStarter>(); starter.StartRun(starter.transform);
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name=="MVP" && ProductionSceneComposition.Active is {IsReady:true} && !SceneTransitionOverlay.IsTransitioning);
-        if (Phase == "catalogue") yield return CoreTestSupport.SelectInitialRouteNode();
+        if (passiveDamage || Phase == "catalogue") yield return CoreTestSupport.SelectInitialRouteNode();
         var player=Object.FindFirstObjectByType<CharacterSpawner>();
         var station=player.Station; var rig=station.Rig;
         player.SpawnedPlayer.GetComponent<PlayerHealth>().DebugInvulnerable=true;
         Object.FindFirstObjectByType<EnemySpawner>().StopSpawning();
         EnemyDebugAiFreeze.SetFrozen(true);
         MoveToNeutral(station);
+        if (passiveDamage)
+        {
+            yield return VerifyPassiveDamage(player);
+            RunEndService.Instance.ReturnToBunker();
+            yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
+            yield break;
+        }
         if (cleanChassis)
         {
             yield return VerifyCleanChassis(station);
@@ -209,6 +228,84 @@ public sealed class TelekineticVisualCorrectionTests
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name==RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
         File.WriteAllText(Output+"/"+Phase+"-completed.txt","Real Editor Game View 1600x900; lab and MVP; reward-owned reserve and valid layouts; returned to bunker.");
     }
+    private static IEnumerator VerifyPassiveDamage(CharacterSpawner player)
+    {
+        var station = player.Station;
+        var rig = station.Rig;
+        yield return CoreTestSupport.Await(() => Time.timeScale > 0 && !SceneTransitionOverlay.IsTransitioning);
+        var hud = Object.FindFirstObjectByType<HUDManager>();
+        var pause = (PauseMenuUI)new SerializedObject(hud).FindProperty("pauseMenu").objectReferenceValue;
+        Assert.That(pause, Is.Not.Null);
+        Assert.That(pause.isActiveAndEnabled, Is.True);
+        Assert.That(new SerializedObject(pause).FindProperty("characterSpawner").objectReferenceValue, Is.SameAs(player));
+        Assert.That(new SerializedObject(UpgradeManager.Instance).FindProperty("pauseMenu").objectReferenceValue, Is.SameAs(pause));
+        pause.Pause();
+        Assert.That(pause.IsPaused, Is.True);
+        Assert.That(Time.timeScale, Is.Zero);
+        pause.Resume();
+        Assert.That(Time.timeScale, Is.GreaterThan(0));
+
+        yield return Grant(station, OrbitalRewardKind.DamageLink);
+        Assert.That(station.Interaction.OpenConstructor(), Is.True);
+        rig.AutoRotate = false;
+        var pistol = rig.Build.Items.Single(item => item.IsWeapon && item.Kind == TelekineticPart.Pistol);
+        if (pistol.Position != Vector2Int.right)
+            Assert.That(rig.Move(pistol, Vector2Int.right), Is.True);
+        Assert.That(rig.Place(TelekineticPart.DMG, new Vector2Int(1, 1)), Is.True);
+        var module = rig.Build.Items.Single(item => item.Kind == TelekineticPart.DMG);
+        float TooltipDamage()
+        {
+            const string damageLabel = "Урон: ";
+            var tooltip = (string)typeof(TelekineticRig).GetMethod("CompactEffect", Hidden).Invoke(rig, new object[] { pistol });
+            Assert.That(tooltip, Does.Not.Contain("заряд").And.Not.Contain("КД"));
+            var damageLine = tooltip.Split('\n').Single(line => line.StartsWith(damageLabel, StringComparison.Ordinal));
+            return float.Parse(damageLine.Substring(damageLabel.Length));
+        }
+        float displayedDamage = TooltipDamage();
+        Assert.That(displayedDamage, Is.GreaterThan(rig.BaseDamage(pistol)));
+        Assert.That(rig.DamageFactor(pistol), Is.GreaterThan(1), "DMG applies immediately on placement");
+        Assert.That(rig.Construction.GetComponentsInChildren<Transform>(true).Any(node => node.name == "Independent cooldown charge"), Is.False);
+
+        var muzzle = rig.Construction.Find(TelekineticBuild.Label(pistol.Kind) + " #" + pistol.Id);
+        var targetObject = new GameObject("QA: passive DMG target") { layer = LayerMask.NameToLayer("Enemy") };
+        targetObject.transform.position = muzzle.position + muzzle.right * 2f;
+        targetObject.AddComponent<CircleCollider2D>().radius = .3f;
+        var target = targetObject.AddComponent<EnemyHealth>();
+        target.SetRuntimeMaxHealth(100f);
+        var healthAfterHits = new List<float>();
+        target.HitFeedback += (_, _, _) => healthAfterHits.Add(target.CurrentHealth);
+        Physics2D.SyncTransforms();
+        try
+        {
+            float before = target.CurrentHealth;
+            int shots = pistol.Shots;
+            station.Interaction.CloseConstructor();
+            pistol.ShotRemaining = 0f;
+            float hitDeadline = Time.realtimeSinceStartup + 3f;
+            while (healthAfterHits.Count < 2 && Time.realtimeSinceStartup < hitDeadline) yield return null;
+            pistol.ShotRemaining = 30f;
+            Assert.That(pistol.Shots, Is.EqualTo(shots + 2));
+            Assert.That(healthAfterHits.Count, Is.EqualTo(2));
+            Assert.That(before - healthAfterHits[0], Is.EqualTo(displayedDamage).Within(.0051f));
+            Assert.That(healthAfterHits[0] - healthAfterHits[1], Is.EqualTo(displayedDamage).Within(.0051f));
+            yield return Capture("passive-dmg-combat");
+
+            Assert.That(station.Interaction.OpenConstructor(), Is.True);
+            Assert.That(rig.Remove(module), Is.True);
+            float baseDamage = TooltipDamage();
+            Assert.That(baseDamage, Is.LessThan(displayedDamage));
+            station.Interaction.CloseConstructor();
+            pistol.ShotRemaining = 0f;
+            hitDeadline = Time.realtimeSinceStartup + 3f;
+            while (healthAfterHits.Count < 3 && Time.realtimeSinceStartup < hitDeadline) yield return null;
+            pistol.ShotRemaining = 30f;
+            Assert.That(healthAfterHits.Count, Is.EqualTo(3));
+            Assert.That(healthAfterHits[1] - healthAfterHits[2], Is.EqualTo(baseDamage).Within(.0051f));
+            Debug.Log($"[MVP DMG] Tooltip {displayedDamage:0.##}, two consecutive hits: HP {before:0.##} → {healthAfterHits[0]:0.##} → {healthAfterHits[1]:0.##}. DMG removed, tooltip {baseDamage:0.##}, HP → {healthAfterHits[2]:0.##}.");
+        }
+        finally { Object.Destroy(targetObject); }
+    }
+
     private static IEnumerator VerifyCleanChassis(OrbitalStationRuntime station)
     {
         var rig = station.Rig;
@@ -480,7 +577,7 @@ public sealed class TelekineticVisualCorrectionTests
             {
                 var icon=view.Find("Pixel node").GetComponent<SpriteRenderer>();
                 Assert.That(icon.sortingLayerID,Is.EqualTo(root.sortingLayerID)); Assert.That(icon.sortingOrder,Is.EqualTo(1));
-                if(item.IsModule) Assert.That(view.Find("Independent cooldown charge").GetComponent<SpriteRenderer>().sortingOrder,Is.EqualTo(2));
+                Assert.That(view.Find("Independent cooldown charge"), Is.Null);
             }
         }
     }

@@ -2349,7 +2349,7 @@ PrefabInstance:
       propertyPath: cameraShake
       value: 
       objectReference: {fileID: 1621092230}
-    - target: {fileID: 5722124322602616884, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
+    - target: {fileID: 4824219420291647568, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
       propertyPath: characterSpawner
       value: 
       objectReference: {fileID: 46915846}
@@ -2411,7 +2411,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HUDManager
 --- !u!114 &2370474437954700990 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5722124322602616884, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4824219420291647568, guid: 3fa48dbca266e684781688376fff63ad, type: 3}
   m_PrefabInstance: {fileID: 2370474437954700988}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}

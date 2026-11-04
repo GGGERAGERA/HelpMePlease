@@ -29,14 +29,14 @@ namespace Subject42.Combat.Telekinetic
             glitchClock+=Mathf.Max(0,dt);
             if (glitchClock<10) return;
             glitchClock%=10;
-            if (Build.TryGlitch(glitchRandom)) { InvalidateCharges(); SyncViews(); }
+            if (Build.TryGlitch(glitchRandom)) { echoes.Clear(); SyncViews(); }
         }
         public void ResetAnomaly()
         {
             if (originalPositions.Count>0)
             {
                 foreach (var pair in originalPositions) pair.Key.Position=pair.Value;
-                originalPositions.Clear(); InvalidateCharges(); SyncViews();
+                originalPositions.Clear(); echoes.Clear(); SyncViews();
             }
             zone=null; anomalyElapsed=glitchClock=0;
         }

@@ -10,7 +10,6 @@ namespace Subject42.Combat.Telekinetic
     {
         public GameObject PistolVisual, ShotgunVisual, SawVisual, SniperVisual;
         public Material SpriteMaterial;
-        public Sprite ModuleSprite;
         public Sprite[] ItemIcons;
         public AudioClip ShotClip, SawClip;
         public TelekineticStructureView StructureView;
@@ -28,7 +27,6 @@ namespace Subject42.Combat.Telekinetic
         public float RotationEnergy => station.State.RotationEnergy;
         public bool AutoRotate { get => station.State.TelekineticAutoRotate; set => station.State.TelekineticAutoRotate=value; }
         public int ShotsFired { get; private set; }
-        public int ModulePulses { get; private set; }
         public float CombatSeconds { get; private set; }
         private float presentationRadius;
         public float PresentationRadius => presentationRadius+Mathf.Max(0,station.State.ContactSizeMultiplier-1)*Saw.ContactRadius;
@@ -38,7 +36,6 @@ namespace Subject42.Combat.Telekinetic
         private ProductionOrbitalCombatAdapter combat;
         private AudioSource audioSource;
         private readonly Dictionary<int,GameObject> views=new();
-        private readonly Dictionary<int,SpriteRenderer> chargeBars=new();
         private float nextContactAudio;
         private bool ready;
         private TelekineticItem selected, held;
@@ -102,14 +99,8 @@ namespace Subject42.Combat.Telekinetic
         private bool CanEdit => ready && station.InputOwner.CanEditConstructor;
         private bool Apply(bool changed)
         {
-            if (changed) { InvalidateCharges(); SyncViews(); }
+            if (changed) { echoes.Clear(); SyncViews(); }
             return changed;
-        }
-        private void InvalidateCharges()
-        {
-            echoes.Clear();
-            foreach (var c in Build.Items)
-            { c.Damage.Clear(); c.Rapid.Clear(); c.RapidUntil.Clear(); c.Extra.Clear(); c.Ricochet.Clear(); c.Effects.Clear(); }
         }
         public void Tick(float dt,bool q,bool e,bool allowed)
         {
@@ -119,16 +110,8 @@ namespace Subject42.Combat.Telekinetic
             AdvanceRotation(dt,q,e);
             CombatSeconds+=dt;
             TickEffectTimers();
-            if (!Suppressed) TickModules(dt);
             TickWeapons(dt); combat.Tick(dt); TickWeaponEffects();
             ApplyPose();
-            foreach (var c in Build.Items)
-                if (chargeBars.TryGetValue(c.Id,out var bar))
-                {
-                    float progress=Mathf.Clamp01(1-c.Remaining/Modules.Cooldown(c,Build));
-                    bar.transform.localScale=new Vector3(.48f*progress,.055f,1);
-                    bar.color=Suppressed ? Color.red : progress>.92f ? Color.white : PartColor(c.Kind);
-                }
         }
         public void AdvanceRotation(float dt,bool q,bool e)
         {
@@ -167,7 +150,7 @@ namespace Subject42.Combat.Telekinetic
         public void Release()
         {
             if (!ready) return;
-            ResetAnomaly(); ClearEffectState(); InvalidateCharges();
+            ResetAnomaly(); ClearEffectState();
             combat.Hit-=RememberBodyTarget; combat.ProjectileSpawned-=CaptureProjectile;
             combat.ProjectileContact-=ProjectileContact; combat.ProjectileEnded-=ProjectileEnded;
             if (constructorPanel != null) Destroy(constructorPanel);

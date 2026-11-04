@@ -11,45 +11,73 @@ namespace Subject42.Combat.Telekinetic
         private readonly HashSet<EnemyHealth> contactTargets=new();
         private long volleyId;
         public OrbitalWeaponSettings Settings(TelekineticItem c) => c.Kind==TelekineticPart.Pistol ? Pistol : c.Kind==TelekineticPart.Shotgun ? Shotgun : c.Kind==TelekineticPart.Sniper ? Sniper : Saw;
-        public float DamageFactor(TelekineticItem c) => Suppressed ? 1 : 1+c.Damage.Values.Sum();
-        public float RateFactor(TelekineticItem c) => Suppressed ? 1 : 1+c.Rapid.Values.Sum();
-        public int ExtraShots(TelekineticItem c) => Suppressed ? 0 : c.Extra.Values.Sum();
-        public int Ricochets(TelekineticItem c) => Suppressed ? 0 : c.Ricochet.Values.Sum();
-        public int LinkedWeapons(TelekineticItem c) => Build.Neighbours(c).Count(n=>Affects(c.Kind,n));
+        public float DamageFactor(TelekineticItem item) => ActiveModifiers(item).DamageMultiplier;
+        public float RateFactor(TelekineticItem item) => ActiveModifiers(item).RateMultiplier;
+        public int ExtraShots(TelekineticItem item) => ActiveModifiers(item).ExtraAttacks;
+        public int Ricochets(TelekineticItem item) => ActiveModifiers(item).Ricochets;
+        public int LinkedWeapons(TelekineticItem module) => Build.Neighbours(module).Count(weapon => FeedsWeapon(module, weapon));
 
-        private void TickModules(float dt)
+        private float BaseAttackInterval(TelekineticItem item) => item.Kind == TelekineticPart.Saw
+            ? Saw.ContactHitInterval : Settings(item).FireInterval / station.State.ShootingRateMultiplier;
+
+        private static bool FeedsWeapon(TelekineticItem module, TelekineticItem weapon) =>
+            module.IsModule && Affects(module.Kind, weapon);
+
+        private static bool EnergyAffects(TelekineticItem module) => module.IsModule &&
+            module.Kind is not (TelekineticPart.Double or TelekineticPart.Shred or TelekineticPart.Echo);
+
+        private float ModuleEnergyBonus(TelekineticItem module) => EnergyAffects(module) && Build.Items.Contains(module)
+            ? Build.Neighbours(module).Where(item => item.Kind == TelekineticPart.Energy).Sum(item => Modules.EnergyBonus * item.Level)
+            : 0f;
+
+        private IEnumerable<TelekineticItem> LinkedModules(TelekineticItem weapon)
         {
-            foreach (var weapon in Build.Items)
+            if (!Build.Items.Contains(weapon)) yield break;
+            foreach (var module in Build.Neighbours(weapon))
+                if (FeedsWeapon(module, weapon)) yield return module;
+        }
+
+        private struct WeaponModifiers
+        {
+            public float DamageBonus, RateBonus, CritBonus, PierceStrength, SplashFraction, ChainFraction, SlowReduction, Knockback;
+            public int ExtraAttacks, Ricochets, Echoes;
+            public bool BypassShields;
+            public float DamageMultiplier => 1 + DamageBonus;
+            public float RateMultiplier => 1 + RateBonus;
+            public float CritMultiplier => 1 + CritBonus;
+        }
+
+        // The current layout is the source of both weapon stats and constructor information.
+        private WeaponModifiers ActiveModifiers(TelekineticItem weapon)
+        {
+            var result = new WeaponModifiers();
+            if (!Suppressed)
+                foreach (var module in LinkedModules(weapon))
+                    ApplyModule(ref result, module);
+            return result;
+        }
+
+        private void ApplyModule(ref WeaponModifiers result, TelekineticItem module)
+        {
+            float strength = (module.Kind == TelekineticPart.RIC ? module.Level : Modules.Strength(module))
+                * (1 + ModuleEnergyBonus(module));
+            switch (module.Kind)
             {
-                if (!weapon.IsWeapon) continue;
-                foreach (int source in weapon.RapidUntil.Where(p=>p.Value<=CombatSeconds).Select(p=>p.Key).ToArray())
-                { weapon.RapidUntil.Remove(source); weapon.Rapid.Remove(source); }
-            }
-            foreach (var c in Build.Items)
-            {
-                if (!c.IsModule) continue;
-                float cooldown=Modules.Cooldown(c,Build);
-                if (!Mathf.Approximately(c.LastCooldown,cooldown))
-                { c.Remaining=c.LastCooldown>0 ? cooldown*Mathf.Clamp01(c.Remaining/c.LastCooldown) : cooldown; c.LastCooldown=cooldown; }
-                c.Remaining-=dt;
-                if (c.Remaining>0) continue;
-                c.Remaining=Modules.Cooldown(c,Build); c.Activations++; ModulePulses++;
-                foreach (var w in Build.Neighbours(c))
-                {
-                    if (!Affects(c.Kind,w)) continue;
-                    switch (c.Kind)
-                    {
-                        case TelekineticPart.DMG: w.Damage[c.Id]=(Modules.DamageMultiplier-1)*Modules.Strength(c); break;
-                        case TelekineticPart.FR:
-                            w.Rapid[c.Id]=(Modules.RapidMultiplier-1)*Modules.Strength(c);
-                            w.RapidUntil[c.Id]=CombatSeconds+Modules.RapidDuration; break;
-                        case TelekineticPart.Double: w.Extra[c.Id]=1; break;
-                        case TelekineticPart.RIC: if (w.Kind!=TelekineticPart.Saw) w.Ricochet[c.Id]=c.Level; break;
-                        default: w.Effects[c.Id]=new TelekineticCharge(c.Kind,Modules.Strength(c)); break;
-                    }
-                }
+                case TelekineticPart.DMG: result.DamageBonus += (Modules.DamageMultiplier - 1) * strength; break;
+                case TelekineticPart.FR: result.RateBonus += (Modules.RapidMultiplier - 1) * strength; break;
+                case TelekineticPart.Double: result.ExtraAttacks++; break;
+                case TelekineticPart.RIC: result.Ricochets += Mathf.RoundToInt(strength); break;
+                case TelekineticPart.Pierce: result.PierceStrength += strength; break;
+                case TelekineticPart.Splash: result.SplashFraction += Modules.SplashDamageFraction * strength; break;
+                case TelekineticPart.Chain: result.ChainFraction += Modules.ChainDamageFraction * strength; break;
+                case TelekineticPart.Crit: result.CritBonus += (Modules.CritMultiplier - 1) * strength; break;
+                case TelekineticPart.Slow: result.SlowReduction += (1 - Modules.SlowMultiplier) * strength; break;
+                case TelekineticPart.Shred: result.BypassShields = true; break;
+                case TelekineticPart.Knock: result.Knockback += Modules.KnockBonus * strength; break;
+                case TelekineticPart.Echo: result.Echoes++; break;
             }
         }
+
         private void TickWeapons(float dt)
         {
             foreach (var item in Build.Items)
@@ -64,10 +92,9 @@ namespace Subject42.Combat.Telekinetic
                 if (saw && !GatherContactTargets(view.transform.position)) continue;
                 var attack=CaptureAttack(item);
                 if (!EmitCaptured(attack,attack.Volleys,saw)) continue;
-                item.ShotRemaining=saw?Saw.ContactHitInterval:Settings(item).FireInterval / station.State.ShootingRateMultiplier;
+                item.ShotRemaining = BaseAttackInterval(item);
                 item.Shots+=attack.Volleys; ShotsFired+=attack.Volleys;
                 for (int i=0;i<attack.Echoes;i++) echoes.Add(new DelayedEcho { Attack=attack,Due=CombatSeconds+Modules.EchoDelay+i*.04f });
-                item.Damage.Clear(); item.Extra.Clear(); item.Ricochet.Clear(); item.Effects.Clear();
             }
         }
     }

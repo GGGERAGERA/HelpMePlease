@@ -237,8 +237,9 @@ namespace Subject42.Combat.Telekinetic
             if (!occupiedCells.TryGetValue(p + side, out var next) || item == next) return;
             if (moving && (held == item && item != null || held == next && next != null)) return;
             bool active = item != null && next != null &&
-                (item.IsModule && (next.Kind == TelekineticPart.Energy || Affects(item.Kind, next)) ||
-                 next.IsModule && (item.Kind == TelekineticPart.Energy || Affects(next.Kind, item)));
+                (FeedsWeapon(item, next) || FeedsWeapon(next, item) ||
+                 item.Kind == TelekineticPart.Energy && EnergyAffects(next) ||
+                 next.Kind == TelekineticPart.Energy && EnergyAffects(item));
             bool focus = active && (item == (hovered ?? selected) || next == (hovered ?? selected));
             Vector2 axis = new(side.x, -side.y);
             Vector2 center = ToUi(p) + axis * (CellSize * .5f);
@@ -287,7 +288,7 @@ namespace Subject42.Combat.Telekinetic
                 Border(row, over ? Cyan : FrameTint(item.Kind), 1);
                 DrawIcon(new Rect(row.x + 10, row.y + 8, 34, 34), item.Kind);
                 GUI.Label(new Rect(row.x + 53, row.y, row.width - 58, row.height),
-                    StockName(item.Kind) + (item.Level > 1 ? " " + TelekineticBuild.Roman(item.Level) : ""), nameStyle);
+                    ItemName(item), nameStyle);
                 if (!over) continue;
                 hovered = item;
                 if (e.type == EventType.MouseDown && e.button == 0)
@@ -509,9 +510,9 @@ namespace Subject42.Combat.Telekinetic
 
         private void DrawTooltip(Vector2 mouse, TelekineticItem item)
         {
-            string name = StockName(item.Kind) + (item.CanMerge ? " " + TelekineticBuild.Roman(item.Level) : "");
+            string name = ItemName(item, showFirstLevel: item.IsWeapon || item.CanMerge);
             string effect = CompactEffect(item);
-            const float width = 256;
+            float width = item.IsWeapon ? 304 : 256;
             float height = 40 + tooltipStyle.CalcHeight(new GUIContent(effect), width - 24);
             Rect rect = new(Mathf.Clamp(mouse.x + 20, 12, UiWidth - width - 12),
                 Mathf.Clamp(mouse.y + 20, 12, UiHeight - height - 12), width, height);
@@ -521,39 +522,71 @@ namespace Subject42.Combat.Telekinetic
             GUI.Label(new Rect(rect.x + 12, rect.y + 32, width - 24, height - 32), effect, tooltipStyle);
         }
 
-        private static string StockName(TelekineticPart kind) => kind switch
+        private static string ItemName(TelekineticItem item, bool showFirstLevel = false)
         {
-            TelekineticPart.Pistol => "Пистолет",
-            TelekineticPart.Shotgun => "Дробовик",
-            TelekineticPart.Sniper => "Снайперка",
-            TelekineticPart.Saw => "Пила",
-            _ => TelekineticBuild.Label(kind)
-        };
+            string name = item.Kind switch
+            {
+                TelekineticPart.Pistol => "Пистолет",
+                TelekineticPart.Shotgun => "Дробовик",
+                TelekineticPart.Sniper => "Снайперка",
+                TelekineticPart.Saw => "Пила",
+                _ => TelekineticBuild.Label(item.Kind)
+            };
+            return showFirstLevel || item.Level > 1 ? $"{name} {TelekineticBuild.Roman(item.Level)}" : name;
+        }
 
         private string CompactEffect(TelekineticItem item)
         {
-            float strength = Modules.Strength(item);
+            if (item.IsWeapon) return WeaponTooltip(item);
+
+            var modifier = new WeaponModifiers();
+            ApplyModule(ref modifier, item);
             return item.Kind switch
             {
-                TelekineticPart.Pistol => "Одиночные выстрелы",
-                TelekineticPart.Shotgun => "Выстрел дробью",
-                TelekineticPart.Sniper => "Дальнобойный выстрел",
-                TelekineticPart.Saw => "Урон при контакте",
-                TelekineticPart.DMG => $"Урон следующей атаки +{(Modules.DamageMultiplier - 1) * strength:P0}",
-                TelekineticPart.FR => $"Частота атак +{(Modules.RapidMultiplier - 1) * strength:P0} на {Modules.RapidDuration:0.#} с",
+                TelekineticPart.DMG => $"Урон атак +{modifier.DamageBonus:P0}",
+                TelekineticPart.FR => $"Частота атак +{modifier.RateBonus:P0}",
                 TelekineticPart.Double => "Дополнительная атака",
-                TelekineticPart.RIC => $"Рикошеты +{item.Level}",
-                TelekineticPart.Energy => "Ускоряет соседние модули",
+                TelekineticPart.RIC => $"Рикошеты +{modifier.Ricochets}",
+                TelekineticPart.Energy => $"Сила числовых эффектов соседних модулей +{Modules.EnergyBonus * item.Level:P0}",
                 TelekineticPart.Pierce => "Снаряд пробивает врагов",
                 TelekineticPart.Splash => "Урон по области",
                 TelekineticPart.Chain => "Поражает дополнительную цель",
-                TelekineticPart.Crit => $"Следующая атака ×{1 + (Modules.CritMultiplier - 1) * strength:0.##} урона",
+                TelekineticPart.Crit => $"Каждая атака ×{modifier.CritMultiplier:0.##} урона",
                 TelekineticPart.Slow => "Замедляет цель",
                 TelekineticPart.Shred => "Атака обходит щиты",
                 TelekineticPart.Knock => "Усиливает отталкивание",
                 TelekineticPart.Echo => "Повторяет атаку с задержкой",
                 _ => "Соединяет части конструкции"
             };
+        }
+
+        private string WeaponTooltip(TelekineticItem item)
+        {
+            var modifiers = ActiveModifiers(item);
+            var attack = DescribeAttack(item, modifiers);
+            var impact = attack.Impact;
+            bool contact = item.Kind == TelekineticPart.Saw;
+            string damageUnit = contact ? " за контакт" : attack.Profile.Pellets > 1 ? " за дробину" : "";
+            var lines = new List<string>();
+            lines.Add($"Урон: {attack.Damage:0.##}{damageUnit}");
+            lines.Add($"Скорость атаки: {attack.AttacksPerSecond:0.##}/с");
+            if (attack.Volleys > 1) lines.Add($"{(contact ? "Ударов" : "Залпов")} за атаку: {attack.Volleys}");
+            if (attack.Ricochets > 0) lines.Add($"Рикошеты: +{attack.Ricochets}");
+            if (!contact && attack.Profile.BodyPierces > 1) lines.Add($"Пробитие целей: {attack.Profile.BodyPierces}");
+            if (impact.SplashDamage > 0) lines.Add($"Урон по области: {impact.SplashDamage:0.##} ({impact.SplashRadius:0.##} м)");
+            if (impact.ChainDamage > 0) lines.Add($"Урон по цепи: {impact.ChainDamage:0.##} ({impact.ChainRadius:0.##} м)");
+            if (modifiers.CritBonus > 0) lines.Add($"Критический урон: ×{modifiers.CritMultiplier:0.##}");
+            if (impact.Slow < 1) lines.Add($"Замедление: {1 - impact.Slow:P0} на {impact.SlowSeconds:0.##} с");
+            if (attack.Profile.BypassShields) lines.Add("Обход щитов");
+            if (attack.Profile.Knockback > 0) lines.Add($"Отталкивание: {attack.Profile.Knockback:0.##}");
+            if (attack.Echoes > 0) lines.Add($"Повторов: {attack.Echoes} · первый через {Modules.EchoDelay:0.##} с");
+            foreach (var module in LinkedModules(item))
+            {
+                string name = ItemName(module, showFirstLevel: true);
+                float energy = ModuleEnergyBonus(module);
+                lines.Add(energy > 0 ? $"{name} · ENERGY +{energy:P0}" : name);
+            }
+            return string.Join("\n", lines);
         }
 
         private static Vector2 ToUi(Vector2 cell) => BoardCenter + new Vector2(cell.x, -cell.y) * CellSize;
