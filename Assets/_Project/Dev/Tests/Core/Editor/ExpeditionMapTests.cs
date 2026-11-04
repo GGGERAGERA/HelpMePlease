@@ -88,7 +88,7 @@ public sealed class ExpeditionMapPlayTests
         var starter = Object.FindFirstObjectByType<BunkerRunStarter>();
         var panels = Object.FindFirstObjectByType<BunkerPanelManager>();
         Assert.That(Read<SurfaceMapView>(panels, "surfaceMapPanel"), Is.Not.Null, "The bunker must reference the production map.");
-        panels.OpenDepthSelect(starter.transform);
+        Read<SurfaceMapView>(panels, "surfaceMapPanel").Show(service, starter, panels, starter.transform);
         var view = Object.FindFirstObjectByType<SurfaceMapView>();
         Assert.That(view, Is.Not.Null, "Opening the production map must activate its hierarchy.");
         var mapRect=(RectTransform)view.transform;

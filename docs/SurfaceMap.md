@@ -1,9 +1,9 @@
 # Surface Map / production bunker
 
-Current production entry (reconciled 2026-10-26): `StartScreen` -> `MainMenu` (bunker) -> `MVP` -> `MainMenu`. Enabled build order is StartScreen, MainMenu, MVP, as saved in [EditorBuildSettings](../ProjectSettings/EditorBuildSettings.asset); [RunEndService](../Assets/_Project/scripts/Run/Flow/RunEndService.cs) routes back to MainMenu. The earlier `Bunker_OneRoom_Prototype` migration described a historical setup. See the [current project map](../Assets/_Project/Documentation/PROJECT_MAP.md) and [GDD reconciliation](gdd-reconciliation-2026-10-26.md).
+Production entry is `StartScreen` → `MainMenu` (bunker) → `MVP` → `MainMenu`. The exit terminal and the screen between locations share `PF_SurfaceMap`. The graph shows five levels and a boss marker. One selected node represents a location with three automatic combat sectors. The existing boss phase starts after the third sector of the fifth location. See [GDD §6.5](../Assets/_Project/Documentation/Subject42_Game_Design_Bible.md#65-текущая-реализация-и-границы).
 
 ## Data and flow
-`Data/SurfaceMap/SurfaceMap_MVP.asset` defines BUNKER-A1-A2, BUNKER-C1-C2 and BUNKER-D1-D2. Starting IDs are A1, C1, D1. Completed nodes are replayable. All IDs are stable and independent of asset names.
+`Data/SurfaceMap/SurfaceMap_MVP.asset` retains the expedition presets and their persistent unlock relationships. Starting IDs are A1, C1, D1. Each starting lane contributes one entry to the first column. An unlocked successor replaces the earlier preset in that lane. The funded Escape trial has its own entry on the same map. The top HUD shows the current level out of five. Preset IDs still identify saves, missions and reward receipts.
 
 `SurfaceMapService` validates the graph, owns selection/progression, and snapshots the selected sector into `RunConfig`. `BunkerRunStarter.StartSurfaceRun` uses the existing character validation and transition. `RunStateManager.CurrentConfig` survives internal stages/restarts. Gameplay reads config parameters; no spawner, event, threat or reward system references the map definition.
 

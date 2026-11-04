@@ -949,6 +949,21 @@ public partial class EnemySpawner : MonoBehaviour
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal IEnumerable<GameObject> DebugEnemyPrefabs()
+    {
+        yield return debugBasicPrefab;
+        yield return debugElitePrefab;
+        yield return debugShooterPrefab;
+        if (enemyPrefabs != null)
+            foreach (var prefab in enemyPrefabs)
+                yield return prefab;
+        if (spawnStages != null)
+            foreach (var stage in spawnStages)
+                if (stage?.enemyPrefabs != null)
+                    foreach (var prefab in stage.enemyPrefabs)
+                        yield return prefab;
+    }
+
     public GameObject FindDebugEnemyPrefab(DebugEnemyArchetype archetype)
     {
         GameObject catalogPrefab = archetype switch

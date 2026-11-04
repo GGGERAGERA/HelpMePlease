@@ -23,12 +23,15 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         activeInstance != null && (activeInstance.isOpen || activeInstance.IsHubOpen);
     private OrbitalInteractionController inputOwner;
     private Func<bool> inputBlocker;
-    private enum DebugTab { Bunker, PlayerBuild, WorldEvents, Additional, OrbitalProduction, Sandbox }
+    private enum DebugTab { Bunker, PlayerBuild, WorldEvents, Additional, Sandbox }
     private static readonly string[] TabLabels =
-        { "Бункер", "Игрок", "Мир", "Инструменты", "Орбиты", "ПЕСОЧНИЦА" };
+        { "Бункер", "Игрок", "Мир", "Инструменты", "ПЕСОЧНИЦА" };
     private GameObject menuRoot, fullMenuBlocker, visualBackButton;
     private Image fullMenuBlockerImage;
     private RectTransform menuPanel, menuHeader, menuTabBar, menuPages, closeButtonRect, contentRoot;
+    private RectTransform sectionParent;
+    private readonly Dictionary<(DebugTab Tab, string Section), bool> expandedSections = new();
+    private readonly List<GameObject> collapsedSectionBodies = new();
     private TextMeshProUGUI menuTitle;
     private readonly GameObject[] tabRoots = new GameObject[TabLabels.Length];
     private readonly Image[] tabButtonImages = new Image[HubCategories.Length];
@@ -37,7 +40,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private float previousTimeScale;
     private bool previousCursorVisible;
     private CursorLockMode previousCursorLockMode;
-    private readonly List<GameObject> debugEnemies = new();
     private string enemyDebugStatus = "Готово к ручному тесту.";
     private TextMeshProUGUI activeXpCounter;
     private float nextXpCounterRefresh;
@@ -109,8 +111,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
     private void Start()
     {
         BindBotLabScene();
-        if (IsMvpDebugMenu)
-            activeTab = (DebugTab)0;
+        if (IsSandboxScene)
+            activeTab = DebugTab.Sandbox;
         else if (IsProductionBunker)
             activeTab = DebugTab.Bunker;
         else if (characterSpawner == null)
@@ -206,7 +208,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             return;
 
         ResolveSceneReferences();
-        if (IsMvpDebugMenu) upgradeManager?.DebugCancelCatalogueReward();
+        if (IsMvpWorldPage) upgradeManager?.DebugCancelCatalogueReward();
         FindFirstObjectByType<OrbitalInteractionController>()?.PrepareForExternalPause();
         previousTimeScale = Time.timeScale;
         previousCursorVisible = Cursor.visible;
@@ -233,7 +235,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         RestoreGameState(!mvpOrbitSurfaceOpen);
         isOpen = false;
         mvpOrbitSurfaceOpen = false;
-        mvpOrbitSaveFooter?.gameObject.SetActive(false);
+        if (mvpOrbitSaveFooter != null) mvpOrbitSaveFooter.gameObject.SetActive(false);
     }
 
     private void RestoreGameState(bool restoreTime = true)
@@ -323,7 +325,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         );
         menuTitle = title;
         Stretch(title.rectTransform, 22f, 90f);
-        if (IsMvpDebugMenu) ConfigureMvpOrbitSurfaceDrag();
+        if (IsSandboxScene) ConfigureMvpOrbitSurfaceDrag();
 
         Button closeButton = CreateButton(header, "X", CloseMenu, 52f);
         RectTransform closeRect = closeButton.GetComponent<RectTransform>();
@@ -341,7 +343,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         tabBar.anchoredPosition = new Vector2(0f, -62f);
         tabBar.sizeDelta = new Vector2(0f, 54f);
 
-        string[] labels = IsMvpDebugMenu ? MvpTabLabels : TabLabels;
         for (int i = 0; i < HubCategories.Length; i++)
         {
             int category = i;
@@ -366,11 +367,11 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         pages.offsetMin = new Vector2(18f, 18f);
         pages.offsetMax = new Vector2(-18f, -120f);
 
-        for (int i = 0; i < labels.Length; i++)
+        for (int i = 0; i < TabLabels.Length; i++)
         {
-            if (i == (int)DebugTab.Bunker && !IsMvpDebugMenu && !IsProductionBunker) continue;
+            if (i == (int)DebugTab.Bunker && !IsProductionBunker) continue;
             bool compactLab = true;
-            tabRoots[i] = CreateTabPage(labels[i], pages, out _, compactLab);
+            tabRoots[i] = CreateTabPage(TabLabels[i], pages, out _, compactLab);
         }
 
         BuildVisualBackButton(header);
@@ -382,7 +383,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         searchButtonRect.anchoredPosition = new Vector2(-78f, 0f);
         searchButtonRect.sizeDelta = new Vector2(104f, 30f);
         searchButton.GetComponentInChildren<TextMeshProUGUI>().fontSize = 12f;
-        if (IsMvpDebugMenu) BuildMvpOrbitSaveFooter();
+        if (IsSandboxScene) BuildMvpOrbitSaveFooter();
     }
 
     private void BuildVisualBackButton(Transform header)
@@ -485,8 +486,7 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
 
     private void SelectTab(DebugTab tab, bool refresh = true)
     {
-        if (IsMvpDebugMenu && (int)tab >= MvpTabLabels.Length) return;
-        if (!IsMvpDebugMenu && tab == DebugTab.Bunker && !IsProductionBunker) return;
+        if (tab == DebugTab.Bunker && !IsProductionBunker) return;
         activeTab = tab;
         if (isOpen)
         {
@@ -500,12 +500,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             bool selected = i == (int)tab;
             if (tabRoots[i] != null) tabRoots[i].SetActive(selected);
 
-            if (tabButtonImages[i] != null)
-            {
-                tabButtonImages[i].color = selected
-                    ? new Color(0.2f, 0.73f, 0.88f, 1f)
-                    : accentColor;
-            }
         }
 
         if (refresh)
@@ -528,6 +522,8 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         if (contentRoot == null)
             return;
 
+        sectionParent = contentRoot;
+        collapsedSectionBodies.Clear();
         for (int i = contentRoot.childCount - 1; i >= 0; i--)
         {
             GameObject oldRow = contentRoot.GetChild(i).gameObject;
@@ -535,44 +531,39 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
             Destroy(oldRow);
         }
 
-        if (IsMvpDebugMenu)
+        contentRoot.GetComponent<VerticalLayoutGroup>().spacing = mvpOrbitSurfaceOpen ? 5f : IsMvpWorldPage ? 8f : 2f;
+        if (mvpOrbitSurfaceOpen)
         {
-            BuildMvpTab((int)tab);
-            return;
+            BuildMvpOrbitSurface();
+        }
+        else if (IsMvpWorldPage)
+        {
+            BuildMvpWorldPage();
+        }
+        else
+        {
+            if (tab != DebugTab.Bunker && tab != DebugTab.Sandbox)
+                AddTabHeading(TabLabels[(int)tab]);
+            switch (tab)
+            {
+                case DebugTab.Bunker: AddBunkerSection(); break;
+                case DebugTab.PlayerBuild: AddPlayerBuildSection(); break;
+                case DebugTab.WorldEvents: AddWorldEventsSection(); break;
+                case DebugTab.Additional: AddAdditionalSection(); break;
+                case DebugTab.Sandbox: BuildSandbox(); break;
+            }
+            AddHint("F1 / Esc — закрыть · Пауза");
         }
 
-        if (tab != DebugTab.Bunker && tab != DebugTab.Sandbox)
-            AddTabHeading(TabLabels[(int)tab]);
-
-        switch (tab)
-        {
-            case DebugTab.Bunker:
-                AddBunkerSection();
-                break;
-            case DebugTab.PlayerBuild:
-                AddPlayerBuildSection();
-                break;
-            case DebugTab.WorldEvents:
-                AddWorldEventsSection();
-                break;
-            case DebugTab.Additional:
-                AddAdditionalSection();
-                break;
-            case DebugTab.OrbitalProduction:
-                AddOrbitalProductionSection();
-                break;
-            case DebugTab.Sandbox:
-                BuildSandbox();
-                break;
-        }
-
-        AddHint("F1 / Esc — закрыть · Пауза");
+        // The row builders look up their child controls while constructing the page.
+        foreach (var body in collapsedSectionBodies) body.SetActive(false);
+        collapsedSectionBodies.Clear();
     }
 
     private void ApplyMenuViewportLayout()
     {
         if (menuPanel == null) return;
-        if (IsMvpDebugMenu) { ApplyMvpViewportLayout(); HubApplyDetailsLayout(); return; }
+        if (mvpOrbitSurfaceOpen || IsMvpWorldPage) { ApplyMvpViewportLayout(); HubApplyDetailsLayout(); return; }
         menuPanel.anchorMin = new Vector2(.24f, .09f);
         menuPanel.anchorMax = new Vector2(.76f, .91f);
         menuPanel.pivot = new Vector2(.5f, .5f);
@@ -603,25 +594,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
                 action?.Invoke();
                 RefreshCurrentTab();
             });
-    }
-
-    private void AddOptionRow(string label, bool selected, bool available,
-        UnityEngine.Events.UnityAction action)
-    {
-        AddRow(label, !available ? "НЕДОСТУПНО В ТЕКУЩЕМ РЕЖИМЕ" :
-                selected ? "ВЫБРАНО" : "ДОСТУПНО",
-            selected ? successColor : available ? mutedColor : warningColor,
-            "ВЫБРАТЬ", available, () =>
-            {
-                action?.Invoke();
-                RefreshCurrentTab();
-            });
-    }
-
-    private void AddOrbitalProductionSection()
-    {
-        ResolveSceneReferences();
-        BuildMvpOrbits();
     }
 
     private void AddBunkerProgressionSection()
@@ -762,78 +734,6 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         heading.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
     }
 
-    private void AddEnemiesSection()
-    {
-        RemoveDestroyedDebugEnemies();
-        AddSectionTitle("ВРАГИ", "Production spawn API; ручной spawn работает при выключенном автоспавне");
-
-        bool aiFrozen = EnemyDebugAiFreeze.IsFrozen;
-        AddSectionTitle(
-            "ПОВЕДЕНИЕ ВРАГОВ",
-            "Отключает только собственные движение и атаки AI"
-        );
-        AddRow(
-            "РЕЖИМ AI",
-            aiFrozen ? "AI ЗАМОРОЖЕН" : "АКТИВНО",
-            aiFrozen ? warningColor : successColor,
-            aiFrozen ? "АКТИВНО" : "AI ЗАМОРОЖЕН",
-            true,
-            ToggleEnemyAiFreeze
-        );
-        AddHint(
-            aiFrozen
-                ? $"Состояние: AI остановлен у: {EnemyHealth.ActiveInstances.Count} врагов"
-                : "Состояние: собственное поведение врагов активно"
-        );
-
-        bool spawnerAvailable = enemySpawner != null;
-        bool autoSpawn = spawnerAvailable && enemySpawner.IsSpawningEnabled;
-        AddRow(
-            "АВТОСПАВН",
-            !spawnerAvailable ? "SPAWNER НЕ НАЙДЕН" : autoSpawn ? "ВКЛ" : "ВЫКЛ",
-            autoSpawn ? successColor : spawnerAvailable ? mutedColor : warningColor,
-            autoSpawn ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ",
-            spawnerAvailable,
-            ToggleEnemyAutoSpawn
-        );
-        AddHint(enemyDebugStatus);
-
-        AddSectionTitle("ASSAULT EVENTS", "Force пропускает таймер; одно событие одновременно");
-        foreach (AssaultEventType type in Enum.GetValues(typeof(AssaultEventType)))
-        {
-            AssaultEventType captured = type;
-            string label = type switch
-            {
-                AssaultEventType.BomberRush => "Force Bomber Rush",
-                AssaultEventType.ShooterSquad => "Force Shooter Squad",
-                AssaultEventType.Encirclement => "Force Encirclement",
-                AssaultEventType.Crossfire => "Force Crossfire",
-                _ => "Force Stampede"
-            };
-            AddRow(label, enemySpawner != null && enemySpawner.IsAssaultActive ? "ACTIVE" : "READY",
-                accentColor, "FORCE", enemySpawner != null && !enemySpawner.IsAssaultActive, () =>
-                {
-                    CloseMenu();
-                    if (!enemySpawner.ForceAssaultEvent(captured))
-                        enemyDebugStatus = "Assault заблокирован состоянием run или нет безопасной формации.";
-                });
-        }
-
-        AddSectionTitle("РУЧНОЙ SPAWN", "Безопасные разные позиции вокруг игрока");
-        AddManualEnemyRows("ОБЫЧНЫЙ", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Basic));
-        AddManualEnemyRows("СТРЕЛОК", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Shooter));
-        AddManualEnemyRows("БОМБЕР", ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Bomber));
-        AddManualEnemyRows("EYES", eyesEnemyPrefab != null ? eyesEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Eyes));
-        AddManualEnemyRows("ТУРЕЛЬ", turretEnemyPrefab != null ? turretEnemyPrefab : ResolveEnemyPrefab(EnemySpawner.DebugEnemyArchetype.Turret));
-        // Real boss fights are owned by RunFlow; raw spawning stays in BossPracticeLab.
-
-        AddRow("Создано вручную",
-            debugEnemies.Count > 0 ? $"Активно: {debugEnemies.Count}" : "Нет",
-            debugEnemies.Count > 0 ? successColor : mutedColor,
-            "УБРАТЬ РУЧНЫХ", debugEnemies.Count > 0,
-            ClearDebugEnemies);
-    }
-
     private void AddFootballMinigameSection()
     {
         FootballMinigame football = FindFirstObjectByType<FootballMinigame>(FindObjectsInactive.Include);
@@ -951,137 +851,67 @@ public sealed partial class Subject42DebugMenu : MonoBehaviour
         RefreshActiveXpCounter();
     }
 
-    private GameObject ResolveEnemyPrefab(
-        EnemySpawner.DebugEnemyArchetype archetype)
-    {
-        return enemySpawner != null
-            ? enemySpawner.FindDebugEnemyPrefab(archetype)
-            : null;
-    }
-
-    private void AddManualEnemyRows(string displayName, GameObject prefab)
-    {
-        bool available = enemySpawner != null && prefab != null;
-        string status = prefab == null ? "PREFAB НЕ НАЙДЕН" :
-            enemySpawner == null ? "SPAWNER НЕ НАЙДЕН" : "ДОСТУПЕН";
-        AddRow(displayName, status,
-            available ? successColor : warningColor,
-            "+1", available, () => SpawnDebugEnemies(prefab, displayName, 1));
-        AddRow("↳ пакет", "Ровно десять попыток в разных позициях",
-            available ? mutedColor : warningColor,
-            "+10", available, () => SpawnDebugEnemies(prefab, displayName, 10));
-    }
-
-    private void SpawnDebugEnemies(GameObject prefab, string displayName, int count, bool flanking = false)
-    {
-        if (flanking && !MvpCanEdit) return;
-        Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
-
-        if (enemySpawner == null || prefab == null || player == null)
-        {
-            enemyDebugStatus = "⚠ Spawn невозможен: отсутствует player, prefab или EnemySpawner.";
-            return;
-        }
-
-        int spawned = 0;
-        for (int i = 0; i < Mathf.Max(1, count); i++)
-        {
-            string flankingStatus = null;
-            GameObject enemy = flanking
-                ? enemySpawner.DebugSpawnFlankingChaserAround(prefab, player.position, out flankingStatus)
-                : enemySpawner.SpawnSpecificEnemyAround(
-                prefab,
-                player.position,
-                3f,
-                8f,
-                3f,
-                false,
-                0.45f
-            );
-
-            if (enemy == null && flanking)
-            {
-                enemyDebugStatus = flankingStatus;
-                RefreshCurrentTab();
-                return;
-            }
-            if (enemy == null)
-                continue;
-
-            debugEnemies.Add(enemy);
-            spawned++;
-        }
-
-        enemyDebugStatus = spawned == count
-            ? $"✓ {displayName}: создано {spawned}."
-            : $"⚠ {displayName}: создано {spawned} из {count}; не хватило безопасных позиций.";
-
-        if (flanking && spawned > 0)
-        {
-            CloseMenu();
-            return;
-        }
-        RefreshCurrentTab();
-    }
-
-    private void ToggleEnemyAutoSpawn()
-    {
-        if (enemySpawner == null) return;
-        SetEnemyAutoSpawn(!enemySpawner.IsSpawningEnabled);
-        enemyDebugStatus = enemySpawner.IsSpawningEnabled
-            ? "✓ Production автоспавн возобновлён."
-            : "✓ Автоспавн остановлен; ручной spawn доступен.";
-        RefreshCurrentTab();
-    }
-
-    private void SetEnemyAutoSpawn(bool enabled, bool captureSettings = false)
-    {
-        if (captureSettings) CaptureSession.SetSpawning(enabled);
-        else if (enemySpawner != null)
-        {
-            if (enabled) enemySpawner.ResumeSpawning();
-            else enemySpawner.StopSpawning();
-        }
-    }
-
-    private void ToggleEnemyAiFreeze()
-    {
-        bool frozen = !EnemyDebugAiFreeze.IsFrozen;
-        SetEnemyAiFrozen(frozen);
-        enemyDebugStatus = frozen
-            ? $"✓ AI остановлен у: {EnemyHealth.ActiveInstances.Count} врагов. Новые враги наследуют режим."
-            : "✓ Собственное движение и атаки врагов восстановлены.";
-        RefreshCurrentTab();
-    }
-
-    private void SetEnemyAiFrozen(bool frozen, bool captureSettings = false)
-    {
-        if (captureSettings) CaptureSession.SetEnemyAiFrozen(frozen);
-        else EnemyDebugAiFreeze.SetFrozen(frozen);
-    }
-
-    private void ClearDebugEnemies()
-    {
-        for (int i = debugEnemies.Count - 1; i >= 0; i--)
-        {
-            if (debugEnemies[i] != null)
-                Destroy(debugEnemies[i]);
-        }
-
-        debugEnemies.Clear();
-        RefreshCurrentTab();
-    }
-
-    private void RemoveDestroyedDebugEnemies()
-    {
-        for (int i = debugEnemies.Count - 1; i >= 0; i--)
-        {
-            if (debugEnemies[i] == null)
-                debugEnemies.RemoveAt(i);
-        }
-    }
-
     private void AddSectionTitle(string title, string subtitle)
+    {
+        contentRoot = CreateDebugFoldout(sectionParent, title, subtitle, true);
+    }
+
+    private void BuildDebugCategory(string title, string subtitle, Action build, bool expanded = true)
+    {
+        var parent = sectionParent;
+        var previousContent = contentRoot;
+        contentRoot = sectionParent = CreateDebugFoldout(parent, title, subtitle, expanded);
+        try { build(); }
+        finally
+        {
+            sectionParent = parent;
+            contentRoot = previousContent;
+        }
+    }
+
+    private RectTransform CreateDebugFoldout(RectTransform parent, string title, string subtitle, bool defaultExpanded)
+    {
+        var key = (activeTab, title);
+        bool expanded = expandedSections.TryGetValue(key, out bool saved) ? saved : defaultExpanded;
+        var group = CreateRect(title + " Section", parent);
+        var layout = group.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.spacing = 5f;
+        layout.childControlWidth = layout.childControlHeight = true;
+        layout.childForceExpandHeight = false;
+        var body = CreateRect(title + " Content", group);
+        var bodyLayout = body.gameObject.AddComponent<VerticalLayoutGroup>();
+        bodyLayout.spacing = 5f;
+        bodyLayout.padding = new RectOffset(12, 0, 0, 0);
+        bodyLayout.childControlWidth = bodyLayout.childControlHeight = true;
+        bodyLayout.childForceExpandHeight = false;
+        var header = CreateButton(group, "", null, 1f);
+        header.name = title;
+        header.transform.SetAsFirstSibling();
+        header.navigation = new Navigation { mode = Navigation.Mode.None };
+        header.targetGraphic.color = new Color(.14f, .23f, .30f, 1f);
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = string.IsNullOrEmpty(subtitle) ? 34f : 46f;
+        var label = header.GetComponentInChildren<TextMeshProUGUI>();
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        label.margin = new Vector4(12f, 0f, 8f, 0f);
+        label.raycastTarget = false;
+        void UpdateLabel()
+        {
+            label.text = (expanded ? "-  " : "+  ") + title;
+            if (!string.IsNullOrEmpty(subtitle)) label.text += $"\n<size=12><color=#A6AFBC>{subtitle}</color></size>";
+        }
+        header.onClick.AddListener(() =>
+        {
+            expanded = !expanded;
+            expandedSections[key] = expanded;
+            body.gameObject.SetActive(expanded);
+            UpdateLabel();
+        });
+        UpdateLabel();
+        if (!expanded) collapsedSectionBodies.Add(body.gameObject);
+        return body;
+    }
+
+    private void AddSectionHeading(string title, string subtitle)
     {
         RectTransform section = CreateRect(title, contentRoot);
         bool compact = mvpOrbitSurfaceOpen;

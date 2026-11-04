@@ -856,6 +856,27 @@ MonoBehaviour:
   - key: route.weather.clear
     ru: "ЯСНО"
     en: "CLEAR"
+  - key: route.surface
+    ru: "МАРШРУТ"
+    en: "SURFACE ROUTE"
+  - key: route.stage.name
+    ru: "Пустошь {0}/{1}"
+    en: "Wasteland {0}/{1}"
+  - key: route.gold
+    ru: "Золото {0}"
+    en: "Gold {0}"
+  - key: route.weather
+    ru: "Погода · {0}"
+    en: "Weather · {0}"
+  - key: route.location_type
+    ru: "Локация · {0}"
+    en: "Location · {0}"
+  - key: route.node.boss
+    ru: "ФИНАЛЬНЫЙ БОСС"
+    en: "FINAL BOSS"
+  - key: route.confirm
+    ru: "В ЛОКАЦИЮ"
+    en: "ENTER LOCATION"
   - key: world.rule.darkness.displayName
     ru: "ТЕМНОТА"
     en: "DARKNESS"
@@ -2017,6 +2038,9 @@ MonoBehaviour:
   - key: map.route.D
     ru: "Маршрут событий"
     en: "Event route"
+  - key: expedition.task_title
+    ru: "ЗАДАНИЕ НА ЗАБЕГ"
+    en: "RUN CONTRACT"
   - key: expedition.rewards
     ru: "\u041F\u043E\u0431\u0435\u0434\u0430: +{0} \u2022 \u0412\u043F\u0435\u0440\u0432\u044B\u0435:
       +{1}"

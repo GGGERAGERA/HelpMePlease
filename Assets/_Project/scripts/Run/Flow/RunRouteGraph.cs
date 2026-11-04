@@ -15,38 +15,46 @@ public sealed class RouteSectorType
 
 public sealed class RouteNode
 {
-    public int SectorNumber { get; }
-    public int Column => RunRoute.ColumnOf(SectorNumber);
+    public int Level { get; }
+    public int SectorNumber => (Level - 1) * RunRoute.SectorsPerLevel + RunRoute.FirstSector;
     public int Row { get; }
+    internal int RowCount { get; }
     public RouteSectorType Type { get; }
     public WorldRuleData WorldRule { get; }
+    internal SurfaceSectorDefinition Expedition { get; }
     public IReadOnlyList<RouteNode> Next { get; internal set; } = Array.Empty<RouteNode>();
 
-    internal RouteNode(int sectorNumber, int row, RouteSectorType type, WorldRuleData worldRule)
+    internal RouteNode(int level, int row, int rowCount, RouteSectorType type,
+        WorldRuleData worldRule, SurfaceSectorDefinition expedition)
     {
-        SectorNumber = sectorNumber;
+        Level = level;
         Row = row;
+        RowCount = rowCount;
         Type = type;
         WorldRule = worldRule;
+        Expedition = expedition;
     }
 }
 
 public sealed class RunRouteGraph
 {
     private const int MaxRows = 3;
-    public int Level { get; }
-    public int Rows { get; }
-    public IReadOnlyList<RouteNode> Entries { get; }
+    private readonly RouteNode[][] levels;
+    public IReadOnlyList<RouteNode> Entries => levels[0];
 
-    private RunRouteGraph(int level, RouteNode[] entries)
+    private RunRouteGraph(RouteNode[][] levels) => this.levels = levels;
+    public IReadOnlyList<RouteNode> NodesAt(int level) => levels[level - 1];
+
+    internal bool ContainsEntry(RouteNode node)
     {
-        Level = level;
-        Rows = entries.Length;
-        Entries = entries;
+        foreach (var entry in Entries)
+            if (entry == node) return true;
+        return false;
     }
 
-    internal static RunRouteGraph Generate(int level, WorldRuleData[] worldRules,
-        RouteSectorType[] types, WorldRuleData initialRule, bool fixedEntryRule)
+    internal static RunRouteGraph Generate(WorldRuleData[] worldRules,
+        RouteSectorType[] types, WorldRuleData initialRule, bool fixedEntryRule,
+        IReadOnlyList<SurfaceSectorDefinition> expeditions = null)
     {
         var pool = new List<WorldRuleData>();
         var ruleIds = new HashSet<string>();
@@ -60,41 +68,49 @@ public sealed class RunRouteGraph
                 ordinaryTypes.Add(type);
 
         int rows = Mathf.Clamp(pool.Count, 1, MaxRows);
-        RouteNode[] entries = null;
-        RouteNode[] previous = null;
-        for (int column = 0; column < RunRoute.SectorsPerLevel; column++)
+        var levels = new RouteNode[RunRoute.LevelCount][];
+        for (int level = 1; level <= RunRoute.LevelCount; level++)
         {
             var options = new List<WorldRuleData>(pool);
             var columnTypes = new List<RouteSectorType>(ordinaryTypes);
-            if (column == 0 && initialRule != null)
+            if (level == 1 && initialRule != null)
                 options.RemoveAll(rule => rule.Id == initialRule.Id);
 
-            var nodes = new RouteNode[rows];
-            int sector = (level - 1) * RunRoute.SectorsPerLevel + column + 1;
-            for (int row = 0; row < rows; row++)
+            var entryExpeditions = level == 1 ? expeditions : null;
+            var nodes = new RouteNode[entryExpeditions?.Count ?? rows];
+            for (int row = 0; row < nodes.Length; row++)
             {
-                WorldRuleData rule = column == 0 && (fixedEntryRule || row == 0) && initialRule != null
+                var expedition = entryExpeditions?[row];
+                WorldRuleData rule = expedition != null ? expedition.WorldRule ?? initialRule :
+                    level == 1 && (fixedEntryRule || row == 0) && initialRule != null
                     ? initialRule : TakeRandom(options);
-                RouteSectorType type = Array.Find(types,
-                    candidate => candidate.MatchingWorldRule != null && candidate.MatchingWorldRule == rule);
+                RouteSectorType type = expedition?.RequiresScan == true
+                    ? Array.Find(types, candidate => candidate.LabelKey == "route.node.unknown")
+                    : Array.Find(types, candidate => candidate.MatchingWorldRule != null && candidate.MatchingWorldRule == rule);
                 type ??= TakeRandom(columnTypes);
-                nodes[row] = new RouteNode(sector, row, type, rule);
+                nodes[row] = new RouteNode(level, row, nodes.Length, type, rule, expedition);
             }
 
-            if (previous == null) entries = nodes;
-            else
+            if (level > 1)
             {
-                int branchRow = rows > 1 ? Random.Range(0, rows - 1) : -1;
-                for (int row = 0; row < rows; row++)
+                var previous = levels[level - 2];
+                int direction = rows > 1 && Random.Range(0, 2) == 0 ? -1 : 1;
+                for (int row = 0; row < previous.Length; row++)
                 {
-                    // Every lane reaches the end; each boundary also has a fork when there is more than one lane.
-                    previous[row].Next = row == branchRow
-                        ? new[] { nodes[row], nodes[row + 1] } : new[] { nodes[row] };
+                    if (previous.Length == 1)
+                    {
+                        previous[row].Next = nodes;
+                        continue;
+                    }
+                    int lane = row * rows / previous.Length;
+                    int branch = lane + direction;
+                    previous[row].Next = branch >= 0 && branch < rows
+                        ? new[] { nodes[lane], nodes[branch] } : new[] { nodes[lane] };
                 }
             }
-            previous = nodes;
+            levels[level - 1] = nodes;
         }
-        return new RunRouteGraph(level, entries);
+        return new RunRouteGraph(levels);
     }
 
     private static T TakeRandom<T>(List<T> pool) where T : class

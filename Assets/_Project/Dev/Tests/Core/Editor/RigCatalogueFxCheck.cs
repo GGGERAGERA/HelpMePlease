@@ -42,29 +42,92 @@ internal static class RigCatalogueFxCheck
         }
         Open(); yield return CoreTestSupport.Await(()=>Subject42DebugMenu.IsDebugMenuOpen);
         Assert.That(Time.timeScale,Is.Zero,"The original F1 sandbox pauses combat");
-        var all=Enum.GetValues(typeof(TelekineticPart)).Cast<TelekineticPart>().ToArray();
+        var tabs=(UnityEngine.UI.Image[])typeof(Subject42DebugMenu).GetField("tabButtonImages",methods).GetValue(debug);
+        Assert.That(tabs.Length,Is.EqualTo(4),"The sandbox is the only build entry in F1");
+        UnityEngine.UI.Button SandboxButton(string label) =>
+            Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None)
+                .Single(button => button.GetComponentInChildren<TMPro.TextMeshProUGUI>()?.text == label);
+        UnityEngine.UI.Button SectionHeader(string name) =>
+            Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None)
+                .Single(button => button.name == name);
+        SectionHeader("Бой").onClick.Invoke();
+        Assert.That(Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsSortMode.None)
+            .Any(button => button.GetComponentInChildren<TMPro.TextMeshProUGUI>()?.text == "УБИТЬ ВСЕХ ВРАГОВ"), Is.False);
+        SectionHeader("Бой").onClick.Invoke();
+        SectionHeader("Все враги").onClick.Invoke();
+        var spawner=Object.FindFirstObjectByType<EnemySpawner>();
+        Assert.That(spawner.IsSpawningEnabled, Is.False);
+        UnityEngine.UI.Button RowButton(string name) =>
+            Object.FindObjectsByType<RectTransform>(FindObjectsSortMode.None).Single(rect => rect.name == name)
+                .GetComponentInChildren<UnityEngine.UI.Button>();
+        RowButton("Автоспавн выключен").onClick.Invoke();
+        Assert.That(spawner.IsSpawningEnabled, Is.True);
+        RowButton("Автоспавн включён").onClick.Invoke();
+        Assert.That(spawner.IsSpawningEnabled, Is.False);
+        var health=PlayerRuntimeReference.PlayerHealth;
+        RowButton("Неуязвимость включена").onClick.Invoke();
+        Assert.That(health.DebugInvulnerable, Is.False);
+        RowButton("Неуязвимость выключена").onClick.Invoke();
+        Assert.That(health.DebugInvulnerable, Is.True);
+        var beforeEnemies=EnemyHealth.ActiveInstances.Count;
+        var chaserRow=Object.FindObjectsByType<RectTransform>(FindObjectsSortMode.None)
+            .Single(rect => rect.name == "p_Enemy_classic");
+        var chaserPrefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/prefabs/Enemies/p_Enemy_classic.prefab");
+        Assert.That(chaserRow.Find("Icon").GetComponent<UnityEngine.UI.Image>().sprite,
+            Is.SameAs(chaserPrefab.GetComponent<EnemyWhiteFlash>().TargetRenderer.sprite), "Show the body sprite, not the enemy shadow");
+        var batch=chaserRow.GetComponentsInChildren<UnityEngine.UI.Button>()
+            .Single(button => button.GetComponentInChildren<TMPro.TextMeshProUGUI>().text == "+5");
+        Assert.That(batch.interactable, Is.True, "Manual spawning is available in a live sector with autospawn disabled");
+        batch.onClick.Invoke();
+        Assert.That(EnemyHealth.ActiveInstances.Count, Is.EqualTo(beforeEnemies+5));
+        Assert.That(spawner.IsSpawningEnabled, Is.False);
+        Assert.That(Object.FindObjectsByType<RectTransform>(FindObjectsSortMode.None)
+            .Any(rect => rect.name == "p_Enemy_Breacher"), Is.True, "The full enemy catalogue stays open after spawning");
+        SandboxButton("УБИТЬ ВСЕХ ВРАГОВ").onClick.Invoke();
+        Assert.That(EnemyHealth.ActiveInstances, Is.Empty);
+        yield return capture("f1-enemies");
+        SectionHeader("Все враги").onClick.Invoke();
+        var all=Enum.GetValues(typeof(TelekineticPart)).Cast<TelekineticPart>()
+            .Where(part => part != TelekineticPart.Frame).ToArray();
         void AssertCompleteCatalogue()
         {
             foreach(var part in all)
             {
-                var kind=rewards.DebugRewardCatalogue.Single(c=>OrbitalRewardProvider.GetRigPart(c.RewardKind)==part).RewardKind;
+                var card=rewards.DebugRewardCatalogue.SingleOrDefault(c=>OrbitalRewardProvider.GetRigPart(c.RewardKind)==part);
+                Assert.That(card, Is.Not.Null, "Missing production reward: "+part);
+                var kind=card.RewardKind;
                 Assert.That(RewardButton(kind),Is.Not.Null,"Existing F1 catalogue: "+part);
+                var icon=RewardButton(kind).transform.parent.Find("Icon");
+                Assert.That(icon, Is.Not.Null, part.ToString());
+                Assert.That(icon.GetComponent<UnityEngine.UI.Image>().sprite, Is.Not.Null, part.ToString());
             }
         }
         AssertCompleteCatalogue();
         yield return capture("f1-catalogue");
-        var tabs=(UnityEngine.UI.Image[])typeof(Subject42DebugMenu).GetField("tabButtonImages",methods).GetValue(debug);
-        Assert.That(tabs.Length,Is.EqualTo(6),"All original F1 sections are preserved");
         tabs[1].GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return null;
-        AssertCompleteCatalogue();
-        foreach(int section in new[]{2,3,5})
-        {
-            tabs[section].GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return null;
-            Assert.That(Subject42DebugMenu.IsDebugMenuOpen,Is.True);
-            Assert.That(Time.timeScale,Is.Zero);
-        }
-        tabs[4].GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return null;
+        Assert.That(SectionHeader("Предметы / Pickups"), Is.Not.Null, "World opens its production tools");
+        tabs[3].GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return null;
+        Assert.That(Subject42DebugMenu.IsDebugMenuOpen,Is.True);
+        Assert.That(Time.timeScale,Is.Zero);
+        SectionHeader("Варианты оружия").onClick.Invoke();
+        Assert.That(SandboxButton("Возврат промаха").interactable, Is.False, "Legacy profile is listed but unavailable on the rig");
+        Assert.That(SandboxButton("Заряженная линия").interactable, Is.False);
+        Assert.That(SandboxButton("Импульсная").interactable, Is.False);
+        tabs[2].GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return null;
         Assert.That(Subject42DebugMenu.IsDebugMenuOpen,Is.True,"Original search/favorites/visual hub exists");
+        var search=(TMPro.TMP_InputField)typeof(Subject42DebugMenu).GetField("hubSearch",methods).GetValue(debug);
+        foreach(string removed in new[]{"Оружие, модули и конструкция", "Карточки и улучшения"})
+        {
+            search.text=removed;
+            Assert.That(Object.FindObjectsByType<TMPro.TextMeshProUGUI>(FindObjectsSortMode.None)
+                .Any(label => label.text == "Команды не найдены."), Is.True, removed);
+        }
+        search.text="";
+        Close();
+        typeof(Subject42DebugMenu).GetMethod("ToggleMvpOrbitSurface",methods).Invoke(debug,null);
+        Assert.That(Time.timeScale, Is.GreaterThan(0), "F9 still opens its live controls");
+        SandboxButton("МЕНЮ").onClick.Invoke();
+        Assert.That(SectionHeader("Бой"), Is.Not.Null, "F9 returns to the sandbox");
         Close();
         yield return null; Assert.That(Time.timeScale,Is.GreaterThan(0),"F1 close restores combat time");
         Assert.That(station.InputOwner.IsIdle,Is.True);
@@ -125,7 +188,7 @@ internal static class RigCatalogueFxCheck
         }
         var expected=new Dictionary<TelekineticPart,int>
         {
-            [TelekineticPart.Frame]=1,[TelekineticPart.Pistol]=1,[TelekineticPart.Sniper]=2,[TelekineticPart.FR]=1,
+            [TelekineticPart.Pistol]=1,[TelekineticPart.Sniper]=2,[TelekineticPart.FR]=1,
             [TelekineticPart.Crit]=1,[TelekineticPart.Slow]=1,[TelekineticPart.Knock]=1,
             [TelekineticPart.Shotgun]=2,[TelekineticPart.DMG]=2,[TelekineticPart.Energy]=2,[TelekineticPart.Pierce]=2,[TelekineticPart.Splash]=2,[TelekineticPart.Shred]=2,
             [TelekineticPart.RIC]=3,[TelekineticPart.Saw]=4,[TelekineticPart.Double]=4,[TelekineticPart.Chain]=4,[TelekineticPart.Echo]=4
@@ -183,7 +246,7 @@ internal static class RigCatalogueFxCheck
         }
         quietUntil=Time.time+.3f; yield return CoreTestSupport.Await(()=>Time.time>=quietUntil); yield return null;
         Assert.That(pistolView.Particles.All(p=>!p.isPlaying),Is.True,"Rapid repeated shots also return to idle");
-        File.WriteAllText(Output+"/completed.txt","All 18 parts granted through the F1 UI add handler; distinct complete footprints installed; M/F controls and quiet/single-shot FX validated.");
+        File.WriteAllText(Output+"/completed.txt",$"All {all.Length} production parts granted through the F1 UI add handler; distinct complete footprints installed; M/F controls and quiet/single-shot FX validated.");
     }
 }
 #endif

@@ -63,7 +63,7 @@ public sealed class BunkerPanelManager : MonoBehaviour
         CloseAll(false);
         if (surfaceMapPanel != null)
         {
-            surfaceMapPanel.Show(runStarter.SurfaceMap, runStarter, this, transitionTarget);
+            surfaceMapPanel.ShowRoute(runStarter, this, transitionTarget);
             return;
         }
         escapeProtocolPanel.ShowDepthSelect(

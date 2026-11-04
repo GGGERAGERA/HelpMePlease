@@ -1,5 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Subject42.Combat.OrbitalStation;
 using TMPro;
@@ -13,90 +14,179 @@ public sealed partial class Subject42DebugMenu
     private string sandboxStatus;
     private bool IsSandboxScene => SceneManager.GetActiveScene().path == "Assets/_Project/Scenes/MainBuild/MVP.unity";
     private string SandboxUnavailableReason => !IsSandboxScene ? "Песочница доступна в production MVP." :
-        !MvpCanEdit || !MvpStation.UsesSegmentedOrbit ? "Нужен живой игрок и свободная очередь наград." :
-        CaptureSession.UnavailableReason;
+        !MvpCanEdit ? "Нужен живой игрок и свободная очередь наград." : CaptureSession.UnavailableReason;
 
     private void OpenSandbox()
     {
-        if (IsSandboxScene) HubOpenUtilityPage(DebugTab.Sandbox);
+        if (IsSandboxScene) HubOpenPage(DebugTab.Sandbox);
     }
 
     private void BuildSandbox()
     {
         ResolveSceneReferences();
         string reason = SandboxUnavailableReason;
-        bool ready = reason == null;
-        string spawnReason = ready ? CaptureSession.SpawnDensityUnavailableReason : reason;
-        bool spawnReady = spawnReason == null;
-        var station = MvpStation;
-        var state = station?.State;
-        var health = PlayerRuntimeReference.PlayerHealth;
-        AddHint(reason ?? "Изменения помечают попытку Development: production-прогресс не засчитывается.");
+        AddHint(reason ?? "Изменения помечают попытку Development.");
         if (!string.IsNullOrEmpty(sandboxStatus)) AddHint(sandboxStatus);
-        SandboxRow("Быстрый тест",
-            ("ПОДГОТОВИТЬ ТЕСТ", ready, () => SandboxAction(PrepareSandboxTest)),
-            ("НАЧАТЬ БОЙ", spawnReady, () => SandboxAction(StartSandboxCombat)));
-        if (state == null || !state.UsesSegmentedOrbit) return;
 
-        if (station.Rig != null) BuildRigRewardCatalogue(true);
-        else
-        {
-        AddSectionTitle("БИЛД", "Выдача в запас; установка в штатном конструкторе Tab.");
-        SandboxRow("Оружие · запас",
-            Weapon(OrbitalRewardKind.Pistol, "Пистолет"), Weapon(OrbitalRewardKind.Sniper, "Снайперка"),
-            Weapon(OrbitalRewardKind.Shotgun, "Дробовик"));
-        SandboxRow("Модули · запас",
-            Weapon(OrbitalRewardKind.DamageLink, "DMG"), Weapon(OrbitalRewardKind.FireRateLink, "FR"),
-            Weapon(OrbitalRewardKind.ExtraShotLink, "2X"), Weapon(OrbitalRewardKind.RicochetLink, "RIC"));
+        BuildDebugCategory("Бой", "", () => BuildSandboxCombat(reason == null));
+        var station = MvpStation;
+        if (station == null || !station.IsInitialized || upgradeManager == null) return;
+        if (station.Rig != null) BuildRigRewardCatalogue();
+        else if (station.UsesSegmentedOrbit) BuildSandboxOrbitStock(station.State, reason == null);
+    }
+
+    private void BuildSandboxOrbitStock(OrbitalRunState state, bool ready)
+    {
+        AddSectionTitle("Оружие", "В запас конструктора");
+        AddStock(OrbitalRewardKind.Pistol, "Пистолет");
+        AddStock(OrbitalRewardKind.Sniper, "Снайперка");
+        AddStock(OrbitalRewardKind.Shotgun, "Дробовик");
+
+        AddSectionTitle("Модули", "В запас конструктора");
+        AddStock(OrbitalRewardKind.DamageLink, "DMG");
+        AddStock(OrbitalRewardKind.FireRateLink, "FR");
+        AddStock(OrbitalRewardKind.ExtraShotLink, "2X");
+        AddStock(OrbitalRewardKind.RicochetLink, "RIC");
+
+        AddSectionTitle("Орбиты / крепления", "");
         SandboxRow($"Орбиты: {state.UnlockedSegmentedLevels}/{OrbitalRunState.SegmentedLevels}",
             ("ОТКРЫТЬ ВСЕ", ready && state.UnlockedSegmentedLevels < OrbitalRunState.SegmentedLevels,
-                () => SandboxAction(() => SandboxOpenAllOrbits())));
-        SandboxRow($"Лимит оружия: {state.SegmentedWeaponLimit}/12",
+                () => SandboxAction(() => OpenAllSandboxOrbits(state))));
+        SandboxRow($"Лимит оружия: {state.SegmentedWeaponLimit}/{OrbitalRunState.MaxSegmentedWeapons}",
             ("+1 ЛИМИТ", ready && state.SegmentedWeaponLimit < OrbitalRunState.MaxSegmentedWeapons,
-                () => SandboxAction(() => SandboxGrantBuildReward(OrbitalRewardKind.AddMount))),
-            ("ОТКРЫТЬ TAB", ready && previousTimeScale > 0f, () => SandboxAction(OpenSandboxConstructor)));
-        }
+                () => SandboxAction(() => GrantSandboxOrbitReward(OrbitalRewardKind.AddMount))));
 
-        AddSectionTitle("БОЙ", "Обычные враги текущего профиля; штатные лимиты и паузы волн.");
-        bool spawning = enemySpawner != null && enemySpawner.IsSpawningEnabled;
-        SandboxRow("Спавн: " + (spawning ? "включён" : "остановлен"),
-            (spawning ? "ОСТАНОВИТЬ" : "ВКЛЮЧИТЬ", spawnReady,
-                () => SandboxAction(() => SetEnemyAutoSpawn(!enemySpawner.IsSpawningEnabled, captureSettings: true))),
-            ("ДОБАВИТЬ ВРАГОВ", spawnReady && spawning, () => SandboxAction(CaptureSession.FillEnemies)));
-        SandboxRow("Плотность", Density(.5f, "×0,5"), Density(1f, "×1"), Density(1.5f, "×1,5"), Density(2f, "×2"));
-        SandboxRow("AI: " + (EnemyDebugAiFreeze.IsFrozen ? "заморожен" : "работает"),
-            (EnemyDebugAiFreeze.IsFrozen ? "РАЗМОРОЗИТЬ AI" : "ЗАМОРОЗИТЬ AI", ready,
-                () => SandboxAction(() => SetEnemyAiFrozen(!EnemyDebugAiFreeze.IsFrozen, captureSettings: true))),
-            ("ОЧИСТИТЬ ОБЫЧНЫХ", ready, () => SandboxAction(CaptureSession.ClearEnemies)));
-        AddHint($"Живых у спавнера: {enemySpawner?.DebugCaptureAliveCount ?? 0} / {enemySpawner?.DebugCaptureMaxAlive ?? 0}. Очистка без XP и наград, босс сохраняется.");
-        if (ready && spawnReason != null) AddHint(spawnReason);
-
-        AddSectionTitle("ИГРОК", health != null ? $"HP {health.CurrentHealth:0}/{health.MaxHealth:0}" : "Игрок не готов");
-        bool invulnerable = health != null && health.DebugInvulnerable;
-        SandboxRow("Бессмертие: " + (invulnerable ? "включено" : "выключено"),
-            (invulnerable ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", ready,
-                () => SandboxAction(() => CaptureSession.SetInvulnerable(!health.DebugInvulnerable))),
-            ("ВОССТАНОВИТЬ HP", ready && health != null && health.CurrentHealth < health.MaxHealth,
-                () => SandboxAction(CaptureSession.Heal)));
-
-        BuildMvpWeaponExperiments(sandbox: true);
-
-        (string, bool, UnityAction) Weapon(OrbitalRewardKind kind, string label)
+        void AddStock(OrbitalRewardKind kind, string label)
         {
-            var weapon = OrbitalRewardProvider.GetModuleKind(kind);
             var link = OrbitalRewardProvider.GetSegmentedLinkKind(kind);
+            var weapon = OrbitalRewardProvider.GetModuleKind(kind);
             int stock = link.HasValue ? state.SegmentedLinkStock.Count(v => v == link.Value) :
                 state.SegmentedWeapons.Count(v => v.ModuleType == weapon);
-            return ($"{label} +1 · {stock}", ready && upgradeManager.DebugRewardUnavailableReason(kind) == null,
-                () => SandboxAction(() => GrantMvpBuildReward(kind)));
+            SandboxRewardRow(kind, label, stock, OrbitalRewardIconResolver.Resolve(kind), ready);
         }
-        (string, bool, UnityAction) Density(float value, string label)
-        {
-            bool selected = enemySpawner != null && Mathf.Approximately(enemySpawner.DebugCaptureDensity, value);
-            return (label + (selected ? " (выбрано)" : ""), spawnReady && !selected,
-                () => SandboxAction(() => CaptureSession.SetSpawnDensity(value)));
-        }
+    }
 
+    private void SandboxRewardRow(OrbitalRewardKind kind, string label, int stock, OrbitalRewardIconResolver.Icon icon, bool ready)
+    {
+        var row = SandboxIconRow(label, $"{label} · в запасе {stock}", icon,
+            ("+1", ready && upgradeManager.DebugRewardUnavailableReason(kind) == null, () => GrantMvpBuildReward(kind)));
+        row.GetComponentInChildren<Button>().name = "Rig reward · " + kind;
+    }
+
+    private void BuildSandboxCombat(bool ready)
+    {
+        bool manualReady = ready && enemySpawner != null && enemySpawner.isActiveAndEnabled;
+        bool spawning = enemySpawner != null && enemySpawner.IsSpawningEnabled;
+        bool autoReady = manualReady && CaptureSession.SpawnDensityUnavailableReason == null;
+        SandboxRow(spawning ? "Автоспавн включён" : "Автоспавн выключен",
+            (spawning ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", autoReady,
+                () => SandboxAction(() => CaptureSession.SetSpawning(!enemySpawner.IsSpawningEnabled))));
+        var health = PlayerRuntimeReference.PlayerHealth;
+        bool invulnerable = health != null && health.DebugInvulnerable;
+        SandboxRow(invulnerable ? "Неуязвимость включена" : "Неуязвимость выключена",
+            (invulnerable ? "ВЫКЛЮЧИТЬ" : "ВКЛЮЧИТЬ", ready && health != null,
+                () => SandboxAction(() => CaptureSession.SetInvulnerable(!health.DebugInvulnerable))));
+        SandboxRow("Очистка арены · без опыта и наград",
+            ("УБИТЬ ВСЕХ ВРАГОВ", ready,
+                () => SandboxAction(() => sandboxStatus = $"Убрано врагов: {CaptureSession.ClearSandboxEnemies()}.")));
+
+        BuildDebugCategory("Все враги", "Ручное добавление работает при выключенном автоспавне", () =>
+        {
+            foreach (var prefab in SandboxEnemyPrefabs().Where(prefab => prefab != null && prefab.GetComponent<EnemyHealth>() != null)
+                         .Distinct().OrderBy(SandboxEnemyName, StringComparer.CurrentCulture))
+            {
+                string name = SandboxEnemyName(prefab);
+                var renderer = prefab.GetComponent<EnemyWhiteFlash>()?.TargetRenderer;
+                if (renderer == null || renderer.sprite == null)
+                    renderer = prefab.GetComponentsInChildren<SpriteRenderer>()
+                        .Where(sprite => sprite.enabled && sprite.sprite != null && sprite.color.a > 0f &&
+                            sprite.name.IndexOf("shadow", StringComparison.OrdinalIgnoreCase) < 0 &&
+                            sprite.sprite.name.IndexOf("shadow", StringComparison.OrdinalIgnoreCase) < 0)
+                        .OrderByDescending(sprite => sprite.sprite.rect.width * sprite.sprite.rect.height)
+                        .FirstOrDefault();
+                var icon = renderer != null ? new OrbitalRewardIconResolver.Icon(renderer.sprite, renderer.color) : default;
+                SandboxIconRow(prefab.name, name, icon,
+                    ("+1", manualReady, () => SandboxAction(() => SpawnSandboxEnemies(prefab, name, 1))),
+                    ("+5", manualReady, () => SandboxAction(() => SpawnSandboxEnemies(prefab, name, 5))));
+            }
+        }, expanded: false);
+    }
+
+    private IEnumerable<GameObject> SandboxEnemyPrefabs()
+    {
+        if (enemySpawner != null)
+            foreach (var prefab in enemySpawner.DebugEnemyPrefabs())
+                yield return prefab;
+        yield return turretEnemyPrefab;
+        yield return eyesEnemyPrefab;
+
+        var sector = RunStateManager.Instance?.CurrentSector;
+        yield return sector?.BossPrefab;
+        foreach (var prefab in ProfileEnemies(sector?.SpawnProfile))
+            yield return prefab;
+        if (levelChoiceManager != null)
+            foreach (var stage in levelChoiceManager.DebugStageProfiles)
+            {
+                yield return stage?.BossPrefab;
+                foreach (var prefab in ProfileEnemies(stage?.SpawnProfile))
+                    yield return prefab;
+            }
+        var map = MetaProgressionManager.Instance?.SurfaceMap?.Definition;
+        if (map?.Sectors != null)
+            foreach (var location in map.Sectors)
+                foreach (var prefab in ProfileEnemies(location?.BuildRunConfig(map.Id).SpawnProfile))
+                    yield return prefab;
+    }
+
+    private static IEnumerable<GameObject> ProfileEnemies(EnemySpawnProfile profile)
+    {
+        if (profile?.Phases == null) yield break;
+        foreach (var phase in profile.Phases)
+            if (phase?.enemies != null)
+                foreach (var entry in phase.enemies)
+                    if (entry != null) yield return entry.enemyPrefab;
+    }
+
+    private static string SandboxEnemyName(GameObject prefab) => prefab.name switch
+    {
+        "p_Enemy_classic" => "Преследователь",
+        "p_Enemy_classic_start" => "Стартовый преследователь",
+        "p_Enemy_default" => "Элитный преследователь",
+        "p_Enemy_Flanker" => "Обходчик",
+        "p_Enemy_Flanker_Start" => "Стартовый обходчик",
+        "p_Enemy_Breacher" => "Проломщик",
+        "p_Enemy_Breacher_Start" => "Стартовый проломщик",
+        "p_Enemy_Shooter" => "Стрелок",
+        "p_Enemy_Bomber" => "Подрывник",
+        "BreakableShieldBearer" or "ShieldBearer" => "Ближний щитоносец",
+        "BreakableShieldShooter" or "ShieldShooter" => "Стрелок со щитом",
+        "p_Enemy_SpiderBigGait" => "Большой паук",
+        "p_Enemy_SpiderBlue" => "Синий паук",
+        "p_Enemy_SpiderDark" => "Тёмный паук",
+        "p_Enemy_SpiderWhite" => "Белый паук",
+        "p_EnemyTurret1" => "Турель 1",
+        "p_EnemyTurret2" => "Турель 2",
+        "p_EnemyEye1 Variant" => "Глаз",
+        _ => prefab.GetComponent<EnemyHealth>() is { IsBoss: true } boss
+            ? LocalizationService.EnsureExists().Get(boss.BossName)
+            : prefab.name
+    };
+
+    private void SpawnSandboxEnemies(GameObject prefab, string name, int count)
+    {
+        var player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+        if (enemySpawner == null || !enemySpawner.isActiveAndEnabled || player == null)
+        {
+            sandboxStatus = "Нужен активный спавнер и игрок.";
+            return;
+        }
+        int spawned = 0;
+        for (int i = 0; i < count; i++)
+            if (enemySpawner.SpawnSpecificEnemyAround(prefab, player.position, 3f, 8f, 3f,
+                    countTowardSpawnLimits: false, spawnClearance: .45f) != null)
+                spawned++;
+        sandboxStatus = $"{name} · добавлено {spawned} из {count}.";
+        if (spawned < count) sandboxStatus += " Не хватило безопасных позиций.";
     }
 
     private void SandboxAction(Action action)
@@ -109,7 +199,13 @@ public sealed partial class Subject42DebugMenu
         if (isOpen) RefreshCurrentTab();
     }
 
-    private bool SandboxGrantBuildReward(OrbitalRewardKind kind)
+    private void OpenAllSandboxOrbits(OrbitalRunState state)
+    {
+        while (state.UnlockedSegmentedLevels < OrbitalRunState.SegmentedLevels)
+            if (!GrantSandboxOrbitReward(OrbitalRewardKind.NewRing)) return;
+    }
+
+    private bool GrantSandboxOrbitReward(OrbitalRewardKind kind)
     {
         string reason = upgradeManager.DebugRewardUnavailableReason(kind);
         if (reason == null && upgradeManager.DebugOfferCatalogueReward(kind, true)) return true;
@@ -117,64 +213,43 @@ public sealed partial class Subject42DebugMenu
         return false;
     }
 
-    private bool SandboxOpenAllOrbits()
-    {
-        while (MvpStation.State.UnlockedSegmentedLevels < OrbitalRunState.SegmentedLevels)
-            if (!SandboxGrantBuildReward(OrbitalRewardKind.NewRing)) return false;
-        return true;
-    }
-
-    private void PrepareSandboxTest()
-    {
-        CaptureSession.SetInvulnerable(true);
-        SetEnemyAutoSpawn(false, captureSettings: true);
-        if (MvpStation.Rig != null)
-        {
-            sandboxStatus = "Тест подготовлен: бессмертие · спавн остановлен. Расширение сетки доступно в каталоге ниже; запас сохранён.";
-            return;
-        }
-        if (!SandboxOpenAllOrbits()) return;
-        while (MvpStation.State.SegmentedWeaponLimit < OrbitalRunState.MaxSegmentedWeapons)
-            if (!SandboxGrantBuildReward(OrbitalRewardKind.AddMount)) return;
-        sandboxStatus = "Тест подготовлен: 3 орбиты · лимит 12 · бессмертие · спавн остановлен. Запас сохранён.";
-    }
-
-    private void OpenSandboxConstructor()
-    {
-        CloseMenu();
-        if (MvpStation.InputOwner.TryToggleConstructor()) return;
-        sandboxStatus = "Конструктор сейчас недоступен.";
-        OpenMenu();
-    }
-
-    private void StartSandboxCombat()
-    {
-        SetEnemyAutoSpawn(true, captureSettings: true);
-        if (enemySpawner.IsSpawningEnabled) CloseMenu();
-        else sandboxStatus = CaptureSession.Status;
-    }
-
     private void SandboxRow(string title, params (string Label, bool Enabled, UnityAction Action)[] actions)
     {
-        var row = CreateRect(title, contentRoot);
+        SandboxIconRow(title, title, default, actions);
+    }
+
+    private RectTransform SandboxIconRow(string id, string title, OrbitalRewardIconResolver.Icon icon,
+        params (string Label, bool Enabled, UnityAction Action)[] actions)
+    {
+        var row = CreateRect(id, contentRoot);
         row.gameObject.AddComponent<Image>().color = rowColor;
         row.gameObject.AddComponent<LayoutElement>().preferredHeight = 46f;
         var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
         layout.padding = new RectOffset(8, 8, 4, 4);
-        layout.spacing = 5f;
+        layout.spacing = 8f;
         layout.childControlWidth = layout.childControlHeight = true;
         layout.childForceExpandWidth = false;
-        var label = CreateText("Состояние", row, title, 15f, TextAlignmentOptions.MidlineLeft, Color.white);
+
+        if (icon.Sprite != null)
+        {
+            var image = CreateRect("Icon", row).gameObject.AddComponent<Image>();
+            image.sprite = icon.Sprite;
+            image.color = icon.ImageTint;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.gameObject.AddComponent<LayoutElement>().preferredWidth = 36f;
+        }
+        var label = CreateText("Название", row, title, 15f, TextAlignmentOptions.MidlineLeft, Color.white);
         label.textWrappingMode = TextWrappingModes.Normal;
-        label.gameObject.AddComponent<LayoutElement>().flexibleWidth = actions.Length > 2 ? .9f : 1.4f;
+        label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
         foreach (var action in actions)
         {
             var button = CreateButton(row, action.Label, action.Action, 1f, action.Enabled);
-            var element = button.gameObject.AddComponent<LayoutElement>();
-            element.flexibleWidth = 1f;
+            button.gameObject.AddComponent<LayoutElement>().preferredWidth = Mathf.Max(64f, action.Label.Length * 8f + 16f);
             button.GetComponentInChildren<TextMeshProUGUI>().fontSize = 13f;
             button.navigation = new Navigation { mode = Navigation.Mode.None };
         }
+        return row;
     }
 }
 #endif

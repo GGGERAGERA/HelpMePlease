@@ -237,14 +237,8 @@ public sealed class ProductionBunkerFlowTests
         var service = new SurfaceMapService(map,new Storage());
         typeof(MetaProgressionManager).GetProperty("SurfaceMap").SetValue(MetaProgressionManager.Instance,service);
         var exit = Station(BunkerStationType.StartRun); var target = Read<Transform>(exit,"runTransitionTarget");
-        exit.Interact();
-        var view = Object.FindFirstObjectByType<SurfaceMapView>(); Assert.That(view, Is.Not.Null);
-        Assert.That(context.Panels.IsAnyPanelOpen, Is.True); Assert.That(service.TrySelect("C1"), Is.True);
-        yield return null;
-        System.IO.Directory.CreateDirectory("Artifacts/GeneratedQA/SurfaceMap");
-        UnityEngine.ScreenCapture.CaptureScreenshot("Artifacts/GeneratedQA/SurfaceMap/surface-map.png");
-        yield return null;
-        Read<Button>(view,"startButton").onClick.Invoke();
+        Assert.That(service.TrySelect("C1"), Is.True);
+        context.RunStarter.StartSurfaceRun(target);
         yield return ReadyRun();
         var run = RunStateManager.Instance;
         Assert.That(run, Is.Not.Null, "RunState singleton lost after scene transition; instances=" + Object.FindObjectsByType<RunStateManager>(FindObjectsSortMode.None).Length);

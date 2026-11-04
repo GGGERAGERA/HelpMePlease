@@ -17,10 +17,11 @@ public sealed class ExpeditionTaskPicker : MonoBehaviour
     private readonly List<(ExpeditionTaskDefinition task, ExpeditionTaskChoice view)> rows = new();
     private SurfaceMapService map;
     private Action launch;
+    private string routeTitle;
     private LocalizationService localization;
-    public void Show(SurfaceMapService service, Action start)
+    public void Show(SurfaceMapService service, Action start, string nodeTitle = null)
     {
-        map = service; launch = start;
+        map = service; launch = start; routeTitle = nodeTitle;
         foreach (var row in rows) Destroy(row.view.gameObject);
         rows.Clear();
         var sector = map.Definition.Find(map.SelectedSectorId);
@@ -59,7 +60,7 @@ public sealed class ExpeditionTaskPicker : MonoBehaviour
     {
         if (map == null) return;
         var sector = map.Definition.Find(map.SelectedSectorId);
-        title.text = SurfaceMapBriefing.Text(sector.DisplayName);
+        title.text = routeTitle ?? SurfaceMapBriefing.Text(sector.DisplayName);
         rewards.text = SurfaceMapBriefing.Format("expedition.rewards", sector.VictoryCores,
             map.GetStatus(sector.Id) == SurfaceSectorStatus.Completed ? 0 : sector.FirstClearCores);
         hint.text = SurfaceMapBriefing.Text("expedition.choose_one");

@@ -2,21 +2,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Viewport-wide pixel fog. Receives already-discovered points only; owns no exploration or save state.</summary>
+/// <summary>Viewport-wide pixel fog with a lighter haze around scenic outlooks.</summary>
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class SurfaceMapFog : MaskableGraphic
 {
     private RectTransform graph;
     private readonly List<Vector2> revealed = new();
     private readonly List<(Vector2 from,Vector2 to)> roads = new();
+    private readonly List<Vector2> outlooks = new();
+    private bool showHorizon;
     private Matrix4x4 previousMatrix;
     private Rect previousRect;
     public void Configure(RectTransform content) { graph=content; raycastTarget=false; SetVerticesDirty(); }
-    public void Reveal(IReadOnlyList<Vector2> points,IReadOnlyList<(Vector2 from,Vector2 to)> connections)
+    public void Reveal(IReadOnlyList<Vector2> points,IReadOnlyList<(Vector2 from,Vector2 to)> connections,
+        IReadOnlyList<Vector2> outlook = null)
     {
-        revealed.Clear(); roads.Clear();
+        revealed.Clear(); roads.Clear(); outlooks.Clear();
         for(int i=0;i<points.Count;i++)revealed.Add(points[i]);
         for(int i=0;i<connections.Count;i++)roads.Add(connections[i]);
+        showHorizon = outlook != null;
+        if (showHorizon)
+            for (int i = 0; i < outlook.Count; i++) outlooks.Add(outlook[i]);
         SetVerticesDirty();
     }
     private void LateUpdate()
@@ -26,19 +32,35 @@ public sealed class SurfaceMapFog : MaskableGraphic
         if(matrix==previousMatrix && rectTransform.rect==previousRect)return;
         previousMatrix=matrix; previousRect=rectTransform.rect; SetVerticesDirty();
     }
-    // Zero in surveyed areas, one in unknown territory. This never uses locked sector coordinates.
+    // Zero in surveyed areas, one in unknown territory. Outlooks only change how the haze is painted.
     public float CoverageAt(Vector2 point)
     {
-        float distance=float.PositiveInfinity;
+        float squaredDistance=float.PositiveInfinity;
         foreach(var center in revealed)
-            distance=Mathf.Min(distance,new Vector2((point.x-center.x)/154f,(point.y-center.y)/170f).magnitude);
+        {
+            var offset = new Vector2((point.x-center.x)/154f, (point.y-center.y)/170f);
+            squaredDistance = Mathf.Min(squaredDistance, offset.sqrMagnitude);
+            if (squaredDistance <= .92f * .92f) return 0f;
+        }
         foreach(var road in roads)
         {
             var delta=road.to-road.from;
             float along=delta.sqrMagnitude>0?Mathf.Clamp01(Vector2.Dot(point-road.from,delta)/delta.sqrMagnitude):0;
-            distance=Mathf.Min(distance,Vector2.Distance(point,road.from+along*delta)/62f);
+            var offset = (point - (road.from + along * delta)) / 62f;
+            squaredDistance = Mathf.Min(squaredDistance, offset.sqrMagnitude);
+            if (squaredDistance <= .92f * .92f) return 0f;
         }
-        return Mathf.Clamp01((distance-.92f)/.22f);
+        return Mathf.Clamp01((Mathf.Sqrt(squaredDistance)-.92f)/.22f);
+    }
+    private byte HorizonOpacity(Vector2 point, byte original)
+    {
+        float nearest = 1f;
+        foreach (var center in outlooks)
+        {
+            var offset = new Vector2((point.x - center.x) / 365f, (point.y - center.y) / 235f);
+            nearest = Mathf.Min(nearest, offset.sqrMagnitude);
+        }
+        return (byte)Mathf.RoundToInt(original * Mathf.Lerp(.38f, .84f, Mathf.Ceil(nearest * 5f) / 5f));
     }
     protected override void OnPopulateMesh(VertexHelper mesh)
     {
@@ -57,6 +79,7 @@ public sealed class SurfaceMapFog : MaskableGraphic
             byte tone=(byte)(cloud<.37f?0:cloud>.64f?8:4);
             Color32 ink=band==1?new Color32(72,83,82,88):band==2?new Color32(49,64,68,175):
                 band==3?new Color32(31,44,51,235):new Color32((byte)(20+tone),(byte)(29+tone),(byte)(36+tone),255);
+            if (showHorizon) ink.a = HorizonOpacity(point, ink.a);
             int start=mesh.currentVertCount; float right=Mathf.Min(x+cell,rect.xMax),top=Mathf.Min(y+cell,rect.yMax);
             mesh.AddVert(new Vector3(x,y),ink,Vector2.zero); mesh.AddVert(new Vector3(x,top),ink,Vector2.zero);
             mesh.AddVert(new Vector3(right,top),ink,Vector2.zero); mesh.AddVert(new Vector3(right,y),ink,Vector2.zero);

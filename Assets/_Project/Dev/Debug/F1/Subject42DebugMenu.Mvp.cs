@@ -6,17 +6,11 @@ using Subject42.Combat.Telekinetic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public sealed partial class Subject42DebugMenu
 {
-    private bool IsMvpDebugMenu => SceneManager.GetActiveScene().name == "MVP" && !hubUtilityPage;
-    private static readonly string[] MvpTabLabels = { "Оружие, модули и конструкция", "Карточки и улучшения", "Враги и бой", "Мир и прогресс" };
-    private int mvpCategoryFilter = -1;
-    private bool mvpAvailableOnly;
-    private OrbitalRewardKind mvpPreviewKind = OrbitalRewardKind.ShootingDamage;
-    private GameObject mvpPreviewRoot;
+    private bool IsMvpWorldPage => IsSandboxScene && activeTab == DebugTab.WorldEvents;
     private string mvpStatus;
     private string mvpRingSurfaceBackup;
     private float mvpRingWidthBackup, mvpRingAlphaBackup;
@@ -69,47 +63,19 @@ public sealed partial class Subject42DebugMenu
         fullMenuBlockerImage.color = new Color(0f, 0f, 0f, .68f); fullMenuBlockerImage.raycastTarget = true;
     }
 
-    private void BuildMvpTab(int tab)
+    private void BuildMvpWorldPage()
     {
         ResolveSceneReferences();
-        if (mvpPreviewRoot != null) { mvpPreviewRoot.SetActive(false); Destroy(mvpPreviewRoot); mvpPreviewRoot = null; }
-        var viewport = contentRoot.parent as RectTransform;
-        viewport.anchorMin = Vector2.zero; viewport.anchorMax = new Vector2(tab == 1 ? .65f : 1f, 1f);
-        viewport.offsetMin = Vector2.zero; viewport.offsetMax = new Vector2(-7f, 0f);
-        var scrollbar = tabRoots[tab].GetComponent<ScrollRect>().verticalScrollbar;
-        if (scrollbar != null)
-        {
-            var bar = scrollbar.GetComponent<RectTransform>();
-            bar.anchorMin = new Vector2(tab == 1 ? .65f : 1f, 0f);
-            bar.anchorMax = new Vector2(tab == 1 ? .65f : 1f, 1f);
-        }
-        var layout = contentRoot.GetComponent<VerticalLayoutGroup>(); layout.spacing = 8f;
-        if (mvpOrbitSurfaceOpen)
-        {
-            layout.spacing = 5f;
-            BuildMvpOrbitSurface();
-            return;
-        }
-        AddSectionTitle(MvpTabLabels[tab], tab == 0 ? "Предметы поступают в запас конструктора." : "F1 / Esc — закрыть меню");
+        AddSectionHeading("Мир и прогресс", "F1 / Esc — закрыть меню");
         if (!string.IsNullOrEmpty(mvpStatus)) AddHint(mvpStatus);
-        if (tab <= 1)
-            SandboxRow("Каталог",
-                ("ОРУЖИЕ / МОДУЛИ / ОРБИТЫ", tab != 0, () => HubOpenDetails(0, DebugTab.OrbitalProduction)),
-                ("КАРТОЧКИ / УЛУЧШЕНИЯ", tab != 1, () => HubOpenDetails(1, DebugTab.PlayerBuild)));
-        switch (tab)
-        {
-            case 0: BuildMvpOrbits(); break;
-            case 1: BuildMvpCatalogue(); break;
-            case 2: BuildMvpEnemies(); break;
-            case 3: BuildMvpPlayer(); break;
-        }
+        BuildMvpPlayer();
     }
 
-    private void MvpRow(string title, string status, string actionLabel = null, bool enabled = false, UnityEngine.Events.UnityAction action = null, bool selected = false)
+    private void MvpRow(string title, string status, string actionLabel = null, bool enabled = false, UnityEngine.Events.UnityAction action = null)
     {
         RectTransform row = CreateRect(title, contentRoot);
-        row.gameObject.AddComponent<Image>().color = selected ? new Color(.09f, .27f, .33f, 1f) : rowColor;
-        bool compact = mvpOrbitSurfaceOpen || activeTab == (IsMvpDebugMenu ? (DebugTab)0 : DebugTab.OrbitalProduction);
+        row.gameObject.AddComponent<Image>().color = rowColor;
+        bool compact = mvpOrbitSurfaceOpen;
         row.gameObject.AddComponent<LayoutElement>().preferredHeight = compact ? 54f : 68f;
         var text = CreateText("Содержание", row, "<b>" + title + $"</b>\n<size={(compact ? 11 : 18)}>" + status + "</size>", compact ? 14f : 21f, TextAlignmentOptions.MidlineLeft, Color.white);
         Stretch(text.rectTransform, compact ? 8f : 16f, string.IsNullOrEmpty(actionLabel) ? 8f : compact ? 108f : 175f, 5f, 5f);
@@ -131,96 +97,53 @@ public sealed partial class Subject42DebugMenu
         OrbitalRewardKind.NewRing or OrbitalRewardKind.AddMount or OrbitalRewardKind.RigExpansion ||
         OrbitalRewardProvider.GetRigPart(kind).HasValue || OrbitalRewardProvider.GetSegmentedLinkKind(kind).HasValue;
 
-    private void BuildMvpOrbits()
-    {
-        var station = MvpStation;
-        if (station != null && station.Rig != null && station.IsInitialized && upgradeManager != null)
-        { BuildRigRewardCatalogue(false); return; }
-        if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit || upgradeManager == null)
-        { AddHint("Segmented Orbit ещё не готова. Начните обычный ран из бункера."); return; }
-        var state = station.State;
-        AddHint("Выдача пополняет запас. Закройте карточку/F1, откройте Tab и перетащите предмет на подходящую ячейку. Установленное оружие занимает общий лимит.");
-        AddSectionTitle("Оружие", "");
-        foreach (var kind in new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.Sniper, OrbitalRewardKind.Shotgun })
-        {
-            var module = OrbitalRewardProvider.GetModuleKind(kind);
-            AddMvpBuildReward(kind, $"Установлено: {state.Modules.Count(w => w.ModuleType == module)} · В запасе: {state.SegmentedWeapons.Count(w => w.ModuleType == module)}");
-        }
-        AddSectionTitle("Модули", "");
-        foreach (var kind in new[] { OrbitalRewardKind.DamageLink, OrbitalRewardKind.FireRateLink,
-                     OrbitalRewardKind.ExtraShotLink, OrbitalRewardKind.RicochetLink })
-        {
-            var link = OrbitalRewardProvider.GetSegmentedLinkKind(kind).Value;
-            AddMvpBuildReward(kind, $"Установлено: {state.SegmentedLinks.Count(m => m.Kind == link)} · В запасе: {state.SegmentedLinkStock.Count(m => m == link)}");
-        }
-        AddSectionTitle("Орбиты / крепления", "");
-        AddMvpBuildReward(OrbitalRewardKind.NewRing, $"Открыто: {state.UnlockedSegmentedLevels}/{OrbitalRunState.SegmentedLevels}", "ОТКРЫТЬ");
-        AddMvpBuildReward(OrbitalRewardKind.AddMount, $"Лимит оружия: {state.SegmentedWeaponLimit}/{OrbitalRunState.MaxSegmentedWeapons}", "+1 ЛИМИТ");
-        MvpRow("Внешний вид орбит", "F9", "НАСТРОИТЬ",
-            MvpCanEdit && previousTimeScale > 0f, OpenMvpOrbitSurface);
-    }
-
-    // Extend the existing F1 build catalogue; grants still use its normal reward callback.
-    private void BuildRigRewardCatalogue(bool compact)
+    private void BuildRigRewardCatalogue()
     {
         var build = MvpStation.Rig.Build;
         foreach (bool weapons in new[] { true, false })
         {
-            AddSectionTitle(weapons ? "Оружие · запас" : "Модули · запас", "");
-            var cards = upgradeManager.DebugRewardCatalogue.Where(card =>
-                OrbitalRewardProvider.GetRigPart(card.RewardKind) is TelekineticPart part &&
-                (part is TelekineticPart.Pistol or TelekineticPart.Sniper or TelekineticPart.Shotgun or TelekineticPart.Saw) == weapons).ToArray();
-            if (compact)
+            AddSectionTitle(weapons ? "Оружие" : "Модули", "В запас конструктора");
+            foreach (var card in upgradeManager.DebugRewardCatalogue)
             {
-                for (int start = 0; start < cards.Length; start += 4)
-                {
-                    var group = cards.Skip(start).Take(4).ToArray();
-                    SandboxRow("Каталог", group.Select(card =>
-                    {
-                        var kind = card.RewardKind;
-                        var part = OrbitalRewardProvider.GetRigPart(kind).Value;
-                        return (TelekineticBuild.Label(part) + " +1 · " + build.Reserve.Count(item => item.Kind == part),
-                            MvpCanEdit && upgradeManager.DebugRewardUnavailableReason(kind) == null,
-                            (UnityEngine.Events.UnityAction)(() => GrantMvpBuildReward(kind)));
-                    }).ToArray());
-                    var buttons = contentRoot.GetChild(contentRoot.childCount - 1).GetComponentsInChildren<Button>();
-                    for (int i = 0; i < buttons.Length; i++) buttons[i].name = "Rig reward · " + group[i].RewardKind;
-                }
-            }
-            else foreach (var card in cards)
-            {
-                var part = OrbitalRewardProvider.GetRigPart(card.RewardKind).Value;
-                AddMvpBuildReward(card.RewardKind,
-                    $"Установлено: {build.Items.Count(item => item.Kind == part)} · В запасе: {build.Reserve.Count(item => item.Kind == part)} · {TelekineticItem.Shape(part).Count} кл.");
+                var kind = card.RewardKind;
+                if (OrbitalRewardProvider.GetRigPart(kind) is not TelekineticPart part ||
+                    (part is TelekineticPart.Pistol or TelekineticPart.Sniper or TelekineticPart.Shotgun or TelekineticPart.Saw) != weapons)
+                    continue;
+
+                int stock = build.Reserve.Count(item => item.Kind == part);
+                SandboxRewardRow(kind, TelekineticBuild.Label(part), stock, OrbitalRewardIconResolver.Resolve(card), MvpCanEdit);
             }
         }
         AddSectionTitle("Пространство конструкции", "");
         AddMvpBuildReward(OrbitalRewardKind.RigExpansion, $"Сетка: {build.AvailableRadius * 2 + 1}×{build.AvailableRadius * 2 + 1}", "РАСШИРИТЬ");
-        contentRoot.GetChild(contentRoot.childCount - 1).GetComponentInChildren<Button>().name = "Rig reward · " + OrbitalRewardKind.RigExpansion;
-        if (compact)
-            SandboxRow("Конструктор", ("ОТКРЫТЬ TAB", MvpCanEdit && previousTimeScale > 0f, OpenSandboxConstructor));
     }
 
-    private void BuildMvpWeaponExperiments(bool sandbox = false)
+    private void BuildMvpWeaponExperiments()
     {
         var station = MvpStation;
-        if (station == null || !station.IsInitialized || !station.UsesSegmentedOrbit)
-        { AddHint("Нужна действующая Segmented Orbit. Оружейные варианты пока недоступны."); return; }
+        if (station == null || !station.IsInitialized)
+        { AddHint("Нужен живой игрок."); return; }
         var state = station.State;
-        AddSectionTitle("ВАРИАНТЫ ОРУЖИЯ", "По одному профилю на тип оружия. Эксперимент помечает попытку Development.");
+        string reason = station.Rig != null || !station.UsesSegmentedOrbit ? "Профили работают в Segmented Orbit." :
+            !MvpCanEdit || station.IsRunEnded ? "Нужен живой игрок и свободная очередь наград." : null;
+        if (reason != null) AddHint(reason);
         Group("Пистолет", OrbitalModuleKind.Pistol, "Обычный", "Прямой одиночный снаряд.",
             ("Возврат промаха", () => state.MissReturnPistolExperiment, station.DebugSetMissReturnPistolExperiment,
                 "При промахе: 4 м наружу и 4 м обратно по фиксированной мировой линии."));
         Group("Снайперка", OrbitalModuleKind.Sniper, "Обычная", "Обычный одиночный выстрел в одну цель.",
             ("Заряженная линия", () => state.ChargedLineSniperExperiment, station.DebugSetChargedLineSniperExperiment,
                 "Подготовка 0,45 с, затем пробитие до трёх тел. Q/E ведут линию до выпуска."));
+        Group("Пила", OrbitalModuleKind.Saw, "Обычная", "Штатная пила.",
+            ("Инерционная", () => state.InertialSawExperiment, station.DebugSetInertialSawExperiment,
+                "Пила набирает и теряет инерцию при смене направления."),
+            ("Импульсная", () => state.PulsedSawExperiment, station.DebugSetPulsedSawExperiment,
+                "Пила работает импульсами."));
+        if (!string.IsNullOrEmpty(mvpStatus)) AddHint(mvpStatus);
         void Group(string title, OrbitalModuleKind kind, string normal, string normalDescription,
             params (string Label, Func<bool> Active, Func<bool, bool> Set, string Description)[] modes)
         {
             int selected = Array.FindIndex(modes, mode => mode.Active()) + 1;
             int installed = state.Modules.Count(module => module.ModuleType == kind);
-            string reason = sandbox ? SandboxUnavailableReason :
-                !MvpCanEdit || station.IsRunEnded ? "Нужен живой игрок и свободная очередь наград." : null;
             var actions = new (string Label, bool Enabled, UnityEngine.Events.UnityAction Action)[modes.Length + 1];
             for (int i = 0; i < actions.Length; i++)
             {
@@ -228,19 +151,18 @@ public sealed partial class Subject42DebugMenu
                 string label = i == 0 ? normal : modes[i - 1].Label;
                 actions[i] = (label + (i == selected ? " · выбран" : ""), reason == null && i != selected, () =>
                 {
-                    if (!MvpCanEdit || station.IsRunEnded) { RefreshCurrentTab(); return; }
-                    void Apply()
+                    if (!MvpCanEdit || station.IsRunEnded || station.Rig != null) { RefreshCurrentTab(); return; }
+                    for (int j = 0; j < modes.Length; j++)
                     {
-                        // Turn off the old profile before the existing setter enables its replacement.
-                        for (int j = 0; j < modes.Length; j++)
-                            if (j + 1 != index && modes[j].Active() && !modes[j].Set(false))
-                            { mvpStatus = "Профиль не сменился: действие сейчас недоступно."; return; }
-                        if (index > 0 && !modes[index - 1].Active() && !modes[index - 1].Set(true))
-                            mvpStatus = "Выбранный профиль сейчас недоступен.";
-                        else mvpStatus = "Профиль обновлён. Установки, улучшения и летящие снаряды сохранены.";
+                        if (j + 1 == index || !modes[j].Active() || modes[j].Set(false)) continue;
+                        mvpStatus = "Профиль не сменился: действие сейчас недоступно.";
+                        RefreshCurrentTab();
+                        return;
                     }
-                    if (sandbox) SandboxAction(Apply);
-                    else { Apply(); RefreshCurrentTab(); }
+                    mvpStatus = index > 0 && !modes[index - 1].Set(true)
+                        ? "Выбранный профиль сейчас недоступен."
+                        : "Профиль обновлён.";
+                    RefreshCurrentTab();
                 });
             }
             SandboxRow("Вариант: " + title, actions);
@@ -251,7 +173,7 @@ public sealed partial class Subject42DebugMenu
             selectedButton.colors = colors;
             string description = selected == 0 ? normalDescription : modes[selected - 1].Description;
             string application = installed == 0 ? "Не установлен: профиль применится после установки. " : $"Установлено: {installed}. ";
-            var hint = CreateText("Описание варианта", contentRoot, reason ?? application + description, 13f,
+            var hint = CreateText("Описание варианта", contentRoot, application + description, 13f,
                 TextAlignmentOptions.MidlineLeft, mutedColor);
             hint.textWrappingMode = TextWrappingModes.Normal;
             hint.gameObject.AddComponent<LayoutElement>().preferredHeight = 42f;
@@ -294,10 +216,10 @@ public sealed partial class Subject42DebugMenu
         if (mvpOrbitSurfaceOpen) { CloseMenu(); return; }
         CloseMenu();
         CloseHub();
-        hubUtilityPage = false;
         ResolveSceneReferences();
-        if (!MvpCanEdit || MvpStation.IsRunEnded || (isOpen ? previousTimeScale : Time.timeScale) <= 0f) return;
-        SelectTab((DebugTab)0, false);
+        if (!MvpCanEdit || MvpStation.IsRunEnded || Time.timeScale <= 0f) return;
+        hubCategory = 0;
+        SelectTab(DebugTab.Sandbox, false);
         OpenMenu();
         OpenMvpOrbitSurface();
     }
@@ -347,8 +269,8 @@ public sealed partial class Subject42DebugMenu
         mvpOrbitSurfaceOpen = false;
         menuLiveSimulation = false;
         Time.timeScale = 0f;
-        ApplyMvpViewportLayout();
-        HubApplyDetailsLayout();
+        mvpOrbitSaveFooter.gameObject.SetActive(false);
+        ApplyMenuViewportLayout();
         RefreshCurrentTab();
     }
 
@@ -419,7 +341,7 @@ public sealed partial class Subject42DebugMenu
             mvpRingWidthBackup = config.RingLineWidth;
             mvpRingAlphaBackup = config.RingLineAlpha;
         }
-        AddSectionTitle("Внешний вид орбит", "F9 / Esc — закрыть · Тяните за заголовок");
+        AddSectionHeading("Внешний вид орбит", "F9 / Esc — закрыть · Тяните за заголовок");
         string pattern = surface.Pattern switch
         {
             OrbitalPresentationConfig.RingPattern.Dashed => "Пунктир",
@@ -461,87 +383,6 @@ public sealed partial class Subject42DebugMenu
             row.GetComponentInChildren<Slider>().navigation = new Navigation { mode = Navigation.Mode.None };
         row.GetComponent<LayoutElement>().preferredHeight = mvpOrbitSurfaceOpen ? 38f : 46f;
         foreach (var text in row.GetComponentsInChildren<TextMeshProUGUI>()) text.fontSize = mvpOrbitSurfaceOpen ? 14f : 18f;
-    }
-
-    private void BeginMvpReward(OrbitalRewardKind kind)
-    {
-        if (IsMvpBuildReward(kind)) return;
-        string reason = upgradeManager.DebugRewardUnavailableReason(kind);
-        if (reason != null) { mvpStatus = reason; RefreshCurrentTab(); return; }
-        CloseMenu();
-        if (upgradeManager.DebugOfferCatalogueReward(kind)) return;
-        mvpStatus = "Награда стала недоступна; состояние рана не изменено."; OpenMenu();
-    }
-
-    private void BuildMvpCatalogue()
-    {
-        if (upgradeManager == null) { AddHint("Система наград ещё не готова."); return; }
-        var filters = CreateRect("Фильтры категорий", contentRoot);
-        filters.gameObject.AddComponent<LayoutElement>().preferredHeight = 44f;
-        var horizontal = filters.gameObject.AddComponent<HorizontalLayoutGroup>(); horizontal.spacing = 6f;
-        horizontal.childControlWidth = true; horizontal.childForceExpandWidth = true; horizontal.childControlHeight = true;
-        for (int i = -1; i < 4; i++)
-        {
-            if (i == (int)OrbitalUpgradeCategory.Orbits) continue;
-            int category = i;
-            string label = i < 0 ? "Все категории" : OrbitalCategories.Label((OrbitalUpgradeCategory)i);
-            var button = CreateButton(filters, label, () => { mvpCategoryFilter = category; RefreshCurrentTab(); }, 120f);
-            button.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
-            if (category == mvpCategoryFilter) button.targetGraphic.color = successColor;
-        }
-        MvpRow("Доступность", mvpAvailableOnly ? "Только доступные сейчас" : "Все активные определения, включая временно недоступные", mvpAvailableOnly ? "ДОСТУПНЫЕ" : "ВСЕ", true,
-            () => { mvpAvailableOnly = !mvpAvailableOnly; RefreshCurrentTab(); });
-        var all = upgradeManager.DebugRewardCatalogue.Where(d => !IsMvpBuildReward(d.RewardKind)).ToList();
-        var filtered = all.Where(d => (mvpCategoryFilter < 0 || (int)d.EffectCategory == mvpCategoryFilter) &&
-            (!mvpAvailableOnly || upgradeManager.DebugRewardUnavailableReason(d.RewardKind) == null)).ToArray();
-        AddHint($"Показано {filtered.Length} из {all.Count}. Выберите «Карточка» для просмотра в штатном UI справа.");
-        foreach (var data in filtered)
-        {
-            string reason = upgradeManager.DebugRewardUnavailableReason(data.RewardKind);
-            var row = CreateRect("Каталог · " + data.RewardKind, contentRoot);
-            row.gameObject.AddComponent<Image>().color = data.RewardKind == mvpPreviewKind ? new Color(.09f, .23f, .29f, 1f) : rowColor;
-            row.gameObject.AddComponent<LayoutElement>().preferredHeight = 164f;
-            var text = CreateText("Определение карточки", row,
-                $"<b>{LocalizationService.EnsureExists().Get(data.upgradeName)}</b> · {OrbitalCategories.Label(data.EffectCategory)}\n" +
-                ProductionUpgradePresentation.GetCardDescription(data) + "\n<size=17>" + upgradeManager.DebugRewardLevel(data) + "\n" +
-                (reason == null ? "<color=#75D895>Доступно сейчас</color>" : "<color=#FFC16A>" + reason + "</color>") + "</size>",
-                19f, TextAlignmentOptions.MidlineLeft, Color.white);
-            text.textWrappingMode = TextWrappingModes.Normal; Stretch(text.rectTransform, 12f, 148f, 5f, 5f);
-            var button = CreateButton(row, "КАРТОЧКА", () => { mvpPreviewKind = data.RewardKind; RefreshCurrentTab(); }, 128f);
-            var rect = button.GetComponent<RectTransform>(); rect.anchorMin = rect.anchorMax = new Vector2(1f, .5f); rect.pivot = new Vector2(1f, .5f);
-            rect.anchoredPosition = new Vector2(-10f, 0f); rect.sizeDelta = new Vector2(128f, 40f);
-        }
-        var selected = filtered.FirstOrDefault(d => d.RewardKind == mvpPreviewKind) ?? filtered.FirstOrDefault();
-        if (selected == null) { AddHint("Нет карточек, соответствующих выбранным фильтрам."); return; }
-        mvpPreviewKind = selected.RewardKind;
-        BuildMvpCardPreview(selected);
-    }
-
-    private void BuildMvpCardPreview(OrbitalRewardData data)
-    {
-        if (upgradeManager.DebugCardTemplate == null) return;
-        var preview = CreateRect("Настоящая карточка награды", tabRoots[(int)activeTab].transform); mvpPreviewRoot = preview.gameObject;
-        preview.anchorMin = new Vector2(.665f, 0f); preview.anchorMax = Vector2.one; preview.offsetMin = Vector2.zero; preview.offsetMax = Vector2.zero;
-        preview.gameObject.AddComponent<Image>().color = rowColor;
-        var heading = CreateText("Заголовок просмотра", preview, "ШТАТНАЯ КАРТОЧКА", 22f, TextAlignmentOptions.Center, Color.white);
-        heading.rectTransform.anchorMin = new Vector2(0f, 1f); heading.rectTransform.anchorMax = Vector2.one;
-        heading.rectTransform.pivot = new Vector2(.5f, 1f); heading.rectTransform.sizeDelta = new Vector2(0f, 46f);
-        var card = Instantiate(upgradeManager.DebugCardTemplate, preview, false);
-        var rect = card.GetComponent<RectTransform>(); rect.anchorMin = rect.anchorMax = new Vector2(.5f, 1f); rect.pivot = new Vector2(.5f, 1f);
-        rect.anchoredPosition = new Vector2(0f, -54f); rect.sizeDelta = new Vector2(300f, 500f); rect.localScale = Vector3.one;
-        // Keep the authored normal card appearance even when its reward is unavailable.
-        // Applying is a separate button with the real eligibility check.
-        card.Setup(data, null);
-        var status = CreateText("Доступность карточки", preview, upgradeManager.DebugRewardLevel(data) + "\n\n" +
-            (upgradeManager.DebugRewardUnavailableReason(data.RewardKind) ?? "Доступно. Откроется обычный выбор этой карточки; затем выберите её, чтобы применить."),
-            19f, TextAlignmentOptions.TopLeft, Color.white);
-        status.textWrappingMode = TextWrappingModes.Normal;
-        status.rectTransform.anchorMin = new Vector2(0f, 0f); status.rectTransform.anchorMax = new Vector2(1f, 1f);
-        status.rectTransform.offsetMin = new Vector2(16f, 70f); status.rectTransform.offsetMax = new Vector2(-16f, -572f);
-        string reason = upgradeManager.DebugRewardUnavailableReason(data.RewardKind);
-        var apply = CreateButton(preview, "ВЫБРАТЬ НАГРАДУ", () => BeginMvpReward(data.RewardKind), 270f, reason == null);
-        var applyRect = apply.GetComponent<RectTransform>(); applyRect.anchorMin = applyRect.anchorMax = new Vector2(.5f, 0f); applyRect.pivot = new Vector2(.5f, 0f);
-        applyRect.anchoredPosition = new Vector2(0f, 15f); applyRect.sizeDelta = new Vector2(270f, 42f);
     }
 
     private void BuildMvpEnemyExperiments()
@@ -596,7 +437,6 @@ public sealed partial class Subject42DebugMenu
                 if (player == null) return;
                 var enemy = enemySpawner.DebugSpawnCommittedVolleyAround(volleyPrefab, player.position, out enemyDebugStatus);
                 if (enemy == null) { RefreshCurrentTab(); return; }
-                debugEnemies.Add(enemy);
                 CloseMenu();
             });
         bool recoilingSpawnerReady = available && enemySpawner.isActiveAndEnabled;
@@ -647,7 +487,6 @@ public sealed partial class Subject42DebugMenu
                 }
                 var enemy = enemySpawner.DebugSpawnRecoilingShooterAround(recoilingPrefab, player.position, out enemyDebugStatus);
                 if (enemy == null) { RefreshCurrentTab(); return; }
-                debugEnemies.Add(enemy);
                 CloseMenu();
             });
         bool interceptingSpawnerReady = available && enemySpawner.isActiveAndEnabled;
@@ -696,7 +535,6 @@ public sealed partial class Subject42DebugMenu
                 }
                 var enemy = enemySpawner.DebugSpawnInterceptingBomberAround(interceptingPrefab, player.position, out enemyDebugStatus);
                 if (enemy == null) { RefreshCurrentTab(); return; }
-                debugEnemies.Add(enemy);
                 CloseMenu();
             });
         MvpRow("Эксперимент: стрелок на траверсе",
@@ -733,7 +571,6 @@ public sealed partial class Subject42DebugMenu
                 }
                 var enemy = enemySpawner.DebugSpawnStrafingShooterAround(strafingPrefab, player.position, out enemyDebugStatus);
                 if (enemy == null) { RefreshCurrentTab(); return; }
-                debugEnemies.Add(enemy);
                 CloseMenu();
             });
         bool retreatAvailable = available && enemySpawner.isActiveAndEnabled;
@@ -760,7 +597,6 @@ public sealed partial class Subject42DebugMenu
                 if (player == null || PlayerRuntimeReference.ResolvePlayerHealth() is not { IsDead: false }) return;
                 var enemy = enemySpawner.DebugSpawnWoundedRetreatAround(retreatPrefab, player.position, out enemyDebugStatus);
                 if (enemy == null) { RefreshCurrentTab(); return; }
-                debugEnemies.Add(enemy);
                 CloseMenu();
             });
         MvpRow("Эксперимент: таранный преследователь",
@@ -786,7 +622,6 @@ public sealed partial class Subject42DebugMenu
                 if (player == null) return;
                 var enemy = enemySpawner.DebugSpawnCommittedRamAround(ramPrefab, player.position, out enemyDebugStatus);
                 if (enemy == null) { RefreshCurrentTab(); return; }
-                debugEnemies.Add(enemy);
                 CloseMenu();
             });
         MvpRow("Эксперимент: заклинивающий щит",
@@ -817,7 +652,6 @@ public sealed partial class Subject42DebugMenu
                 }
                 var enemy = enemySpawner.DebugSpawnBlockLockedShieldAround(blockLockedShieldPrefab, player.position, out enemyDebugStatus);
                 if (enemy == null) { RefreshCurrentTab(); return; }
-                debugEnemies.Add(enemy);
                 CloseMenu();
             });
         var flankingPrefab = profile?.Phases?.Where(p => p != null && p.enemies != null).SelectMany(p => p.enemies)
@@ -835,50 +669,12 @@ public sealed partial class Subject42DebugMenu
                     RefreshCurrentTab();
                     return;
                 }
-                SpawnDebugEnemies(flankingPrefab, "Фланговый преследователь", 1, true);
+                var player = PlayerRuntimeReference.ResolvePlayerTransform(forceLookup: true);
+                if (player != null &&
+                    enemySpawner.DebugSpawnFlankingChaserAround(flankingPrefab, player.position, out enemyDebugStatus) != null)
+                    CloseMenu();
+                else RefreshCurrentTab();
             });
-        AddHint(enemyDebugStatus);
-    }
-
-    private void BuildMvpEnemies()
-    {
-        bool available = enemySpawner != null;
-        AddEnemiesSection();
-        AddCaptureSpawnControls(CaptureSession.UnavailableReason);
-        var profile = RunStateManager.Instance?.CurrentSector?.SpawnProfile;
-        if (profile != null)
-            foreach (var prefab in profile.Phases.Where(p => p != null).SelectMany(p => p.enemies).Where(e => e?.enemyPrefab != null).Select(e => e.enemyPrefab).Distinct())
-            {
-                string name = prefab.GetComponent<EnemyDirectionalShield>() != null ? prefab.GetComponent<EnemyShooterMovement>() != null ? "Стрелок со щитом" : "Ближний щитоносец" :
-                    prefab.GetComponent<EnemyShooterMovement>() != null ? "Стрелок" : prefab.GetComponent<EnemyBomberMovement>() != null ? "Подрывник" : "Обычный враг";
-                var profilePlayer = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
-                bool profileSpawnReady = available && MvpCanEdit && enemySpawner.isActiveAndEnabled &&
-                    RunStateManager.Instance != null && RunStateManager.Instance.CurrentSector?.SpawnProfile == profile &&
-                    profilePlayer != null && profilePlayer.gameObject.activeInHierarchy &&
-                    PlayerRuntimeReference.PlayerHealth != null && !PlayerRuntimeReference.PlayerHealth.IsDead;
-                MvpRow(name, prefab.name + " · одна безопасная ручная установка через спавнер", "+1 ВРАГ", profileSpawnReady,
-                    () =>
-                    {
-                        var runState = RunStateManager.Instance;
-                        var player = PlayerRuntimeReference.ResolvePlayerTransform("Player", true);
-                        var currentProfile = runState?.CurrentSector?.SpawnProfile;
-                        bool currentPrefab = prefab != null && currentProfile?.Phases != null &&
-                            currentProfile.Phases.Where(p => p != null && p.enemies != null)
-                                .SelectMany(p => p.enemies).Any(e => e != null && e.enemyPrefab == prefab);
-                        if (!MvpCanEdit || enemySpawner == null || !enemySpawner.isActiveAndEnabled ||
-                            runState == null || !currentPrefab || player == null || !player.gameObject.activeInHierarchy ||
-                            PlayerRuntimeReference.PlayerHealth == null || PlayerRuntimeReference.PlayerHealth.IsDead)
-                        {
-                            enemyDebugStatus = "Нужны доступное редактирование, живой MVP и враг текущего профиля.";
-                            RefreshCurrentTab();
-                            return;
-                        }
-                        runState.DebugMarkDevelopmentRun();
-                        SpawnDebugEnemies(prefab, name, 1);
-                    });
-            }
-        AddSectionTitle("Тестовый босс", "Отдельный Development encounter; не завершение текущего сектора");
-        AddCaptureEncounter(TrailerCaptureConfig.Shot.Boss);
         AddHint(enemyDebugStatus);
     }
 
@@ -952,11 +748,12 @@ public sealed partial class Subject42DebugMenu
     {
         var player = PlayerRuntimeReference.CachedPlayer; var health = player != null ? player.GetComponent<PlayerHealth>() : null;
         var run = RunStateManager.Instance; var experience = ExperienceManager.Instance;
+        AddSectionTitle("Игрок", "");
         MvpRow("Здоровье игрока", health != null ? $"{health.CurrentHealth:0}/{health.MaxHealth:0}" : "Игрок не готов", "ВОССТАНОВИТЬ", health != null && !health.IsDead, () => { health.Heal(health.MaxHealth); RefreshCurrentTab(); });
-        MvpRow("Неуязвимость", health != null && health.DebugInvulnerable ? "Включена" : "Выключена", "ПЕРЕКЛЮЧИТЬ", health != null, () => { run?.DebugMarkDevelopmentRun(); health.DebugInvulnerable = !health.DebugInvulnerable; RefreshCurrentTab(); });
-        BuildMvpPickupTools();
         MvpRow("Опыт до следующего уровня", experience != null ? $"Уровень {experience.CurrentLevel} · {experience.CurrentExp}/{experience.ExpToNextLevel}" : "Система опыта не готова", "ДАТЬ ОПЫТ", MvpCanEdit && experience != null,
             () => { CloseMenu(); run.DebugMarkDevelopmentRun(); experience.AddExperience(Mathf.Max(1, experience.ExpToNextLevel - experience.CurrentExp)); });
+        BuildMvpPickupTools();
+        AddSectionTitle("Текущий забег", "");
         MvpRow("Текущий ран", $"Сектор {run?.CurrentSector?.SectorNumber} · орбит {MvpStation?.Rings.Count} · оружий {MvpStation?.Modules.Count} · угроза {run?.ThreatValue:0.0}");
         bool canExit = MvpCanEdit && runFlowController != null && runFlowController.CanDebugCompleteCurrentLevel && runFlowController.IsExitUnlocked;
         MvpRow("Завершить текущий сектор", canExit ? "Через штатный выход и выбор следующего сектора" : "Выход ещё недоступен или ран занят наградой", "ЗАВЕРШИТЬ", canExit, () => { CloseMenu(); CompleteLevel(); });

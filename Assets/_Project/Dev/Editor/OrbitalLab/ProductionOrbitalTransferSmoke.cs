@@ -332,9 +332,7 @@ public static class ProductionOrbitalTransferSmoke
         int oldSector = RunStateManager.Instance.CurrentSector.SectorNumber;
         var flow = RunFlowController.Instance;
         typeof(RunFlowController).GetField("<SectorElapsedTime>k__BackingField", Private).SetValue(flow, 100000f);
-        station.enabled = true; yield return .1f;
-        Check(flow.HandleExitReached(), "existing sector-exit flow opens rule choice");
-        Check(Object.FindFirstObjectByType<LevelChoiceManager>().DebugSelectFirstRule(), "existing rule card triggers next sector");
+        station.enabled = true;
         yield return Wait(() => RunStateManager.Instance.CurrentSector?.SectorNumber == oldSector + 1 && !SceneTransitionOverlay.IsTransitioning && Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized: true });
         station = Object.FindFirstObjectByType<OrbitalStationRuntime>();
         Check(station.State.ShootingDamageMultiplier == 1.2f && station.State.ContactSizeMultiplier == 1.15f && station.Modules.Any(m => m.Kind == OrbitalModuleKind.Shotgun), "real next-sector transition preserves weapons/category upgrades");

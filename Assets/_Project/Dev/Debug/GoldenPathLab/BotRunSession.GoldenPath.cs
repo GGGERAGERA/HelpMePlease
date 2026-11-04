@@ -213,6 +213,16 @@ public sealed partial class BotRunSession
         {
             CaptureGoldenFinal(); ReleaseGoldenScene(); SetGoldenStage("Victory Bunker"); return;
         }
+        var activeRun = RunStateManager.Instance;
+        if (activeRun?.CurrentSector?.SectorNumber == goldenSector + 1 && !RunRoute.CompletesLevel(goldenSector))
+        {
+            if (!GoldenCheck("Run.CompletedSectorOnce", activeRun.CompletedLevels == goldenSector / RunRoute.SectorsPerLevel,
+                "Internal sector advanced the location counter")) return;
+            golden.SectorsCompleted = goldenSector;
+            ReleaseGoldenScene();
+            SetGoldenStage("Sector Startup");
+            return;
+        }
         if (!GoldenCheck("Run.SceneStillPresent", health != null && flow != null && station != null, "Unexpected scene unload")) return;
         telemetry.Sample(Time.deltaTime);
         if (!GoldenCheck("Run.PlayerAlive", !health.IsDead, "Player died during regression route")) return;
@@ -257,7 +267,7 @@ public sealed partial class BotRunSession
         if (!GoldenCheck("Rewards.SelectionReleased", !station.RewardFlow.PendingReward.HasValue && station.InputOwner.CanTransition, "Queue idle with unfinished arena selection")) return;
         if (flow.IsLevelCompleted && goldenSector < RunRoute.FinalSector)
         {
-            if (!GoldenCheck("Progression.SectorChoiceDeadline", Time.realtimeSinceStartup - goldenCompletedAt < 45f, "Sector choices did not become available")) return;
+            if (!GoldenCheck("Progression.SectorChoiceDeadline", Time.realtimeSinceStartup - goldenCompletedAt < 45f, "Location choices did not become available")) return;
             var choices = FindFirstObjectByType<LevelChoiceManager>();
             if (choices == null || !choices.IsChoosing) return;
             if (!GoldenCheck("Rewards.TransitionOnlyWhenResolved", rewards.IsRewardQueueIdle && station.InputOwner.CanTransition, "Unfinished reward at sector transition")) return;

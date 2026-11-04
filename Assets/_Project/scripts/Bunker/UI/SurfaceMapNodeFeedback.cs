@@ -8,13 +8,14 @@ public sealed class SurfaceMapNodeFeedback : MonoBehaviour, IPointerEnterHandler
 {
     public bool Selected, Available;
     public Action DoubleClick;
+    internal Action<bool> HoverChanged;
     private bool hovered;
     private RectTransform selection;
     private Vector2 selectionHome;
     private Graphic rim;
     public void Configure(Graphic border, RectTransform marker) { rim=border; selection=marker; selectionHome=marker.anchoredPosition; }
-    public void OnPointerEnter(PointerEventData e) { hovered=true; }
-    public void OnPointerExit(PointerEventData e) { hovered=false; }
+    public void OnPointerEnter(PointerEventData e) { hovered=true; HoverChanged?.Invoke(true); }
+    public void OnPointerExit(PointerEventData e) { hovered=false; HoverChanged?.Invoke(false); }
     public void OnPointerClick(PointerEventData e)
     { if(e.button!=PointerEventData.InputButton.Left)return; if(e.clickCount==2)DoubleClick?.Invoke(); }
     private void OnDisable() { hovered=false; }

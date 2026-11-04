@@ -56,7 +56,7 @@ public sealed class RunRouteProgressView : MonoBehaviour
         if (sectorText != null)
         {
             if (tutorial) sectorText.text = string.Empty;
-            else sectorText.SetText("{0}/{1}", displayedSector, displayedTotal);
+            else sectorText.SetText("{0}/{1}", RunRoute.LevelOf(displayedSector), RunRoute.LevelOf(displayedTotal));
         }
         if (objectiveText != null)
         {

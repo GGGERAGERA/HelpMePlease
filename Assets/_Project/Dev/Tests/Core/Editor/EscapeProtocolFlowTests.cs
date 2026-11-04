@@ -90,8 +90,14 @@ public sealed class EscapeProtocolFlowTests
         var starter=Object.FindFirstObjectByType<BunkerRunStarter>();
         Assert.That(starter, Is.Not.Null);
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset"));
-        Assert.That(map.TrySelect("F1"),Is.True);map.TrySelectTask(null);starter.StartSurfaceRun(starter.transform);yield return Ready("MVP");
-        yield return CoreTestSupport.SelectInitialRouteNode();
+        panels.OpenDepthSelect(starter.transform);
+        GameObject.Find("Route variant").GetComponent<Button>().onClick.Invoke();
+        GameObject.Find("Route location 1-1").GetComponent<Button>().onClick.Invoke();
+        GameObject.Find("Route confirm").GetComponent<Button>().onClick.Invoke();
+        var tasks = Object.FindFirstObjectByType<ExpeditionTaskPicker>();
+        Assert.That(tasks, Is.Not.Null);
+        Read<Button>(tasks,"launchButton").onClick.Invoke();
+        yield return Ready("MVP");
         var run=RunStateManager.Instance;
         Assert.That(run,Is.Not.Null,"Run service after scene transition");
         Assert.That(run.CurrentConfig,Is.Not.Null,"Run config after scene transition");
@@ -134,9 +140,12 @@ public sealed class EscapeProtocolFlowTests
             int nextSector=run.CurrentSector.SectorNumber+1;
             flow=RunFlowController.Instance;
             typeof(RunFlowController).GetProperty("SectorElapsedTime").SetValue(flow,run.CurrentSector.Duration);
-            var choices=Object.FindFirstObjectByType<LevelChoiceManager>();
-            yield return CoreTestSupport.Await(()=>choices.IsChoosing);
-            Assert.That(choices.DebugSelectFirstRule(),Is.True);
+            if (RunRoute.CompletesLevel(nextSector - 1))
+            {
+                var choices=Object.FindFirstObjectByType<LevelChoiceManager>();
+                yield return CoreTestSupport.Await(()=>choices.IsChoosing);
+                Assert.That(choices.DebugSelectFirstRule(),Is.True);
+            }
             yield return CoreTestSupport.Await(()=>!SceneTransitionOverlay.IsTransitioning&&run.CurrentSector.SectorNumber==nextSector&&
                 Object.FindFirstObjectByType<OrbitalStationRuntime>() is {IsInitialized:true});
             Assert.That(run.CurrentConfig.IsEscapeFinal,Is.True);Assert.That(run.FinalObjectiveSatisfied,Is.True);

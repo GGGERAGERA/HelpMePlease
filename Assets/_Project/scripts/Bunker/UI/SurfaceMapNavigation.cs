@@ -5,6 +5,7 @@ public sealed class SurfaceMapNavigation : MonoBehaviour, IBeginDragHandler, IDr
 {
     public const float MinZoom = .65f, MaxZoom = 2.2f;
     public RectTransform Content { get; private set; }
+    internal bool ScrollAlongRoute { get; set; }
     private RectTransform viewport;
     private Vector2 lastPoint, home;
     private Rect bounds = new(-300,-200,600,400);
@@ -31,6 +32,13 @@ public sealed class SurfaceMapNavigation : MonoBehaviour, IBeginDragHandler, IDr
     public void Pan(Vector2 delta) { if(Content==null)return; Content.anchoredPosition+=delta; Clamp(); }
     public void OnScroll(PointerEventData data)
     {
+        if (ScrollAlongRoute && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.RightControl))
+        {
+            var delta = data.scrollDelta;
+            float along = Mathf.Abs(delta.x) > Mathf.Abs(delta.y) ? -delta.x : delta.y;
+            Pan(new Vector2(along * 132f, 0f));
+            return;
+        }
         RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport,data.position,data.enterEventCamera,out var point);
         Zoom(data.scrollDelta.y,point);
     }

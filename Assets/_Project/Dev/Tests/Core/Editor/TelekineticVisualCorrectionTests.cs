@@ -136,6 +136,7 @@ public sealed class TelekineticVisualCorrectionTests
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset"));
         var starter=Object.FindFirstObjectByType<BunkerRunStarter>(); starter.StartRun(starter.transform);
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name=="MVP" && ProductionSceneComposition.Active is {IsReady:true} && !SceneTransitionOverlay.IsTransitioning);
+        if (Phase == "catalogue") yield return CoreTestSupport.SelectInitialRouteNode();
         var player=Object.FindFirstObjectByType<CharacterSpawner>();
         var station=player.Station; var rig=station.Rig;
         player.SpawnedPlayer.GetComponent<PlayerHealth>().DebugInvulnerable=true;

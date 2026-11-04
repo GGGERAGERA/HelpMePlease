@@ -44,6 +44,10 @@ public sealed class RunStateManager : MonoBehaviour
 
     public RunSector CurrentSector { get; private set; }
     public RunRouteGraph RouteGraph { get; internal set; }
+    private RunRouteGraph entryGraph;
+    private RouteNode entryNode;
+    private readonly List<RouteNode> routePath = new();
+    internal IReadOnlyList<RouteNode> RoutePath => routePath;
 
     private readonly List<UpgradeData> pickedUpgrades = new();
     private readonly RunItemSlots itemSlots = new();
@@ -225,12 +229,16 @@ public sealed class RunStateManager : MonoBehaviour
     {
         sector?.ApplyRunConfig(CurrentConfig);
         CurrentSector = sector;
+        if (sector?.RouteNode is RouteNode node &&
+            (routePath.Count == 0 || routePath[routePath.Count - 1] != node))
+            routePath.Add(node);
     }
 
     public void ClearCurrentSector()
     {
         CurrentSector = null;
         RouteGraph = null;
+        routePath.Clear();
     }
 
     // Strict access: the caller owns diagnostics; absence never starts a run.
@@ -311,7 +319,7 @@ public sealed class RunStateManager : MonoBehaviour
         CharacterData character,
         WeaponData weapon,
         AnomalyStabilizerData anomalyStabilizer,
-        bool isDevelopmentRun = false)
+        bool isDevelopmentRun = false, RunRouteGraph graph = null, RouteNode entry = null)
     {
         if (lifecycleBusy) return;
         if (!runEnded) EndRun(RunEndReason.ReturnedToBunker, RunId);
@@ -321,6 +329,8 @@ public sealed class RunStateManager : MonoBehaviour
         if (!developmentRun) ApplyPendingSlotBonus();
 
         ClearCurrentSector();
+        RouteGraph = entryGraph = graph;
+        entryNode = entry;
         SelectedCharacter = character;
         // Production Orbital runs always start from OrbitalRunState's Pistol.
         // Keep the legacy parameter for old debug callers, but never persist it.
@@ -791,8 +801,10 @@ public sealed class RunStateManager : MonoBehaviour
         int depth = CurrentDepthId;
         bool dev = developmentRun;
         var config = CurrentConfig;
+        var graph = entryGraph;
+        var entry = entryNode;
         EndRun(reason, expectedRunId);
-        BeginNewRun(character, null, stage, rule, anomaly, stabilizer, depth, dev, config);
+        BeginNewRun(character, null, stage, rule, anomaly, stabilizer, depth, dev, config, graph, entry);
         return true;
     }
 
@@ -836,7 +848,7 @@ public sealed class RunStateManager : MonoBehaviour
         AnomalyStabilizerData anomalyStabilizer,
         int depthId = DepthCatalog.SurfaceId,
         bool isDevelopmentRun = false,
-        RunConfig config = null)
+        RunConfig config = null, RunRouteGraph graph = null, RouteNode entry = null)
     {
         if (lifecycleBusy) return;
         if (isDevelopmentRun) developmentRun = true;
@@ -846,7 +858,7 @@ public sealed class RunStateManager : MonoBehaviour
         startingStageProfile = stageProfile;
         startingWorldRule = worldRule;
         startingLocalAnomaly = localAnomaly;
-        BeginNewRunInternal(character, weapon, anomalyStabilizer, isDevelopmentRun);
+        BeginNewRunInternal(character, weapon, anomalyStabilizer, isDevelopmentRun, graph, entry);
     }
 
     private void CreateStartingSector()
@@ -871,16 +883,13 @@ public sealed class RunStateManager : MonoBehaviour
             return;
         }
 
-        SetCurrentSector(new RunSector(
-            TutorialController.NeedsTutorial ? RunRoute.TutorialSector : RunRoute.FirstSector,
-            startingStageProfile,
-            startingWorldRule,
-            startingLocalAnomaly
-        ));
+        SetCurrentSector(TutorialController.NeedsTutorial
+            ? new RunSector(RunRoute.TutorialSector, startingStageProfile, startingWorldRule, startingLocalAnomaly)
+            : CreateFirstNormalSector());
     }
 
     public RunSector CreateFirstNormalSector() => new RunSector(
-        RunRoute.FirstSector, startingStageProfile, startingWorldRule, startingLocalAnomaly);
+        RunRoute.FirstSector, startingStageProfile, startingWorldRule, startingLocalAnomaly, entryNode);
 
     public void ClearFinishedRunCompatibilityState()
     {

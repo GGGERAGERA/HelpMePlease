@@ -144,7 +144,7 @@ public sealed partial class Subject42DebugMenu
     }
     private void UpdateBotLabTelemetry()
     {
-        if (!isOpen || (activeTab != DebugTab.Additional || additionalSection != 0) || Time.unscaledTime < nextBotUiRefresh) return;
+        if (!isOpen || activeTab != DebugTab.Additional || Time.unscaledTime < nextBotUiRefresh) return;
         nextBotUiRefresh = Time.unscaledTime + .25f;
         RefreshBotLabTelemetry();
     }

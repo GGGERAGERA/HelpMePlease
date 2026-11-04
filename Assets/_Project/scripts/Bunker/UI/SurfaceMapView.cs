@@ -63,6 +63,8 @@ public sealed class SurfaceMapView : MonoBehaviour
     [SerializeField] private Trail[] trails = System.Array.Empty<Trail>();
     [SerializeField] private Sprite selectedSprite;
     private LocalizationService localization;
+    private SurfaceRoutePresentation routePresentation;
+    private RunStateManager routeRun;
     private string inspectedId, lastSelectedId;
     private bool centered;
     private static readonly Color Selected = new(.78f,.67f,.41f);
@@ -92,7 +94,69 @@ public sealed class SurfaceMapView : MonoBehaviour
         if (localization != null) localization.LanguageChanged += HandleLanguageChanged;
         BindCharacterSelection();
     }
-    private void HandleLanguageChanged(GameLanguage language) { if (service != null) Refresh(); }
+    private void HandleLanguageChanged(GameLanguage language)
+    {
+        if (routePresentation != null) routePresentation.RefreshText();
+        else if (service != null) Refresh();
+    }
+
+    internal void ShowRoute(BunkerRunStarter runStarter, BunkerPanelManager panelOwner, Transform target)
+    {
+        ShowBunkerRoute(false);
+
+        void ShowBunkerRoute(bool escape)
+        {
+            var entry = runStarter.GetEntryGraph(escape);
+            if (entry == null)
+            {
+                Debug.LogError("The bunker route is missing its production configuration.", this);
+                return;
+            }
+            bool canSwitch = escape || runStarter.EscapeRoute != null;
+            var map = runStarter.SurfaceMap;
+            ShowRoute(entry, System.Array.Empty<RouteNode>(), entry.Entries, node =>
+            {
+                if (!map.TrySelect(node.Expedition.Id)) return false;
+                taskPicker.Show(map, () => runStarter.StartRoute(target, entry, node),
+                    L("expedition.task_title"));
+                return true;
+            }, panelOwner.CloseAll, canSwitch ? () => ShowBunkerRoute(!escape) : null,
+                escape ? "route.surface" : "interaction.escape");
+        }
+    }
+
+    internal void ShowRoute(RunRouteGraph route, IReadOnlyList<RouteNode> path,
+        IReadOnlyList<RouteNode> available, System.Func<RouteNode, bool> confirm,
+        System.Action close = null, System.Action alternate = null, string alternateKey = null,
+        RunStateManager run = null)
+    {
+        gameObject.SetActive(true);
+        if (routePresentation == null)
+        {
+            card.gameObject.SetActive(false);
+            closeButton.gameObject.SetActive(false);
+            routePresentation = new SurfaceRoutePresentation((RectTransform)transform, graph, world,
+                navigation, fog, details, Art("BUNKER")?.Sprite, locationIcons);
+        }
+        var character = run?.SelectedCharacter ?? characterSelection?.SelectedCharacter ?? defaultCharacter;
+        routePresentation.Show(route, path, available, confirm, close, alternate, alternateKey, character);
+        BindRouteReward(run);
+        RefreshRouteGold();
+    }
+
+    private void BindRouteReward(RunStateManager run)
+    {
+        if (routeRun != null) routeRun.CurrentRewardChanged -= RefreshRouteGold;
+        routeRun = run;
+        if (routeRun != null) routeRun.CurrentRewardChanged += RefreshRouteGold;
+    }
+
+    private void RefreshRouteGold() =>
+        routePresentation.SetGold(routeRun != null ? routeRun.GetCurrentGoldReward(RunEndReason.ReturnedToBunker) : 0);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal bool DebugConfirmFirstRouteNode() => routePresentation?.ConfirmFirst() == true;
+#endif
     private void ResetView() => navigation.ResetView();
     private void OnDestroy()
     {
@@ -119,6 +183,7 @@ public sealed class SurfaceMapView : MonoBehaviour
     }
     private void OnDisable()
     {
+        BindRouteReward(null);
         if (taskPicker != null) taskPicker.gameObject.SetActive(false);
         if (service != null) service.Changed -= Refresh;
         if (localization != null) localization.LanguageChanged -= HandleLanguageChanged;
@@ -134,8 +199,9 @@ public sealed class SurfaceMapView : MonoBehaviour
     }
     private void RefreshHero(CharacterData character)
     {
-        if (hero == null) return;
         var current = character != null ? character : defaultCharacter;
+        routePresentation?.SetCharacter(current);
+        if (hero == null) return;
         hero.sprite = current != null ? current.GameplayIcon : null;
         hero.gameObject.SetActive(hero.sprite != null);
     }

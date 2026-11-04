@@ -7,7 +7,7 @@ public sealed partial class Subject42DebugMenu
     private readonly List<ExperiencePickup> testPickups = new();
     private readonly RaycastHit2D[] pickupPathHits = new RaycastHit2D[16];
 
-    private bool CanUsePickupDebugTools => IsMvpDebugMenu && MvpCanEdit &&
+    private bool CanUsePickupDebugTools => IsMvpWorldPage && MvpCanEdit &&
         ExperienceManager.Instance != null &&
         ExperienceManager.Instance.CanUseRarePickups(gameObject.scene) &&
         GameplayAreaService.Instance != null;

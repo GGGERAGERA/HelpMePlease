@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum SurfaceMapMeaning { Danger, Reward, Anomaly, Event, Rule, Expedition }
+public enum SurfaceMapMeaning { Danger, Reward, Anomaly, Event, Rule, Expedition, Cleared, Boss }
 
 /// <summary>Shared condition symbols plus a neutral expedition marker; owns no gameplay profile.</summary>
 [RequireComponent(typeof(CanvasRenderer))]
@@ -15,7 +15,9 @@ public sealed class SurfaceMapGlyph : MaskableGraphic
         new[]{"000010000","000101000","001001100","010011010","100110001","010100010","001101100","000101000","000010000"},
         new[]{"010000000","011111110","010111100","011111110","010000000","010000000","010000000","111100000","000000000"},
         new[]{"001111100","011000110","110010011","100111001","100010001","100111001","110010011","011000110","001111100"},
-        new[]{"000111000","011000110","110000011","100000001","100000001","110000011","011000110","001111100","000000000"}
+        new[]{"000111000","011000110","110000011","100000001","100000001","110000011","011000110","001111100","000000000"},
+        new[]{"000000000","000000011","000000110","000001100","110011000","011110000","001100000","000000000","000000000"},
+        new[]{"001111100","011111110","111111111","110111011","100111001","111101111","011111110","001010100","000000000"}
     };
     public static Color Tint(SurfaceMapMeaning value) => value switch
     {
@@ -24,6 +26,8 @@ public sealed class SurfaceMapGlyph : MaskableGraphic
         SurfaceMapMeaning.Anomaly => new Color32(178,149,203,255),
         SurfaceMapMeaning.Event => new Color32(214,158,91,255),
         SurfaceMapMeaning.Rule => new Color32(126,184,187,255),
+        SurfaceMapMeaning.Cleared => new Color32(153,196,166,255),
+        SurfaceMapMeaning.Boss => new Color32(255,209,130,255),
         _ => new Color32(162,174,163,255)
     };
     public void Show(SurfaceMapMeaning value)

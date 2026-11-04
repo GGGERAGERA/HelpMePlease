@@ -37,6 +37,7 @@ public sealed class SurfaceSectorDefinition : ScriptableObject
     public string Id => id;
     public string DisplayName => displayName;
     public string Description => description;
+    internal WorldRuleData WorldRule => parameters.worldRule;
     public Vector2 MapPosition => mapPosition;
     public SurfaceLocationFamily LocationFamily
     {

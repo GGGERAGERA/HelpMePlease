@@ -120,7 +120,7 @@ public sealed class TrailerCaptureSession : MonoBehaviour
             events?.ClearAllDebugEvents();
         bool spawningBeforeApply = enemies.IsSpawningEnabled;
         enemies.StopSpawning();
-        DespawnOrdinaryEnemies();
+        DespawnEnemies();
         if (!preserveBuild)
         {
             var previousState = run.OrbitalStationState;
@@ -188,10 +188,10 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         ownedEvent = null;
     }
 
-    private void DespawnOrdinaryEnemies()
+    private void DespawnEnemies(bool includeBosses = false)
     {
         foreach (var enemy in EnemyHealth.ActiveInstances.ToArray())
-            if (enemy != null && !enemy.IsBoss && enemy.gameObject.scene == gameObject.scene)
+            if (enemy != null && (includeBosses || !enemy.IsBoss) && enemy.gameObject.scene == gameObject.scene)
             {
                 enemy.gameObject.SetActive(false);
                 Destroy(enemy.gameObject);
@@ -238,13 +238,20 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         if (!Capture()) return false;
         // Existing enemies carry spawn-time health/Golden modifiers. Replace ordinary
         // spawns instead of stacking or trying to reverse those combat modifiers.
-        DespawnOrdinaryEnemies();
+        DespawnEnemies();
         if (!modifiers.DebugApplyCaptureWorldRule(rule)) { Status = "Аномалию не удалось применить"; return false; }
         worldRuleChanged = true;
         Status = $"Глобальная аномалия: {rule.DisplayName}. Новые враги получат её штатные эффекты";
         return true;
     }
-    public void ClearEnemies() { if (Capture()) DespawnOrdinaryEnemies(); }
+    public int ClearSandboxEnemies()
+    {
+        if (!Capture()) return 0;
+        int count = EnemyHealth.ActiveInstances.Count(enemy => enemy != null && enemy.gameObject.scene == gameObject.scene);
+        flow.DebugResetFilmingBoss();
+        DespawnEnemies(includeBosses: true);
+        return count;
+    }
     public void ClearWorldEvents()
     {
         if (!Capture()) return;
@@ -267,7 +274,7 @@ public sealed class TrailerCaptureSession : MonoBehaviour
         if (reason != null) { Status = reason; return false; }
         ClearOwnedEncounter();
         enemies?.StopSpawning();
-        DespawnOrdinaryEnemies();
+        DespawnEnemies();
         if (buildChanged && station != null)
         {
             station.Teardown();

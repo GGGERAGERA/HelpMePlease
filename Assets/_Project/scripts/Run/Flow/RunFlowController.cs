@@ -238,6 +238,17 @@ public sealed class RunFlowController : MonoBehaviour
         worldEventSpawner?.CancelActiveEventsForDeparture();
         levelCompleted = true;
 
+        if (!RunRoute.CompletesLevel(sectorNumber))
+        {
+            if (manager.TryAdvanceWithinLocation(RegisterCurrentLevelCompletion))
+            {
+                ExitReached?.Invoke();
+                return true;
+            }
+            levelCompleted = false;
+            return false;
+        }
+
         if (!manager.TryShowChoices())
         {
             levelCompleted = false;
@@ -245,7 +256,7 @@ public sealed class RunFlowController : MonoBehaviour
         }
 
         RegisterCurrentLevelCompletion();
-        if (RunRoute.CompletesLevel(sectorNumber)) runState.RegisterCompletedLevel();
+        runState.RegisterCompletedLevel();
         ExitReached?.Invoke();
         return true;
     }
