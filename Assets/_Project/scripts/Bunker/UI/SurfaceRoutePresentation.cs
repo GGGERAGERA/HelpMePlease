@@ -13,7 +13,8 @@ internal sealed class SurfaceRoutePresentation
     private readonly RectTransform root, graph, landmarks;
     private readonly SurfaceMapFog fog;
     private readonly SurfaceMapNavigation navigation;
-    private readonly TMP_Text fontSource, header, goldLabel, pressureLabel, alternateLabel;
+    private readonly TMP_Text fontSource, header, goldLabel, alternateLabel;
+    private readonly RunPressureMeter pressureMeter;
     private readonly RectTransform chrome;
     private readonly SurfaceRouteCard card;
     private readonly Button back, alternateButton;
@@ -32,7 +33,6 @@ internal sealed class SurfaceRoutePresentation
     private Func<RouteNode, bool> confirm;
     private string alternateKey;
     private int runGold;
-    private ThreatTier pressureTier;
     private int displayedLevel;
     private RouteNode selected, inspected;
 
@@ -78,11 +78,8 @@ internal sealed class SurfaceRoutePresentation
         goldLabel.fontSizeMin = 12f;
         goldLabel.fontSizeMax = 16f;
         var pressure = Frame("Route pressure HUD", chrome, new Vector2(395f, 396f), new Vector2(198f, 42f), Border, Surface);
-        pressureLabel = Label("Route pressure", pressure.rectTransform, Vector2.zero, new Vector2(184f, 30f), 16f, SecondaryText);
-        pressureLabel.textWrappingMode = TextWrappingModes.NoWrap;
-        pressureLabel.enableAutoSizing = true;
-        pressureLabel.fontSizeMin = 12f;
-        pressureLabel.fontSizeMax = 16f;
+        pressureMeter = RunPressureMeter.Create(pressure.rectTransform, fontSource.font,
+            new Vector2(176f, 30f), "Route pressure");
         back = Control("Route close", chrome, new Vector2(742f, 396f), new Vector2(46f, 42f), "×", out _);
         alternateButton = Control("Route variant", chrome, new Vector2(540f, 338f), new Vector2(312f, 42f), "", out alternateLabel);
 
@@ -226,14 +223,13 @@ internal sealed class SurfaceRoutePresentation
     internal void SetRunStatus(int gold, float pressure)
     {
         runGold = gold;
-        pressureTier = ThreatTierPresentation.FromPressure(pressure);
+        pressureMeter.SetValue(pressure);
         RefreshRunStatus();
     }
 
     private void RefreshRunStatus()
     {
         goldLabel.text = F("route.gold", Tint(runGold, PrimaryText));
-        pressureLabel.text = F("route.pressure", Tint(ThreatTierPresentation.Format(pressureTier), PrimaryText));
     }
 
     private static void Bind(Button button, Action action)

@@ -91,8 +91,8 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private RunThreatController threat;
     [SerializeField] private CameraShake cameraShake;
     private EnemyHealth boundBoss;
-    private ThreatTier? lastThreatTier;
-    private TMP_Text pressureText;
+    private float pressureValue;
+    private RunPressureMeter pressureMeter;
 
     public bool IsInformationVisible => boundPlayer != null && !boundPlayer.IsDead &&
         runStateManager != null && !runStateManager.IsRunEnded &&
@@ -154,7 +154,6 @@ public class HUDManager : MonoBehaviour
         var localization = LocalizationService.EnsureExists();
         if (levelText != null) levelText.text = displayedLevel.ToString();
         if (bossNameText != null && displayedBossName != null) bossNameText.text = localization.Get(displayedBossName);
-        if (lastThreatTier is { } tier) RefreshPressureText(tier);
     }
 
     private readonly Vector3[] framingCorners = new Vector3[4];
@@ -227,19 +226,16 @@ public class HUDManager : MonoBehaviour
             return;
         }
 
-        if (timerText != null && combatVitals == null)
+        if (timerText != null)
         {
-            pressureText = new GameObject("Combat pressure", typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-            var rect = pressureText.rectTransform;
-            rect.SetParent(threatPanel, false);
-            rect.anchorMin = rect.anchorMax = new Vector2(1f, .5f);
-            rect.pivot = new Vector2(0f, .5f);
-            rect.anchoredPosition = new Vector2(8f, 0f);
-            rect.sizeDelta = new Vector2(168f, 26f);
-            pressureText.font = timerText.font;
-            pressureText.fontSize = 14f;
-            pressureText.alignment = TextAlignmentOptions.MidlineLeft;
-            pressureText.raycastTarget = false;
+            // Keep the existing pressure icon and surface; replace only its four segments.
+            foreach (Transform child in threatSegments.transform)
+                if (child.name.StartsWith("Segment", System.StringComparison.Ordinal))
+                    child.gameObject.SetActive(false);
+            pressureMeter = RunPressureMeter.Create(threatPanel, timerText.font,
+                new Vector2(124f, 26f), "Combat pressure");
+            ((RectTransform)pressureMeter.transform).anchoredPosition = new Vector2(14f, 0f);
+            pressureMeter.SetValue(pressureValue);
         }
         combatVitals?.SetVisible(false);
         HideLowHpVignette();
@@ -385,17 +381,8 @@ public class HUDManager : MonoBehaviour
 
     public void SetThreat(float value, ThreatTier tier)
     {
-        if (lastThreatTier == tier) return;
-        lastThreatTier = tier;
-        threatSegments.SetValue((int)tier);
-        RefreshPressureText(tier);
-    }
-
-    private void RefreshPressureText(ThreatTier tier)
-    {
-        if (pressureText != null)
-            pressureText.text = string.Format(LocalizationService.EnsureExists().Get("route.pressure"),
-                ThreatTierPresentation.Format(tier));
+        pressureValue = value;
+        pressureMeter?.SetValue(value);
     }
 
     public void SetCurrentRunCurrency(int amount) => goldCounter.SetValue(amount);

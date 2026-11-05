@@ -39,7 +39,7 @@ public sealed class SurfaceMapUxTests
             Assert.That(fog.CoverageAt(nodes["C1"].GetComponent<RectTransform>().anchoredPosition),Is.Zero);
             var facts=root.transform.Find("Sector card").GetComponentsInChildren<TMP_Text>();
             Assert.That(System.Array.Exists(facts,label=>label.text.Contains("+50%") && label.color==SurfaceMapGlyph.Tint(SurfaceMapMeaning.Reward)),Is.True);
-            Assert.That(System.Array.Exists(facts,label=>label.text.Contains("+30%") && label.text.Contains("+44%") && label.color==SurfaceMapGlyph.Tint(SurfaceMapMeaning.Danger)),Is.True,"Concrete threat and enemy HP modifiers remain visible.");
+            Assert.That(System.Array.Exists(facts,label=>label.text.Contains("+44%") && label.color==SurfaceMapGlyph.Tint(SurfaceMapMeaning.Danger)),Is.True,"The actual enemy HP modifier remains visible.");
             var frontier=Read<RectTransform>(view,"graph").Find("Trail C1-C2").GetComponent<Image>();
             var hint=frontier.sprite;
             Assert.That(hint.name,Does.Contain("Hint"),"Only a short continuation may enter the unexplored area.");

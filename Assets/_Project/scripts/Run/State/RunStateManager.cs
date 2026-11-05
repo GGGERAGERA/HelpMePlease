@@ -342,7 +342,7 @@ public sealed class RunStateManager : MonoBehaviour
         pickedUpgrades.Clear();
         itemSlots.Clear();
         anomalyInventory.Clear();
-        threatValue = CurrentConfig.InitialThreat;
+        threatValue = 0f;
         threatElapsedTime = 0f;
 
         ClearExperienceSnapshot();
@@ -920,7 +920,6 @@ public sealed class RunStateManager : MonoBehaviour
         CurrentAnomalyStabilizer = null;
         AnomalyModifiers = AnomalyRunModifiers.None;
         anomalyInventory.Clear();
-        threatValue = threatElapsedTime = 0f;
         OrbitalStationState = null;
         CurrentConfig = RunConfig.Default;
         Expedition = null;

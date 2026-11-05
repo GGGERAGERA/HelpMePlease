@@ -328,7 +328,7 @@ public sealed class SurfaceSectorTransitionTests
         Assert.That(PreviewFeedback(4), Is.Not.Null);
         Assert.That(PreviewFeedback(5), Is.Null);
         Assert.That(GameObject.Find("Type mark"), Is.Null);
-        Assert.That(GameObject.Find("Route pressure").GetComponent<TMP_Text>().GetParsedText(), Is.EqualTo("Давление I / IV"));
+        Assert.That(GameObject.Find("Route pressure").GetComponent<TMP_Text>().GetParsedText(), Is.EqualTo("0%"));
         Assert.That(AvailableButtons().Count(), Is.EqualTo(3));
         Assert.That(GameObject.Find("Route selection outline"), Is.Null, "Opening the map does not choose a node.");
         var preview = GameObject.Find("Route location 2-1");
@@ -391,11 +391,9 @@ public sealed class SurfaceSectorTransitionTests
         health.DebugInvulnerable = true;
         run.SetThreatForDebug(52f);
         yield return null;
-        Assert.That(GameObject.Find("Combat pressure"), Is.Null);
-        var pressureMeter = (HudSegments)typeof(HUDManager).GetField("threatSegments", InstanceMembers).GetValue(HUDManager.Instance);
-        var segments = (Image[])typeof(HudSegments).GetField("segments", InstanceMembers).GetValue(pressureMeter);
-        var activeColor = (Color)typeof(HudSegments).GetField("activeColor", InstanceMembers).GetValue(pressureMeter);
-        Assert.That(segments.Count(segment => segment.color == activeColor), Is.EqualTo(3));
+        var pressureMeter = HUDManager.Instance.GetComponentInChildren<RunPressureMeter>();
+        Assert.That(pressureMeter.Value, Is.InRange(52f, 52.1f));
+        Assert.That(GameObject.Find("Combat pressure").GetComponent<TMP_Text>().text, Is.EqualTo("52%"));
 
         for (int sector = 1; sector <= (full ? RunRoute.FinalSector : 2); sector++)
         {
@@ -432,8 +430,8 @@ public sealed class SurfaceSectorTransitionTests
             AssertMapLevel(sector + 1);
             var pressure = GameObject.Find("Route pressure").GetComponent<TMP_Text>();
             pressure.ForceMeshUpdate();
-            Assert.That(pressure.GetParsedText(),
-                Is.EqualTo($"Давление {ThreatTierPresentation.Format(ThreatTierPresentation.FromPressure(run.ThreatValue))}"));
+            Assert.That(pressure.GetComponentInParent<RunPressureMeter>().Value,
+                Is.EqualTo(run.ThreatValue));
             var buttons = AvailableButtons().ToArray();
             Assert.That(buttons.Select(button => button.name), Is.EquivalentTo(location.Next.Select(NodeName)));
             Assert.That(GameObject.Find(NodeName(location)).GetComponent<Button>(), Is.Null);

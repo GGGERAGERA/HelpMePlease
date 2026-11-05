@@ -1,6 +1,6 @@
 param(
     [ValidateSet('Night', 'Smoke', 'Status', 'Stop')][string]$Mode = 'Status',
-    [ValidateRange(0.01, 7)][double]$Hours = 6,
+    [ValidateRange(0.01, 7)][double]$Hours = 5,
     [string]$DeadlineAt,
     [string]$ResumeFrom,
     [string]$Unity = 'G:/unity/editor/6000.3.13f1/Editor/Unity.exe'
@@ -28,13 +28,20 @@ if ($Mode -eq 'Status') {
 if (Test-Path -LiteralPath (Join-Path $taskBase 'session.lock')) { throw 'A session lock exists. Use Status; do not start a second controller.' }
 if (Test-Path -LiteralPath (Join-Path $taskBase 'STOP')) { throw 'STOP exists. Remove that exact file deliberately before a new run.' }
 $taskNode = (Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+$taskCodex = (Get-Command codex.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+if (-not $taskCodex) {
+    $taskCodex = Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'OpenAI/Codex/bin') -Filter codex.exe -File -Recurse -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1 -ExpandProperty FullName
+}
+if (-not $taskCodex) { throw 'Native Codex CLI not found. Install Codex CLI or add codex.exe to PATH.' }
 $taskScript = Join-Path $PSScriptRoot 'night-shift.mjs'
 if ($Mode -eq 'Smoke') {
-    & $taskNode $taskScript --mode smoke --hours $Hours --unity $Unity
+    & $taskNode $taskScript --mode smoke --hours $Hours --unity $Unity --codex $taskCodex
     exit $LASTEXITCODE
 }
 $taskStamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')
 $taskArgs = @(('"' + $taskScript + '"'), '--mode', 'night', '--hours', $Hours.ToString([Globalization.CultureInfo]::InvariantCulture), '--unity', ('"' + $Unity + '"'))
+$taskArgs += @('--codex', ('"' + $taskCodex + '"'))
 if ($DeadlineAt) { $taskArgs += @('--deadline-at', ('"' + $DeadlineAt + '"')) }
 if ($ResumeFrom) { $taskArgs += @('--resume-from', ('"' + $ResumeFrom + '"')) }
 $taskProcess = Start-Process -FilePath $taskNode -ArgumentList $taskArgs -WorkingDirectory $taskProject -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $taskBase "launcher-$taskStamp.stdout.log") -RedirectStandardError (Join-Path $taskBase "launcher-$taskStamp.stderr.log")

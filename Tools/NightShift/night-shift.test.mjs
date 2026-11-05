@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import * as nightShift from './night-shift.mjs';
 import { cycleLoop, parseTestXml, readVerification, smokeReady, findPendingBackups, withSessionLock, workspaceFingerprint, nightVerified, runProcess, recoverySmoke, checkTaskProcess, sessionDeadline, staticVerification } from './night-shift.mjs';
 
 test('static work never invents Unity compilation, tests or gameplay evidence', () => {
@@ -193,6 +195,94 @@ test('quota failure is fatal but an ordinary child error remains recoverable', (
     assert.throws(() => checkTaskProcess({ exitCode: 1, stderr }, output, 'Worker'), error => !error.recoverable && /quota/.test(error.message));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+test('night gate rejects old read-only smoke and requires verified worker write access', () => {
+  const now = Date.now(), baseline = { head: 'head', fingerprint: 'workspace' };
+  const ready = { ready: true, kind: 'recovery-v3', workerAccessVerified: true,
+    ...baseline, at: new Date(now).toISOString() };
+  assert.equal(nightShift.smokeGateMatches?.({ ...ready, kind: 'recovery-v2' }, baseline, now), false);
+  assert.equal(nightShift.smokeGateMatches?.({ ...ready, workerAccessVerified: false }, baseline, now), false);
+  assert.equal(nightShift.smokeGateMatches?.(ready, baseline, now), true);
+  assert.equal(nightShift.smokeGateMatches?.(ready, { ...baseline, fingerprint: 'changed' }, now), false);
+});
+
+test('write-access probe checks existing files and new-file directories without changing source', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'night-write-probe-'));
+  try {
+    const source = path.join(dir, 'existing.cs');
+    fs.writeFileSync(source, 'unchanged');
+    const targets = path.join(dir, 'targets.json'), output = path.join(dir, 'receipt.json');
+    fs.writeFileSync(targets, JSON.stringify(['existing.cs', 'new/subfolder/new.cs']));
+    const result = spawnSync('pwsh', ['-NoProfile', '-File', fileURLToPath(new URL('./Test-WorkerAccess.ps1', import.meta.url)),
+      '-Project', dir, '-TargetsFile', targets, '-Output', output], { encoding: 'utf8', windowsHide: true });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(fs.readFileSync(output, 'utf8').replace(/^\uFEFF/, '')).passed, true);
+    assert.equal(fs.readFileSync(source, 'utf8'), 'unchanged');
+    assert.equal(fs.existsSync(path.join(dir, 'new')), false);
+    assert.deepEqual(fs.readdirSync(dir).sort(), ['existing.cs', 'receipt.json', 'targets.json']);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('write-access probe rejects a read-only source and paths outside the project', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'night-write-denied-'));
+  const source = path.join(dir, 'locked.cs');
+  try {
+    fs.writeFileSync(source, 'unchanged');
+    fs.chmodSync(source, 0o444);
+    const targets = path.join(dir, 'targets.json'), output = path.join(dir, 'receipt.json');
+    for (const paths of [['locked.cs'], ['../outside.cs']]) {
+      fs.writeFileSync(targets, JSON.stringify(paths));
+      const result = spawnSync('pwsh', ['-NoProfile', '-File', fileURLToPath(new URL('./Test-WorkerAccess.ps1', import.meta.url)),
+        '-Project', dir, '-TargetsFile', targets, '-Output', output], { encoding: 'utf8', windowsHide: true });
+      assert.notEqual(result.status, 0);
+      const receipt = JSON.parse(fs.readFileSync(output, 'utf8').replace(/^\uFEFF/, ''));
+      assert.equal(receipt.passed, false);
+      assert.ok(receipt.error);
+    }
+    assert.equal(fs.readFileSync(source, 'utf8'), 'unchanged');
+  } finally { fs.chmodSync(source, 0o666); fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('write-access probe rejects a file occupying an intermediate directory', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'night-write-conflict-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'new'), 'existing file');
+    const targets = path.join(dir, 'targets.json'), output = path.join(dir, 'receipt.json');
+    fs.writeFileSync(targets, JSON.stringify(['new/subfolder/new.cs']));
+    const result = spawnSync('pwsh', ['-NoProfile', '-File', fileURLToPath(new URL('./Test-WorkerAccess.ps1', import.meta.url)),
+      '-Project', dir, '-TargetsFile', targets, '-Output', output], { encoding: 'utf8', windowsHide: true });
+    assert.notEqual(result.status, 0);
+    const receipt = JSON.parse(fs.readFileSync(output, 'utf8').replace(/^\uFEFF/, ''));
+    assert.equal(receipt.passed, false);
+    assert.equal(fs.readFileSync(path.join(dir, 'new'), 'utf8'), 'existing file');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('NoSafeWork cannot end a timed shift even when its stop review approves', async () => {
+  const worked = [];
+  const rows = await cycleLoop({ maxCycles: 2, deadline: Date.now() + 10000, stopped: () => false,
+    decide: async (_history, index) => index === 0
+      ? { action: 'stop', stopCategory: 'NoSafeWork', task: 'one area is blocked', issueKey: 'map' }
+      : { action: 'work', task: 'independent reward work', issueKey: 'rewards' },
+    reviewStop: async () => true,
+    work: async decision => { worked.push(decision.issueKey); return {}; },
+    verify: async () => ({ passed: true }) });
+  assert.deepEqual(worked, ['rewards']);
+  assert.equal(rows[0].verification.result, 'StopRejected');
+});
+
+test('replanning defers a task without blocking its later execution', async () => {
+  const worked = [];
+  const rows = await cycleLoop({ maxCycles: 3, deadline: Date.now() + 10000, stopped: () => false,
+    decide: async (_history, index) => ({ action: index < 2 ? 'stop' : 'work',
+      stopCategory: index < 2 ? 'NoSafeWork' : null, task: 'map', issueKey: 'map' }),
+    reviewStop: async () => ({ action: 'retry' }),
+    work: async decision => { worked.push(decision.issueKey); return {}; },
+    verify: async () => ({ passed: true }) });
+  assert.deepEqual(worked, ['map']);
+  assert.equal(rows[0].verification.result, 'ReplanPending');
+  assert.equal(rows[1].blocked, false);
+});
+
 test('an explicit morning cutoff shortens the original session and cannot extend its budget', () => {
   const start = '2026-10-27T22:47:35.881Z', now = Date.parse('2026-10-27T23:00:00Z');
   assert.equal(sessionDeadline(start, 5, '2026-10-28T06:00:00+03:00', now), Date.parse('2026-10-28T03:00:00Z'));

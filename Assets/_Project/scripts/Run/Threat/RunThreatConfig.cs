@@ -16,6 +16,9 @@ public static class ThreatTierPresentation
     public const float Tier3Minimum = 50f;
     public const float Tier4Minimum = 75f;
 
+    // Difficulty samples the start of a stage; the HUD keeps the continuous value.
+    public static float StageMinimum(float pressure) => ((int)FromPressure(pressure) - 1) * 25f;
+
     public static ThreatTier FromPressure(float pressure)
     {
         float value = Mathf.Clamp(pressure, 0f, 100f);
@@ -63,21 +66,23 @@ public sealed class RunThreatConfig : ScriptableObject
         [Min(1)] public int batchSize = 1;
     }
 
-    [SerializeField, Min(0f)] private float valuePerSecond = 0.12f;
+    [SerializeField, Min(0f), Tooltip("Percentage points per second of combat game time.")]
+    private float valuePerSecond = 0.25f;
     [SerializeField] private Preset[] presets = Array.Empty<Preset>();
     [Header("Early run pressure")]
     [SerializeField, Range(.5f, 1f)] private float earlyMeleeSpeed = .87f;
     [SerializeField, Min(.01f)] private float earlyMeleeResponseSeconds = .3f;
-    [SerializeField, Min(0f)] private float openingDuration = 55f;
     [SerializeField, Min(1f)] private float openingSpawnIntervalMultiplier = 1.3f;
     [SerializeField, Min(1)] private int openingAliveCap = 12;
 
     public float MeleeSpeed(float pressure) => Mathf.Lerp(earlyMeleeSpeed, 1f,
-        Mathf.InverseLerp(ThreatTierPresentation.Tier2Minimum, ThreatTierPresentation.Tier3Minimum, pressure));
+        Mathf.InverseLerp(ThreatTierPresentation.Tier2Minimum, ThreatTierPresentation.Tier3Minimum,
+            ThreatTierPresentation.StageMinimum(pressure)));
     public float MeleeResponseSeconds(float pressure) => Mathf.Lerp(earlyMeleeResponseSeconds, 0f,
-        Mathf.InverseLerp(ThreatTierPresentation.Tier2Minimum, ThreatTierPresentation.Tier3Minimum, pressure));
-    public bool IsOpening(float pressure, float elapsed) => elapsed < openingDuration &&
-        pressure < ThreatTierPresentation.Tier2Minimum;
+        Mathf.InverseLerp(ThreatTierPresentation.Tier2Minimum, ThreatTierPresentation.Tier3Minimum,
+            ThreatTierPresentation.StageMinimum(pressure)));
+    public bool IsOpening(float pressure, float elapsed) =>
+        ThreatTierPresentation.FromPressure(pressure) == ThreatTier.Tier1;
     public float OpeningSpawnIntervalMultiplier => openingSpawnIntervalMultiplier;
     public int OpeningAliveCap => openingAliveCap;
 
@@ -89,7 +94,7 @@ public sealed class RunThreatConfig : ScriptableObject
         if (presets == null || presets.Length == 0)
             return 0;
 
-        float value = Mathf.Clamp(threatValue, 0f, 100f);
+        float value = ThreatTierPresentation.StageMinimum(threatValue);
         int result = 0;
 
         for (int i = 0; i < presets.Length; i++)

@@ -119,16 +119,16 @@ public sealed class Subject42OnboardingTests
     }
 
     [Test]
-    public void OpeningReliefEndsWithoutWeakeningLaterThreat()
+    public void OpeningReliefAndMeleeModifiersChangeOnlyAtStageBoundaries()
     {
         var config = AssetDatabase.LoadAssetAtPath<RunThreatConfig>("Assets/_Project/Data/World/RunThreatConfig.asset");
         Assert.That(config.IsOpening(0f, 0f), Is.True);
         Assert.That(config.IsOpening(9f, 54f), Is.True);
-        Assert.That(config.IsOpening(9f, 55f), Is.False);
+        Assert.That(config.IsOpening(9f, 1000f), Is.True);
         Assert.That(config.IsOpening(25f, 10f), Is.False);
         Assert.That(config.MeleeSpeed(24.99f), Is.EqualTo(.87f).Within(.001f));
         Assert.That(config.MeleeSpeed(25f), Is.EqualTo(config.MeleeSpeed(24.99f)).Within(.001f));
-        Assert.That(config.MeleeSpeed(37.5f), Is.InRange(.9f, .97f));
+        Assert.That(config.MeleeSpeed(49.99f), Is.EqualTo(.87f).Within(.001f));
         Assert.That(config.MeleeSpeed(50f), Is.EqualTo(1f));
         Assert.That(config.MeleeResponseSeconds(50f), Is.Zero);
     }

@@ -1,10 +1,11 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["action", "task", "classification", "reason", "evidence", "candidates", "testProfile", "testFilter", "issueKey", "stopCategory", "gdd", "success", "abort"],
+  "required": ["action", "task", "classification", "reason", "evidence", "candidates", "testProfile", "testFilter", "issueKey", "stopCategory", "gdd", "success", "abort", "writePaths"],
   "properties": {
     "action": { "type": "string", "enum": ["work", "stop"] },
     "task": { "type": "string" },
+    "writePaths": { "type": "array", "items": { "type": "string" } },
     "classification": { "type": "string", "enum": ["Production", "Experimental", "Verification"] },
     "reason": { "type": "string" },
     "evidence": { "type": "array", "items": { "type": "string" } },

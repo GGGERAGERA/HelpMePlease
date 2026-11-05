@@ -14,7 +14,6 @@ public static class SurfaceMapBriefing
     public static string RiskDrivers(RunConfig config)
     {
         var drivers=new List<string>();
-        if(!Mathf.Approximately(config.ThreatGrowth,1))drivers.Add(Bonus("map.threat.growth",config.ThreatGrowth));
         if(!Mathf.Approximately(EntryHealth(config),1))drivers.Add(Bonus("map.enemy.hp",EntryHealth(config)));
         if(drivers.Count<2 && !Mathf.Approximately(EntryPressure(config),1))drivers.Add(Bonus("map.spawn.pressure",EntryPressure(config)));
         return string.Join("\n",drivers);
@@ -69,7 +68,6 @@ public static class SurfaceMapBriefing
             return Format("map.feature.start_rule", config.WorldRule.DisplayName);
         var anomalyBias=AnomalyBias(config);
         if(anomalyBias.Count>0)return string.Join(" / ",anomalyBias);
-        if (config.ThreatGrowth < 1f) return Text("map.feature.slow_threat");
         if (EntryPressure(config) > 1f) return Text("map.feature.more_enemies");
         return string.Empty;
     }

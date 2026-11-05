@@ -602,9 +602,16 @@ namespace Subject42.Combat.Telekinetic
         private void DrawOrientedIcon(Vector2 point, float size, TelekineticItem item)
         {
             var matrix = GUI.matrix;
-            if (item.IsWeapon) GUIUtility.RotateAroundPivot(-item.Heading, point);
+            if (item.IsWeapon) RotateUiAroundPivot(-item.Heading, point);
             DrawIcon(new Rect(point - Vector2.one * (size * .5f), Vector2.one * size), item.Kind);
             GUI.matrix = matrix;
+        }
+
+        private static void RotateUiAroundPivot(float angle, Vector2 pivot)
+        {
+            // Rotate in constructor coordinates before applying the Game View scale and offset.
+            GUI.matrix = GUI.matrix * Matrix4x4.TRS(pivot, Quaternion.Euler(0, 0, angle), Vector3.one)
+                * Matrix4x4.Translate(-pivot);
         }
 
         private void DrawFootprint(TelekineticItem item, Color fill, Color border, float width)
@@ -650,7 +657,7 @@ namespace Subject42.Combat.Telekinetic
         {
             var matrix = GUI.matrix;
             var delta = b - a;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, a);
+            RotateUiAroundPivot(Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, a);
             Fill(new Rect(a.x, a.y - width * .5f, delta.magnitude, width), color);
             GUI.matrix = matrix;
         }

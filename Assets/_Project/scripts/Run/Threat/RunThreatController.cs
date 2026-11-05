@@ -48,15 +48,19 @@ public sealed class RunThreatController : MonoBehaviour
     {
         RunStateManager runState = RunStateManager.Instance;
 
+        var flow = RunFlowController.Instance;
         if (TutorialController.IsTutorialSector || config == null || runState == null || runState.IsRunEnded ||
-            Time.timeScale == 0f)
+            Time.timeScale <= 0f || SceneTransitionOverlay.IsTransitioning ||
+            flow == null || (flow.Phase != RunPhase.NormalSector && flow.Phase != RunPhase.FinalBossCombat) ||
+            flow.LevelChoice.IsChoosing ||
+            PlayerRuntimeReference.PlayerHealth == null || PlayerRuntimeReference.PlayerHealth.IsDead ||
+            (UpgradeManager.Instance != null && !UpgradeManager.Instance.IsRewardQueueIdle))
         {
             return;
         }
 
-        runState.AdvanceThreat(Time.deltaTime, config.ValuePerSecond * runState.CurrentConfig.ThreatGrowth);
+        runState.AdvanceThreat(Time.deltaTime, config.ValuePerSecond);
         ApplyCurrentPreset(false);
-        foreach (var enemy in EnemyHealth.ActiveInstances) ApplyMovement(enemy);
     }
 
     private void ApplyCurrentPreset(bool force)
@@ -85,6 +89,7 @@ public sealed class RunThreatController : MonoBehaviour
 
         appliedPresetIndex = presetIndex;
         openingApplied = opening;
+        foreach (var enemy in EnemyHealth.ActiveInstances) ApplyMovement(enemy);
         RunThreatConfig.Preset preset = config.GetPreset(presetIndex);
 
         if (preset != null)

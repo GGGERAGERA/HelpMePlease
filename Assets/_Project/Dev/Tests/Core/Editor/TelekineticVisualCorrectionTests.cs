@@ -148,13 +148,20 @@ public sealed class TelekineticVisualCorrectionTests
         RunSelectionManager.Instance.SelectCharacter(AssetDatabase.LoadAssetAtPath<CharacterData>("Assets/_Project/Data/Characters/01_Gera.asset"));
         var starter=Object.FindFirstObjectByType<BunkerRunStarter>(); starter.StartRun(starter.transform);
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name=="MVP" && ProductionSceneComposition.Active is {IsReady:true} && !SceneTransitionOverlay.IsTransitioning);
-        if (passiveDamage || Phase == "catalogue") yield return CoreTestSupport.SelectInitialRouteNode();
+        if (passiveDamage || Phase is "catalogue" or "weapon-icons") yield return CoreTestSupport.SelectInitialRouteNode();
         var player=Object.FindFirstObjectByType<CharacterSpawner>();
         var station=player.Station; var rig=station.Rig;
         player.SpawnedPlayer.GetComponent<PlayerHealth>().DebugInvulnerable=true;
         Object.FindFirstObjectByType<EnemySpawner>().StopSpawning();
         EnemyDebugAiFreeze.SetFrozen(true);
         MoveToNeutral(station);
+        if (Phase == "weapon-icons")
+        {
+            yield return VerifyWeaponIcons(station);
+            RunEndService.Instance.ReturnToBunker();
+            yield return CoreTestSupport.Await(() => SceneManager.GetActiveScene().name == RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
+            yield break;
+        }
         if (passiveDamage)
         {
             yield return VerifyPassiveDamage(player);
@@ -228,6 +235,73 @@ public sealed class TelekineticVisualCorrectionTests
         yield return CoreTestSupport.Await(()=>SceneManager.GetActiveScene().name==RunEndService.BunkerSceneName && !SceneTransitionOverlay.IsTransitioning);
         File.WriteAllText(Output+"/"+Phase+"-completed.txt","Real Editor Game View 1600x900; lab and MVP; reward-owned reserve and valid layouts; returned to bunker.");
     }
+    private static void SetIconGameViewSize(int width, int height)
+    {
+        var assembly = typeof(Editor).Assembly;
+        var sizesType = assembly.GetType("UnityEditor.GameViewSizes");
+        var sizes = typeof(ScriptableSingleton<>).MakeGenericType(sizesType).GetProperty("instance").GetValue(null);
+        var group = sizesType.GetMethod("GetGroup").Invoke(sizes, new object[] { 0 });
+        var type = group.GetType();
+        int count = (int)type.GetMethod("GetTotalCount").Invoke(group, null), index = -1;
+        for (int i = 0; i < count; i++)
+        {
+            var size = type.GetMethod("GetGameViewSize").Invoke(group, new object[] { i });
+            if ((int)size.GetType().GetProperty("width").GetValue(size) == width &&
+                (int)size.GetType().GetProperty("height").GetValue(size) == height) { index = i; break; }
+        }
+        if (index < 0)
+        {
+            var size = Activator.CreateInstance(assembly.GetType("UnityEditor.GameViewSize"), new object[]
+                { Enum.ToObject(assembly.GetType("UnityEditor.GameViewSizeType"), 1), width, height, $"Rig icon QA {width}×{height}" });
+            type.GetMethod("AddCustomSize").Invoke(group, new[] { size });
+            index = count;
+        }
+        var view = EditorWindow.GetWindow(assembly.GetType("UnityEditor.GameView"));
+        view.GetType().GetProperty("selectedSizeIndex").SetValue(view, index);
+        view.Show();
+    }
+
+    private static IEnumerator VerifyWeaponIcons(OrbitalStationRuntime station)
+    {
+        var rig = station.Rig;
+        Assert.That(station.Interaction.OpenConstructor(), Is.True);
+        var pistol = rig.Build.Items.Single(item => item.Kind == TelekineticPart.Pistol);
+        Assert.That(rig.Move(pistol, Vector2Int.down), Is.True);
+        try
+        {
+            foreach (var size in new[] { new Vector2Int(1280, 720), new Vector2Int(1600, 900), new Vector2Int(1600, 1000) })
+            {
+                SetIconGameViewSize(size.x, size.y);
+                yield return Frames(5);
+                foreach (int aim in new[] { 0, 2, 4, 6 })
+                {
+                    Assert.That(rig.TurnWeapon(pistol, aim - pistol.AimSteps), Is.True);
+                    string name = $"pistol-{size.x}x{size.y}-{aim}";
+                    yield return Capture(name, size.x, size.y);
+                    var texture = new Texture2D(2, 2);
+                    Assert.That(texture.LoadImage(File.ReadAllBytes(CapturePath(name))), Is.True);
+                    try
+                    {
+                        float scale = Mathf.Min(size.x / 1600f, size.y / 900f);
+                        Vector2 origin = new((size.x - 1600 * scale) * .5f, (size.y - 900 * scale) * .5f);
+                        Vector2 center = origin + UiCell(pistol.Position).center * scale;
+                        int radius = Mathf.RoundToInt(14 * scale), cyanPixels = 0;
+                        for (int y = -radius; y <= radius; y++)
+                        for (int x = -radius; x <= radius; x++)
+                        {
+                            Color color = texture.GetPixel(Mathf.RoundToInt(center.x) + x, size.y - 1 - Mathf.RoundToInt(center.y) + y);
+                            if (color.r < .4f && color.g > .65f && color.b > .65f) cyanPixels++;
+                        }
+                        Assert.That(cyanPixels, Is.GreaterThan(35 * scale * scale),
+                            $"Pistol sprite must remain inside its own cell at {size}, aim {aim}");
+                    }
+                    finally { Object.Destroy(texture); }
+                }
+            }
+        }
+        finally { BunkerDebugTools.SetGameView1600(); station.Interaction.CloseConstructor(); }
+    }
+
     private static IEnumerator VerifyPassiveDamage(CharacterSpawner player)
     {
         var station = player.Station;
@@ -581,15 +655,16 @@ public sealed class TelekineticVisualCorrectionTests
             }
         }
     }
-    private static IEnumerator Capture(string name)
+    private static IEnumerator Capture(string name) => Capture(name, 1600, 900);
+    private static IEnumerator Capture(string name, int width, int height)
     {
         yield return Frames(4);
-        Assert.That(Screen.width,Is.EqualTo(1600)); Assert.That(Screen.height,Is.EqualTo(900));
+        Assert.That(Screen.width,Is.EqualTo(width)); Assert.That(Screen.height,Is.EqualTo(height));
         string path=CapturePath(name); if(File.Exists(path)) File.Delete(path);
         ScreenCapture.CaptureScreenshot(path);
         yield return CoreTestSupport.Await(()=>File.Exists(path) && new FileInfo(path).Length>1000);
         var png=new Texture2D(2,2); Assert.That(png.LoadImage(File.ReadAllBytes(path)),Is.True);
-        Assert.That(png.width,Is.EqualTo(1600)); Assert.That(png.height,Is.EqualTo(900)); Object.Destroy(png);
+        Assert.That(png.width,Is.EqualTo(width)); Assert.That(png.height,Is.EqualTo(height)); Object.Destroy(png);
     }
     private static IEnumerator Frames(int count) { for(int i=0;i<count;i++) yield return null; }
     private static void MoveToNeutral(OrbitalStationRuntime station)

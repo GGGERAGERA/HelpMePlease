@@ -104,6 +104,12 @@ export function smokeReady(rows) {
   return pair.length === 2 && pair.every(r => r.verification.passed) && pair.some(r => r.decision.testProfile === 'golden-path');
 }
 
+export function smokeGateMatches(ready, baseline, now = Date.now()) {
+  const age = now - Date.parse(ready?.at);
+  return ready?.ready === true && ready.kind === 'recovery-v3' && ready.workerAccessVerified === true &&
+    ready.head === baseline.head && ready.fingerprint === baseline.fingerprint && age >= 0 && age <= 86400000;
+}
+
 export async function cycleLoop({ maxCycles = Infinity, deadline, reserveMs = 0, stopped, decide, work, verify, save, history = [], stopWhen = () => false, reviewStop = async () => false }) {
   const failures = new Map();
   for (let index = 0; index < maxCycles && Date.now() < deadline - reserveMs && !stopped(); index++) {
@@ -113,8 +119,9 @@ export async function cycleLoop({ maxCycles = Infinity, deadline, reserveMs = 0,
       if (stopped() || Date.now() >= deadline - reserveMs) break;
       if (decision.action === 'stop') {
         const review = await reviewStop(decision, history, index);
-        if (review === true) break;
+        if (review === true && decision.stopCategory !== 'NoSafeWork') break;
         if (review && typeof review === 'object' && review.action === 'work') decision = review;
+        else if (review?.action === 'retry') verification = { passed: false, executed: 0, result: 'ReplanPending' };
         else verification = { passed: false, executed: 0, result: 'StopRejected' };
       }
       const key = decision.issueKey || decision.testProfile || decision.task;
@@ -129,8 +136,10 @@ export async function cycleLoop({ maxCycles = Infinity, deadline, reserveMs = 0,
       verification = { passed: false, executed: 0, failed: 0, result: error.result ?? 'TaskFailed', diagnostic: error.message, details: error.details };
     }
     const key = decision.issueKey || decision.testProfile || decision.task;
-    if (verification.passed) failures.delete(key);
-    else failures.set(key, (failures.get(key) ?? 0) + 1);
+    if (verification.result !== 'ReplanPending') {
+      if (verification.passed) failures.delete(key);
+      else failures.set(key, (failures.get(key) ?? 0) + 1);
+    }
     history.push({ cycle: index + 1, at: new Date().toISOString(), decision, work: workResult, verification, blocked: (failures.get(key) ?? 0) >= 2 });
     await save?.(history);
     if (stopWhen(history)) break;
@@ -218,7 +227,8 @@ async function main() {
   const root = path.resolve(here, '../..');
   const base = path.join(root, 'Artifacts/GeneratedQA/NightShift');
   const unity = option('unity', 'G:/unity/editor/6000.3.13f1/Editor/Unity.exe');
-  const hours = Number(option('hours', '6'));
+  const codexExecutable = option('codex', 'codex');
+  const hours = Number(option('hours', '5'));
   if (!Number.isFinite(hours) || hours <= 0 || hours > 7) throw new Error('hours must be >0 and <=7');
   const resumeFrom = option('resume-from', null);
   const resumePath = resumeFrom ? path.resolve(resumeFrom) : null;
@@ -232,7 +242,7 @@ async function main() {
     const readyPath = path.join(base, 'smoke-ready.json');
     if (!fs.existsSync(readyPath)) throw new Error('Night requires a successful recovery smoke first');
     const ready = JSON.parse(fs.readFileSync(readyPath));
-    if (!ready.ready || ready.kind !== 'recovery-v2' || ready.head !== git(root, 'rev-parse', 'HEAD') || ready.fingerprint !== workspaceFingerprint(root) || Date.now() - Date.parse(ready.at) > 86400000)
+    if (!smokeGateMatches(ready, { head: git(root, 'rev-parse', 'HEAD'), fingerprint: workspaceFingerprint(root) }))
       throw new Error('Smoke gate is stale or failed; repeat smoke');
   }
   const lockPath = path.join(base, 'session.lock');
@@ -274,7 +284,10 @@ async function main() {
     let decision;
     try { decision = JSON.parse(fs.readFileSync(output, 'utf8')); }
     catch (error) { throw Object.assign(new Error(`Invalid planner JSON: ${error.message}`), { recoverable: true, result: 'PlannerInvalid' }); }
-    if (!(decision.testProfile in profiles) || !['work', 'stop'].includes(decision.action) || !Array.isArray(decision.candidates) || !decision.issueKey || (decision.testFilter && !/^[A-Za-z0-9_.;]+$/.test(decision.testFilter)))
+    if (!(decision.testProfile in profiles) || !['work', 'stop'].includes(decision.action) || !Array.isArray(decision.candidates) || !decision.issueKey ||
+        !Array.isArray(decision.writePaths) || decision.writePaths.some(file => typeof file !== 'string' || !file.trim()) ||
+        (decision.action === 'work' && decision.classification !== 'Verification' && decision.writePaths.length === 0) ||
+        (decision.testFilter && !/^[A-Za-z0-9_.;]+$/.test(decision.testFilter)))
       throw Object.assign(new Error('Invalid planner decision/filter'), { recoverable: true, result: 'PlannerInvalid' });
     return decision;
   }
@@ -283,9 +296,25 @@ async function main() {
     const cliArgs = ['exec', '--ignore-user-config', '--sandbox', readOnly ? 'read-only' : 'workspace-write', '--ephemeral', '--disable', 'multi_agent', '-c', 'approval_policy="never"', '-c', 'windows.sandbox="unelevated"', '--json'];
     if (structured) cliArgs.push('--output-schema', schema);
     cliArgs.push('-o', output, '-C', root, '-');
-    const result = await runProcess('codex', cliArgs, { cwd: root, input: prompt, prefix: path.join(dir, label), timeoutMs: budget(timeout), stopped, onState });
+    const result = await runProcess(codexExecutable, cliArgs, { cwd: root, input: prompt, prefix: path.join(dir, label), timeoutMs: budget(timeout), stopped, onState });
     guard(); checkTaskProcess(result, output, label); return result;
   };
+  async function verifyWorkerAccess(paths, dir) {
+    phase = 'worker-access'; heartbeat();
+    const targetsFile = path.join(dir, 'write-targets.json'), receiptFile = path.join(dir, 'worker-access.json');
+    writeJson(targetsFile, paths);
+    const probeArgs = ['-c', 'windows.sandbox="unelevated"', 'sandbox', '--include-managed-config',
+      '--permission-profile', ':workspace', '-C', root, '--', 'pwsh', '-NoProfile', '-File',
+      path.join(here, 'Test-WorkerAccess.ps1'), '-Project', root, '-TargetsFile', targetsFile, '-Output', receiptFile];
+    const result = await runProcess(codexExecutable, probeArgs, { cwd: root, prefix: path.join(dir, 'worker-access'),
+      timeoutMs: budget(60000), stopped, onState });
+    guard();
+    const receipt = fs.existsSync(receiptFile) ? JSON.parse(fs.readFileSync(receiptFile, 'utf8').replace(/^\uFEFF/, '')) : null;
+    if (result.exitCode !== 0 || receipt?.passed !== true || JSON.stringify(receipt.targets) !== JSON.stringify(paths))
+      throw Object.assign(new Error(`Worker write access failed: ${receipt?.error ?? result.stderr}`),
+        { recoverable: true, result: 'WorkerAccessDenied', details: result });
+    event(`worker write access verified: ${paths.join(', ')}`);
+  }
   try {
     const status = git(root, 'status', '--short'); fs.writeFileSync(path.join(session, 'initial-git-status.txt'), status);
     fs.copyFileSync(path.join(root, 'NIGHT_REPORT.md'), path.join(session, 'previous-night-report.md'));
@@ -318,15 +347,18 @@ async function main() {
     }
     if (mode === 'smoke') {
       phase = 'recovery-smoke'; await recoverySmoke(session); guard();
+      await verifyWorkerAccess(['Assets/_Project/scripts/Bunker/UI/SurfaceRouteCard.cs',
+        'Assets/_Project/scripts/Bunker/UI/SurfaceRoutePresentation.cs'], session);
       const probeOutput = path.join(session, 'codex-probe.json');
-      await codex('Read-only connectivity/schema probe. Do not explore files or run tools. Return valid schema JSON: action work, task connectivity checked, issueKey smoke-connectivity, classification Verification, reason connectivity only, evidence [], candidates [], testProfile orbital-control, testFilter null, stopCategory null, gdd not applicable, success schema accepted, abort infrastructure failure.', session, 'connectivity', true, probeOutput, true, 120000);
+      await codex('Read-only connectivity/schema probe. Do not explore files or run tools. Return valid schema JSON: action work, task connectivity checked, issueKey smoke-connectivity, classification Verification, reason connectivity only, evidence [], candidates [], writePaths [], testProfile orbital-control, testFilter null, stopCategory null, gdd not applicable, success schema accepted, abort infrastructure failure.', session, 'connectivity', true, probeOutput, true, 120000);
       readDecision(probeOutput);
       const decision = { action: 'work', issueKey: 'smoke-unity', task: 'Compile + one existing outward-fire lab test', testProfile: 'orbital-control', testFilter: 'OrbitalCombatV2LabTests.FixedShotsUseRadialMuzzleWithoutTargetsAndKeepTheProfileCadence' };
       const verification = await verifyUnity(decision, 0);
       rows = [{ cycle: 1, decision, work: {}, verification }]; writeJson(rowsFile, rows);
       if (!verification.passed) throw new Error(`Real smoke Unity check failed: ${verification.result}; see ${verification.editorLog}`);
       completed = true; endReason = 'recovery-smoke-passed';
-      writeJson(path.join(base, 'smoke-ready.json'), { ready: true, kind: 'recovery-v2', at: new Date().toISOString(), head: baseline.head, fingerprint: workspaceFingerprint(root), session, cycles: rows });
+      writeJson(path.join(base, 'smoke-ready.json'), { ready: true, kind: 'recovery-v3', workerAccessVerified: true,
+        at: new Date().toISOString(), head: baseline.head, fingerprint: workspaceFingerprint(root), session, cycles: rows });
     } else {
     rows = await cycleLoop({ deadline, reserveMs, stopped,
       stopWhen: history => {
@@ -339,7 +371,7 @@ async function main() {
         event(`cycle ${index + 1}: fresh read-only selection`);
         const output = path.join(dir, 'decision.json');
         const blocked = history.filter(r => r.blocked).map(r => r.decision.issueKey);
-        const prompt = `${policy}\nPHASE: READ-ONLY PLANNER. Return schema JSON for cycle ${index + 1}. Follow the ordered priorities in the brief. Finish the current area before the next eligible one, then continue while another area can be completed and checked. Reserve time before the last 15 minutes for one final targeted production Unity run covering the changed areas. Only the first cycle inventories the project; later cycles use evidence and history. Record current → proposed UX and the player decision in task/reason, observed evidence in evidence, the GDD section in gdd, and comparison and rejection criteria in success/abort. Use testProfile=static with testFilter=null for intermediate steps. For a meaningful comparison or regression question, choose a non-static profile with exact existing Unity test filters. The final run may combine a small set of exact filters with semicolons. Use a stable issueKey. StopCategory is null for work, TaskBlocked for one issue, and NoSafeWork only when independent UX candidates are exhausted. BLOCKED issueKeys: ${JSON.stringify(blocked)}. Remaining seconds: ${Math.floor(budget(Infinity) / 1000)}.\n<verified_history>\n${historyText(history)}\n</verified_history>`;
+        const prompt = `${policy}\nPHASE: READ-ONLY PLANNER. Return schema JSON for cycle ${index + 1}. List every intended created or modified file in writePaths using project-relative paths. Use [] for a verification-only step or stop proposal. Your read-only session is only the planner; the executor has a separate workspace-write sandbox and its target access is checked by the host. Follow the ordered priorities in the brief. Finish the current area before the next eligible one, then continue while another area can be completed and checked. Reserve time before the last 15 minutes for one final targeted production Unity run covering the changed areas. Only the first cycle inventories the project; later cycles use evidence and history. Record current → proposed UX and the player decision in task/reason, observed evidence in evidence, the GDD section in gdd, and comparison and rejection criteria in success/abort. Use testProfile=static with testFilter=null for intermediate steps. For a meaningful comparison or regression question, choose a non-static profile with exact existing Unity test filters. The final run may combine a small set of exact filters with semicolons. Use a stable issueKey. StopCategory is null for work, TaskBlocked for one issue, and NoSafeWork only when independent UX candidates are exhausted. BLOCKED issueKeys: ${JSON.stringify(blocked)}. Remaining seconds: ${Math.floor(budget(Infinity) / 1000)}.\n<verified_history>\n${historyText(history)}\n</verified_history>`;
         await codex(prompt, dir, 'planner', true, output, true);
         const decision = readDecision(output);
         event(`selected ${decision.testProfile}: ${decision.task}`); return decision;
@@ -347,19 +379,29 @@ async function main() {
       reviewStop: async (proposal, history, index) => {
         const dir = path.join(session, `cycle-${index + 1}`), output = path.join(dir, 'stop-review.json');
         event(`cycle ${index + 1}: controller reviewing stop proposal; category=${proposal.stopCategory}`);
-        const prompt = `${policy}\nPHASE: READ-ONLY STOP REVIEW. Return schema JSON. One failed task, compile error, recoverable timeout or blocked hypothesis does not stop the shift. Evaluate the unfinished priority area and the next eligible independent area under the brief. Completing one area is not a stop condition. Return work if there is a concrete, safe improvement with a feasible check. NoSafeWork requires evidence that at least two independent candidates are already addressed or infeasible. Safety/AuthQuota/ProcessControl requires a real infrastructure or data risk.\nProposal: ${JSON.stringify(proposal)}\nHistory: ${historyText(history)}`;
+        const prompt = `${policy}\nPHASE: READ-ONLY STOP REVIEW. Return schema JSON. One failed task, compile error, recoverable timeout or blocked hypothesis does not stop the shift. Evaluate the unfinished priority area and the next eligible independent area under the brief. Completing one area is not a stop condition. Return work if there is a concrete, safe improvement with a feasible check. NoSafeWork requires evidence that at least two independent candidates are already addressed or infeasible. It requests a delayed fresh selection and cannot finish the timed shift. Assess executor access from host probe results, not from your own read-only session. Safety/AuthQuota/ProcessControl requires a real infrastructure or data risk.\nProposal: ${JSON.stringify(proposal)}\nHistory: ${historyText(history)}`;
         await codex(prompt, dir, 'stop-review', true, output, true);
         const review = readDecision(output);
         if (review.action === 'work') return review;
-        if (review.candidates.length >= 2 && review.evidence.length > 0 && ['NoSafeWork', 'Safety', 'AuthQuota', 'ProcessControl'].includes(review.stopCategory)) {
-          endReason = `reviewed-${review.stopCategory}: ${review.reason}`;
-          writeJson(path.join(session, 'accepted-stop.json'), { proposal, review }); return true;
+        if (review.evidence.length > 0 && ['Safety', 'AuthQuota', 'ProcessControl'].includes(review.stopCategory)) {
+          writeJson(path.join(session, 'accepted-stop.json'), { proposal, review });
+          throw new Error(`reviewed-${review.stopCategory}: ${review.reason}`);
+        }
+        if (review.stopCategory === 'NoSafeWork') {
+          phase = 'replanning'; heartbeat();
+          writeJson(path.join(dir, 'replan-pending.json'), { reason: review.reason, at: new Date().toISOString() });
+          event('NoSafeWork is deferred; keeping the shift active and selecting work again in two minutes');
+          const retryAt = Math.min(Date.now() + 120000, deadline - reserveMs);
+          while (Date.now() < retryAt && !stopped())
+            await new Promise(resolve => setTimeout(resolve, Math.min(1000, retryAt - Date.now())));
+          return { action: 'retry' };
         }
         return false;
       },
       work: async (decision, index) => {
         const dir = path.join(session, `cycle-${index + 1}`), output = path.join(dir, 'worker-summary.md');
-        const prompt = `${policy}\nPHASE: EXECUTOR. Implement only the selected small step within the workspace and leave coherent changes. The host runs Unity only for non-static profiles. Do not launch Unity or background processes. Report in Russian what the player can now understand or do, what text was removed or retained and why, the actual evidence and its limits, and the next comparison or exact manual steps. Do not overwrite NIGHT_REPORT.md.\nCURRENT DECISION:\n${JSON.stringify(decision)}\n<verified_history>\n${historyText(rows)}\n</verified_history>`;
+        if (decision.writePaths.length > 0) await verifyWorkerAccess(decision.writePaths, dir);
+        const prompt = `${policy}\nPHASE: EXECUTOR. Implement only the selected small step in the declared writePaths and leave coherent changes. If another target is needed, report it for the next planner step before changing that file. The host runs Unity only for non-static profiles. Do not launch Unity or background processes. Report in Russian what the player can now understand or do, what text was removed or retained and why, the actual evidence and its limits, and the next comparison or exact manual steps. Do not overwrite NIGHT_REPORT.md.\nCURRENT DECISION:\n${JSON.stringify(decision)}\n<verified_history>\n${historyText(rows)}\n</verified_history>`;
         event(`cycle ${index + 1}: workspace-write work`);
         const result = await codex(prompt, dir, 'worker', false, output, false, 12 * 60000);
         let diff;
@@ -389,7 +431,7 @@ async function main() {
       while (Date.now() < deadline && !stopped()) await new Promise(resolve => setTimeout(resolve, Math.min(1000, deadline - Date.now())));
     }
     endReason ??= stopped() ? 'user-stop' : 'deadline';
-    completed = !stopped();
+    completed = !stopped() && Date.now() >= deadline;
     }
     writeJson(path.join(session, 'final.json'), { completed, allChecksPassed: nightVerified(rows), mode, startedAt, endedAt: new Date().toISOString(), deadlineAt: new Date(deadline).toISOString(), endReason, cycles: rows.length, stopped: stopped(), deadlineReached: Date.now() >= deadline });
     event(`END; completed=${completed}; cycles=${rows.length}`);

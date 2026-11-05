@@ -6,10 +6,10 @@ using static Subject42UITheme;
 /// <summary>Route briefing laid out in pixels on the route's 1600×900 reference canvas.</summary>
 internal sealed class SurfaceRouteCard
 {
-    private const float Width = 845f;
-    private const float Height = 257f;
+    private const float Width = 620f;
+    private const float Height = 224f;
     private const float Padding = 15f;
-    private const float ValueColumn = 429f;
+    private const float ValueColumn = 235f;
     private readonly TMP_FontAsset font;
     private readonly Material textMaterial;
     private readonly Image panel;
@@ -30,12 +30,12 @@ internal sealed class SurfaceRouteCard
         Rect("Combat icon", rect, new Vector2(Width - Padding - 18f, 21f), new Vector2(18f, 18f))
             .gameObject.AddComponent<SurfaceMapGlyph>().Show(SurfaceMapMeaning.Combat);
 
-        (modifierLabel, modifier) = Row("Modifier", rect, 59f);
-        (durationLabel, duration) = Row("Duration", rect, 90f);
-        (rewardLabel, reward) = Row("Reward", rect, 121f, Amber);
-        (difficultyLabel, difficulty) = Row("Difficulty", rect, 151f);
+        (modifierLabel, modifier) = Row("Modifier", rect, 49f);
+        (durationLabel, duration) = Row("Duration", rect, 77f);
+        (rewardLabel, reward) = Row("Reward", rect, 105f, Amber);
+        (difficultyLabel, difficulty) = Row("Difficulty", rect, 133f);
 
-        var button = Rect("Route confirm", rect, new Vector2(Padding, 185f), new Vector2(Width - 2f * Padding, 57f));
+        var button = Rect("Route confirm", rect, new Vector2(Padding, 165f), new Vector2(Width - 2f * Padding, 44f));
         Launch = Subject42UIStyle.ActionButton(button);
         action = Subject42UIStyle.Text(Rect("Label", button, Vector2.zero, button.sizeDelta), font, textMaterial,
             15.5f, PrimaryText, true, TextAlignmentOptions.Center);
