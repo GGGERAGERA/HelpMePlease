@@ -1,0 +1,24 @@
+{
+  "issueKey": "demo-ux-route-map",
+  "gdd": "Assets/_Project/Documentation/Subject42_Game_Design_Bible.md §6.2 и §6.5",
+  "observation": "Четыре пары подписей и значений перечитываются при каждом переключении узла.",
+  "change": "Четыре строки → общая полоса с делениями сложности, часами и точными секундами, знаком и категорией награды. Ниже краткий локализованный эффект. Доступный узел с прямоугольным контуром, закрытый с обрезанными углами и замком.",
+  "playerDecision": "Выбрать риск и время до выхода ради награды с учётом правила сектора.",
+  "success": "Во второй колонке после крайнего узла видны два доступных и один закрытый. Порядок параметров совпадает, секунды и награда берутся из графа, закрытый узел не запускается.",
+  "abort": "Зависимость от цвета, потеря параметра, расхождение с графом или изменение допуска к запуску.",
+  "testProfile": "static",
+  "status": "blocked",
+  "hostVerification": "SurfaceMapUxTests.InspectionRouteAndViewStateStayInPresentation и SurfaceSectorTransitionTests.ProductionMapRevealsOnlyNextSector. Два кадра второй колонки при переключении доступных узлов. Итоговый прогон и восстановление настроек завершить до последних 15 минут смены.",
+  "sectorExit": {
+    "gdd": "Assets/_Project/Documentation/Subject42_Game_Design_Bible.md §2.1, §6.5",
+    "observation": "Арена убирает стрелки в закрытом состоянии, миникарта меняет только цвет.",
+    "change": "Контур и цветная метка → общий знак дверного проёма с поперечной преградой в закрытом состоянии и локализованным последствием открытого входа.",
+    "playerDecision": "Найти выход и решить, закончить бой сейчас или остаться.",
+    "success": "Сопоставимые кадры закрытого и открытого выхода, различимые без цвета. SurfaceSectorTransitionTests.ProductionDeadlineOpensPhysicalExitBeforeRewardAndRoute. Прогон и восстановление настроек до последних 15 минут.",
+    "abort": "Знак теряется в бою, состояния сливаются либо меняется переход, прогресс или выдача награды.",
+    "status": "implemented_pending_host",
+    "hostVerification": "Отдельный адресный прогон после последних правок. Один Refresh, дождаться компиляции, запустить SurfaceSectorTransitionTests.ProductionDeadlineOpensPhysicalExitBeforeRewardAndRoute, затем сравнить закрытый и открытый выход в production Game View из изолированного MainMenu. Начать с запасом на компиляцию, сценарий, кадры и восстановление настроек. Завершить до последних 15 минут смены."
+  },
+  "stopCategory": "TaskBlocked",
+  "blocker": "Повторное открытие SurfaceRouteCard.cs и SurfaceRoutePresentation.cs на запись вернуло Access denied для обоих файлов. У файлов нет атрибута ReadOnly и git status не показывает изменений в UI карты. Production-карта не изменена."
+}

@@ -9,6 +9,13 @@ param(
 $ErrorActionPreference = 'Stop'
 $taskBackup = Join-Path $Output 'playerprefs-backup.clixml'
 $taskPaths = @('Software\Unity\UnityEditor\Life Up Studio\Subject#42', 'Software\Life Up Studio\Subject#42')
+function Test-TaskPreferenceValue([Microsoft.Win32.RegistryKey]$Key, $Saved) {
+    $taskActual = $Key.GetValue($Saved.Name, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+    return $null -ne $taskActual -and
+        [int]$Key.GetValueKind($Saved.Name) -eq $Saved.Kind -and
+        (ConvertTo-Json -InputObject $taskActual -Compress -Depth 8) -ceq (ConvertTo-Json -InputObject $Saved.Value -Compress -Depth 8)
+}
+
 function Restore-TaskPreferences {
     if (Get-Process Unity -ErrorAction SilentlyContinue) { throw 'Close Unity before restoring PlayerPrefs.' }
     $taskSaved = Import-Clixml -LiteralPath $taskBackup
@@ -23,12 +30,13 @@ function Restore-TaskPreferences {
                 if ($taskName -notin @($taskEntry.Values | ForEach-Object { $_.Name })) { $taskKey.DeleteValue($taskName, $false) }
             }
             foreach ($taskValue in $taskEntry.Values) {
-                $taskKey.SetValue($taskValue.Name, $taskValue.Value, [Microsoft.Win32.RegistryValueKind]$taskValue.Kind)
+                # Preserve matching values, including legacy DWORD data that SetValue cannot round-trip.
+                if (-not (Test-TaskPreferenceValue $taskKey $taskValue)) {
+                    $taskKey.SetValue($taskValue.Name, $taskValue.Value, [Microsoft.Win32.RegistryValueKind]$taskValue.Kind)
+                }
             }
             foreach ($taskValue in $taskEntry.Values) {
-                $taskActual = $taskKey.GetValue($taskValue.Name, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-                if ([int]$taskKey.GetValueKind($taskValue.Name) -ne $taskValue.Kind -or
-                    (ConvertTo-Json -InputObject $taskActual -Compress -Depth 8) -cne (ConvertTo-Json -InputObject $taskValue.Value -Compress -Depth 8)) {
+                if (-not (Test-TaskPreferenceValue $taskKey $taskValue)) {
                     throw 'PlayerPrefs restoration mismatch; keeping the recovery snapshot.'
                 }
             }

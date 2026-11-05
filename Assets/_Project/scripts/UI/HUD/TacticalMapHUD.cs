@@ -67,6 +67,7 @@ public sealed class TacticalMapHUD : MonoBehaviour
         anomalyZones = new();
     private readonly List<TacticalMapMarker> eventMarkers = new();
     private readonly List<TacticalMapMarker> breakableMarkers = new();
+    private Image[] exitDoorway;
     private readonly List<TacticalMapMarkerDescriptor> breakableDescriptors =
         new();
 
@@ -85,7 +86,27 @@ public sealed class TacticalMapHUD : MonoBehaviour
             return;
         }
         ApplyMapLayout(MaxMapSize, MaxMapSize);
+        CreateExitDoorway();
         SetVisible(visibleByDefault);
+    }
+
+    private void CreateExitDoorway()
+    {
+        exitDoorway = new Image[ProductionSectorExit.DoorwayStrokes.Length];
+        exitMarker.Rect.sizeDelta = new Vector2(18f, 18f);
+        for (int i = 0; i < exitDoorway.Length; i++)
+        {
+            var stroke = ProductionSectorExit.DoorwayStrokes[i];
+            Vector2 direction = stroke.To - stroke.From;
+            var image = new GameObject("Exit doorway", typeof(RectTransform)).AddComponent<Image>();
+            image.raycastTarget = false;
+            var rect = image.rectTransform;
+            rect.SetParent(exitMarker.Rect, false);
+            rect.anchoredPosition = (stroke.From + stroke.To) * 8f;
+            rect.sizeDelta = new Vector2(direction.magnitude * 16f + 2f, 2f);
+            rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+            exitDoorway[i] = image;
+        }
     }
 
     private void OnEnable()
@@ -342,9 +363,13 @@ public sealed class TacticalMapHUD : MonoBehaviour
                     sectorExit.transform.position
                 );
                 exitMarker.Rect.gameObject.SetActive(true);
-                SetMarkerStyle(exitMarker,
-                    sectorExit.IsAvailable ? ExitFill : lockedExitFill,
-                    sectorExit.IsAvailable ? ExitBorder : lockedExitBorder);
+                bool available = sectorExit.IsAvailable;
+                Color fill = available ? ExitFill : lockedExitFill;
+                Color border = available ? ExitBorder : lockedExitBorder;
+                SetMarkerStyle(exitMarker, fill * new Color(0.2f, 0.2f, 0.2f, 1f), border);
+                foreach (var stroke in exitDoorway)
+                    stroke.color = available ? border : Color.Lerp(border, Color.white, 0.45f);
+                exitDoorway[ProductionSectorExit.BarrierStroke].enabled = !available;
                 break;
             }
         }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 [RequireComponent(typeof(CircleCollider2D))]
@@ -18,7 +19,18 @@ public sealed class ProductionSectorExit : MonoBehaviour
     private float pulse;
     private bool initialized;
     private ParticleSystem energyParticles;
-    private readonly List<LineRenderer> chevrons = new();
+    private readonly List<LineRenderer> doorway = new();
+    private TextMeshPro entryHint;
+    private string entryHintKey;
+
+    internal static readonly (Vector2 From, Vector2 To)[] DoorwayStrokes =
+    {
+        (new(-0.32f, -0.36f), new(-0.32f, 0.36f)),
+        (new(-0.32f, 0.36f), new(0.32f, 0.36f)),
+        (new(0.32f, 0.36f), new(0.32f, -0.36f)),
+        (new(-0.32f, -0.08f), new(0.32f, -0.08f))
+    };
+    internal const int BarrierStroke = 3;
 
     public static IReadOnlyList<ProductionSectorExit> ActiveExits =>
         activeExits;
@@ -82,15 +94,37 @@ public sealed class ProductionSectorExit : MonoBehaviour
         surface.sortingOrder = 26;
         glow = CreateContour("Exit contour glow", vertices, 0.32f, new Color(0.1f, 0.8f, 1f, 0.18f), 27);
         ring = CreateContour("Exit energy contour", vertices, 0.065f, new Color(0.55f, 0.95f, 1f), 28);
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < DoorwayStrokes.Length; i++)
         {
-            var arrow = AnomalyPowerVisuals.CreateLine(transform, "Exit forward chevron", new Color(0.8f, 0.97f, 1f, 0.9f), 0.11f, 3, material);
-            arrow.useWorldSpace = false;
-            float y = (-0.36f + i * 0.43f) * radius;
-            arrow.SetPosition(0, new Vector3(-0.3f * radius, y, 0f));
-            arrow.SetPosition(1, new Vector3(0f, y + 0.22f * radius, 0f));
-            arrow.SetPosition(2, new Vector3(0.3f * radius, y, 0f));
-            chevrons.Add(arrow);
+            var stroke = DoorwayStrokes[i];
+            var line = AnomalyPowerVisuals.CreateLine(transform, "Exit doorway", Color.white, radius * 0.12f, 2, material);
+            line.useWorldSpace = false;
+            line.sortingLayerName = "Foreground";
+            line.SetPosition(0, stroke.From * radius * 1.5f);
+            line.SetPosition(1, stroke.To * radius * 1.5f);
+            doorway.Add(line);
+        }
+        RefreshDoorway(IsAvailable);
+
+        var sector = RunStateManager.Instance?.CurrentSector;
+        if (sector != null && RunRoute.IsExplorationSector(sector.SectorNumber))
+        {
+            entryHintKey = RunRoute.IsFinalSector(sector.SectorNumber)
+                ? "hud.exit.enter_final" : "hud.exit.enter_route";
+            var hintObject = new GameObject("Exit entry hint", typeof(TextMeshPro));
+            hintObject.transform.SetParent(transform, false);
+            hintObject.transform.localPosition = Vector3.down * (radius + 0.45f);
+            entryHint = hintObject.GetComponent<TextMeshPro>();
+            entryHint.font = TMP_Settings.defaultFontAsset;
+            entryHint.alignment = TextAlignmentOptions.Center;
+            entryHint.fontSize = 3.5f;
+            entryHint.textWrappingMode = TextWrappingModes.NoWrap;
+            entryHint.raycastTarget = false;
+            entryHint.rectTransform.sizeDelta = new Vector2(12f, 0.8f);
+            var hintRenderer = hintObject.GetComponent<MeshRenderer>();
+            hintRenderer.sortingLayerName = "Foreground";
+            hintRenderer.sortingOrder = 31;
+            hintObject.SetActive(false);
         }
 
         // Reuse Epic Toon FX's portal glow texture without its vortex/gameplay prefab.
@@ -157,19 +191,34 @@ public sealed class ProductionSectorExit : MonoBehaviour
         float brightness = 0.78f + Mathf.Sin(pulse) * 0.06f + proximity * 0.16f;
         ring.startColor = ring.endColor = new Color(0.55f, 0.95f, 1f, brightness);
         glow.startColor = glow.endColor = new Color(0.1f, 0.8f, 1f, 0.16f + proximity * 0.13f + Mathf.Sin(pulse) * 0.025f);
-        // A closed, dim amber contour reads as locked without a localized label.
-        if (!IsAvailable)
+        bool available = IsAvailable;
+        if (!available)
         {
             ring.startColor = ring.endColor = new Color(0.6f, 0.34f, 0.12f, 0.55f);
             glow.startColor = glow.endColor = Color.clear;
         }
-        foreach (var chevron in chevrons) chevron.enabled = IsAvailable;
+        RefreshDoorway(available);
+        if (entryHint != null)
+        {
+            var localization = LocalizationService.Instance;
+            bool showHint = available && target > 0f && localization != null;
+            if (showHint) entryHint.text = localization.Get(entryHintKey);
+            entryHint.gameObject.SetActive(showHint);
+        }
         if (energyParticles != null)
         {
-            if (IsAvailable && !energyParticles.isPlaying) energyParticles.Play();
-            else if (!IsAvailable && energyParticles.isPlaying)
+            if (available && !energyParticles.isPlaying) energyParticles.Play();
+            else if (!available && energyParticles.isPlaying)
                 energyParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
+    }
+
+    private void RefreshDoorway(bool available)
+    {
+        Color color = available ? new Color(0.7f, 1f, 1f) : new Color(1f, 0.73f, 0.4f);
+        foreach (var line in doorway)
+            line.startColor = line.endColor = color;
+        doorway[BarrierStroke].enabled = !available;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

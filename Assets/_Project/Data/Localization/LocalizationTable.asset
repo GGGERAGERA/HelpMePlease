@@ -148,6 +148,12 @@ MonoBehaviour:
   - key: hud.exit.opened
     ru: "ВЫХОД ОТКРЫТ"
     en: "EXIT OPEN"
+  - key: hud.exit.enter_route
+    ru: "Войдите: награда, затем карта"
+    en: "Enter for reward, then map"
+  - key: hud.exit.enter_final
+    ru: "Войдите: награда, затем босс"
+    en: "Enter for reward, then boss"
   - key: hud.objective.survive
     ru: "ПЕРЕЖИВИТЕ СЕКТОР"
     en: "SURVIVE THE SECTOR"
