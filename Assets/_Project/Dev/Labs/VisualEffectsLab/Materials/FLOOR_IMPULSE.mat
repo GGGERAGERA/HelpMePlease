@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: FLOOR_IMPULSE
+  m_Shader: {fileID: 4800000, guid: c534f59fda1774143a6a607d2c971739, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _ActorTex:
+        m_Texture: {fileID: 2800000, guid: e1f639c2cd1c26242a566060b6c8b961, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FloorTex:
+        m_Texture: {fileID: 2800000, guid: 7d61ac08ecb06454aa60446182695c30, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Intensity: 1
+    - _LabTime: 0
+    - _Mode: 1
+    m_Colors:
+    - _ActorRect: {r: 0, g: 0.75, b: 0.2457964, a: 0.25}
+    - _FloorRect: {r: 0.625, g: 0.96875, b: 0.03125, a: 0.03125}
+    - _FloorTint: {r: 0.5, g: 0.3, b: 0.34, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -88,7 +88,14 @@ public static class EnemyFeedbackSmoke
         Check(hit != null && hit.main.duration <= .25f && hit.main.startLifetime.constantMax <= .2f,
             "The existing hit sprite must be brief and return promptly to its pool.");
         trace.AppendLine($"Target={target.name} hit 1000->992 blend={blend:F3} flash={duration:F3}; crowd={crowd.Length}");
+        yield return null; // Let the native emitter simulate its first burst before capture.
         yield return Capture(directory, "02-enemy-hit");
+        yield return WaitGame(.06f);
+        int visibleCount = hit.particleCount;
+        var hitRenderer = hit.GetComponent<ParticleSystemRenderer>();
+        Check(visibleCount > 0 && hitRenderer.enabled, "An active hit effect must emit renderable particles.");
+        trace.AppendLine($"Hit particles={visibleCount}; age={hit.time:F3}; shader={hitRenderer.sharedMaterial.shader.name}");
+        yield return Capture(directory, "02b-enemy-hit-moving");
         body.GetPropertyBlock(properties);
         properties.SetFloat("_FeedbackQASentinel", 456f);
         body.SetPropertyBlock(properties);

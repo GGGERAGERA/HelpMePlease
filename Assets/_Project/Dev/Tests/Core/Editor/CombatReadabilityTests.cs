@@ -3368,7 +3368,13 @@ public sealed class CombatReadabilityTests
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         yield return new EnterPlayMode();
         yield return BeginProductionRun();
-        yield return EnemyFeedbackSmoke.VerifyCurrentRun("Artifacts/GeneratedQA/EnemyFeedback/PlayMode");
+        float previousCaptureDeltaTime = Time.captureDeltaTime;
+        try
+        {
+            Time.captureDeltaTime = 1f / 60f;
+            yield return EnemyFeedbackSmoke.VerifyCurrentRun("Artifacts/GeneratedQA/EnemyFeedback/PlayMode");
+        }
+        finally { Time.captureDeltaTime = previousCaptureDeltaTime; }
     }
 
     [UnityTest]
@@ -3673,6 +3679,7 @@ public sealed class CombatReadabilityTests
             Object.FindFirstObjectByType<EnemySpawner>() != null &&
             Camera.main != null && Camera.main.isActiveAndEnabled &&
             Object.FindFirstObjectByType<OrbitalStationRuntime>() is { IsInitialized: true } && !SceneTransitionOverlay.IsTransitioning);
+        yield return CoreTestSupport.SelectInitialRouteNode();
     }
 
     private static GameObject PrepareProduction()
