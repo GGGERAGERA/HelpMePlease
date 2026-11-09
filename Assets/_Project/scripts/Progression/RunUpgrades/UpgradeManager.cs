@@ -115,16 +115,15 @@ public sealed partial class UpgradeManager : MonoBehaviour
         var targets = build.RouteRewardTargets(weapon).Take(upgradePanelView.CardViews.Count).ToList();
         if (targets.Count == 0) targets.Add(null);
         var cards = new List<UpgradeData>(targets.Count);
-        var icons = OrbitalPresentationConfig.Active.TelekineticRigPrefab;
         var localization = LocalizationService.EnsureExists();
         foreach (var target in targets)
         {
             var part = target?.Kind ?? (weapon ? TelekineticPart.Pistol : TelekineticPart.DMG);
             int rank = target?.Level ?? 1;
-            var card = ScriptableObject.CreateInstance<UpgradeData>();
+            var card = ScriptableObject.CreateInstance<TelekineticRankRewardData>();
             card.hideFlags = HideFlags.HideAndDontSave;
             card.upgradeName = TelekineticBuild.Label(part);
-            card.icon = icons != null ? icons.Icon(part) : null;
+            card.Part = part;
             string change = target == null ? "II" : $"{TelekineticBuild.Roman(rank)} → {TelekineticBuild.Roman(rank + 1)}";
             string slot = target == null || build.Reserve.Contains(target)
                 ? localization.Get("reward.route.reserve")
@@ -239,6 +238,9 @@ public sealed partial class UpgradeManager : MonoBehaviour
         granted = null;
         if (state == null || !state.Validate(out _)) return false;
         var candidate = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(state));
+        // JsonUtility materializes an empty inline object for a null rig.
+        // Preserve the uninitialized rig so scene setup imports the awarded weapon.
+        if (!state.UsesTelekineticRig) candidate.Telekinetic = null;
         if (!TryApplyCasinoBonus(candidate, bonus) || !candidate.Validate(out _)) return false;
         if (bonus == OrbitalSlotSymbol.Ring && candidate.UsesCustomPaths &&
             !candidate.TryMarkPendingCasinoRing(candidate.Rings[candidate.Rings.Count - 1].StableRingId, out _))

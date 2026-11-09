@@ -25,20 +25,39 @@ namespace Subject42.Visuals
         public VisualComparisonMode Mode { get; private set; } = VisualComparisonMode.Current;
         public readonly List<VisualTarget> Targets = new();
         public int Revision { get; private set; }
-        public int OriginalMatchedCount { get; private set; }
-        public int OriginalUnmatchedCount { get; private set; }
+        public int OriginalMatchedCount
+        {
+            get
+            {
+                if (originalStatsRevision == Revision) return originalMatchedCount;
+                var matched = new HashSet<(string Type, string Property)>();
+                foreach (var target in Targets)
+                {
+                    if (!target.IsAlive || !originalRules.TryGetValue(("Type", target.TypeKey), out var values)) continue;
+                    foreach (var property in target.Properties)
+                        if (values.ContainsKey(property.Id)) matched.Add((target.TypeKey, property.Id));
+                }
+                originalMatchedCount = matched.Count + originalRingMatches;
+                originalStatsRevision = Revision;
+                return originalMatchedCount;
+            }
+        }
+        public int OriginalUnmatchedCount => Original.Values.Count - OriginalMatchedCount;
         public event Action Changed;
         private readonly Dictionary<int, VisualTarget> registered = new();
         private readonly List<Component> configuredHierarchy = new();
         private readonly Dictionary<GameObject, string> sources = new();
         private readonly Dictionary<string, string> sourceNames = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, Dictionary<string, float>> rules = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, Dictionary<string, float>> originalRules = new(StringComparer.Ordinal);
+        private readonly Dictionary<(string Scope, string Target), Dictionary<string, float>> rules = new();
+        private readonly Dictionary<(string Scope, string Target), Dictionary<string, float>> originalRules = new();
         private readonly List<(VisualTarget target, VisualProperty property, float value)> applied = new();
+        private readonly List<VisualTarget> pendingTargets = new();
         private readonly List<VisualProfile> undo = new(), redo = new();
         private int orbitalRevision = -1;
+        private int originalStatsRevision = -1, originalMatchedCount, originalRingMatches;
         private Action applySavedRingValues, restoreSavedRingValues;
         private bool refreshPending;
+        private bool targetsRemoved;
         private readonly List<EnemyHealth> pendingEnemies = new();
         private float nextCleanup;
         public bool CanUndo => undo.Count > 0;
@@ -78,6 +97,7 @@ namespace Subject42.Visuals
             }
             EnemyHealth.Spawned += EnemySpawned;
             SceneManager.sceneLoaded += SceneLoaded;
+            refreshPending = true;
             StartCoroutine(RegisterInitializedScene());
         }
         private void SceneLoaded(Scene scene, LoadSceneMode mode) { if (scene == gameObject.scene) refreshPending = true; }
@@ -117,7 +137,7 @@ namespace Subject42.Visuals
             using var profilerScope = ApplyProfile.Auto();
             var runtime = Instance;
             if (runtime == null || root == null) return;
-            if (runtime.refreshPending) { runtime.refreshPending = false; runtime.Rebuild(); }
+            runtime.FlushTargetChanges();
             foreach (var item in runtime.applied)
                 if (item.target.IsAlive && item.target.Component != null && item.target.Component.transform.IsChildOf(root.transform))
                 { item.target.Maintain?.Invoke(); item.property.Write(item.value); }
@@ -153,15 +173,17 @@ namespace Subject42.Visuals
                 if (target.IsAlive) continue;
                 target.Release?.Invoke();
                 if (int.TryParse(target.Key, out int id)) registered.Remove(id);
-                Targets.RemoveAt(i); refreshPending = true;
+                Targets.RemoveAt(i);
+                targetsRemoved = true;
             }
         }
         private void BindOrbital()
         {
-            if (!OrbitalPresentationConfig.IsConfigured || orbitalRevision == OrbitalPresentationConfig.ConfigurationRevision) return;
+            if (orbitalRevision == OrbitalPresentationConfig.ConfigurationRevision) return;
             orbitalRevision = OrbitalPresentationConfig.ConfigurationRevision;
             Targets.RemoveAll(t => t.TypeKey == "config:orbital");
-            Targets.Add(OrbitalVisualAdapter.CreateTarget());
+            if (OrbitalPresentationConfig.IsConfigured) Targets.Add(OrbitalVisualAdapter.CreateTarget());
+            refreshPending = true;
         }
         private void RegisterRoot(GameObject root, string explicitSource)
         {
@@ -216,8 +238,8 @@ namespace Subject42.Visuals
                 if (target.Properties.Count == 0) continue;
                 Targets.Add(target); registered.Add(component.GetInstanceID(), target);
                 target.SetComparison?.Invoke(Mode);
-                // Already registered pooled effects do not invalidate the entire scene profile.
-                refreshPending = true;
+                // Bind after the pool captures the owner's configured values, before activation.
+                pendingTargets.Add(target);
             }
         }
         private static string GroupFor(Component component)
@@ -251,66 +273,88 @@ namespace Subject42.Visuals
                 nextCleanup = Time.unscaledTime + .5f;
                 RemoveDeadTargets();
             }
-            if (refreshPending) { refreshPending = false; Rebuild(); }
+            FlushTargetChanges();
             if (Mode == VisualComparisonMode.Original)
                 foreach (var target in Targets) if (target.IsAlive && target.IsActive) target.Maintain?.Invoke();
             foreach (var item in applied)
                 if (item.target.IsAlive && item.target.IsActive) { item.target.Maintain?.Invoke(); item.property.Write(item.value); }
             applySavedRingValues?.Invoke();
         }
-        private static string RuleKey(string scope, string target) => scope + "\n" + target;
-        private static void Index(VisualProfile profile, Dictionary<string, Dictionary<string, float>> index)
+        private static void Index(VisualProfile profile, Dictionary<(string Scope, string Target), Dictionary<string, float>> index)
         {
             index.Clear();
             foreach (var value in profile.Values)
             {
-                string key = RuleKey(value.Scope, value.Target);
+                var key = (value.Scope, value.Target);
                 if (!index.TryGetValue(key, out var values)) index[key] = values = new Dictionary<string, float>(StringComparer.Ordinal);
                 values[value.Property] = value.Value;
             }
         }
         public bool TryOriginal(VisualTarget target, VisualProperty property, out float value)
         {
-            return originalRules.TryGetValue(RuleKey("Type", target.TypeKey), out var values) && values.TryGetValue(property.Id, out value)
+            return originalRules.TryGetValue(("Type", target.TypeKey), out var values) && values.TryGetValue(property.Id, out value)
                 || Original.TryGet("Group", target.Group, property.Id, out value);
         }
+
+        private void FlushTargetChanges()
+        {
+            if (refreshPending)
+            {
+                Rebuild();
+                return;
+            }
+            if (pendingTargets.Count == 0 && !targetsRemoved) return;
+            if (targetsRemoved) applied.RemoveAll(item => !item.target.IsAlive);
+            foreach (var target in pendingTargets)
+                if (target.IsAlive) BindTarget(target);
+            pendingTargets.Clear();
+            targetsRemoved = false;
+            Revision++;
+            Changed?.Invoke();
+        }
+
+        private void BindTarget(VisualTarget target)
+        {
+            rules.TryGetValue(("Instance", target.Key), out var instanceRules);
+            rules.TryGetValue(("Type", target.TypeKey), out var typeRules);
+            rules.TryGetValue(("Group", target.Group), out var groupRules);
+            foreach (var property in target.Properties)
+            {
+                float value = 0;
+                bool has = instanceRules != null && instanceRules.TryGetValue(property.Id, out value) ||
+                    typeRules != null && typeRules.TryGetValue(property.Id, out value) ||
+                    groupRules != null && groupRules.TryGetValue(property.Id, out value);
+                if (has)
+                {
+                    value = property.Sanitize(value);
+                    property.Touched = true;
+                    applied.Add((target, property, value));
+                    property.Write(value);
+                }
+                else if (property.Touched)
+                {
+                    property.RestoreCurrent();
+                    property.Touched = false;
+                }
+            }
+        }
+
         private void Rebuild()
         {
             using var profilerScope = RebuildProfile.Auto();
             restoreSavedRingValues?.Invoke();
             applySavedRingValues = restoreSavedRingValues = null;
             rules.Clear(); applied.Clear();
-            var baselineKeys = new HashSet<string>();
+            refreshPending = targetsRemoved = false;
+            pendingTargets.Clear();
             var profile = Mode == VisualComparisonMode.Original ? Original : Mode == VisualComparisonMode.Custom ? Custom : null;
             if (profile != null) Index(profile, rules);
             foreach (var target in Targets)
-            {
-                if (!target.IsAlive) continue;
-                rules.TryGetValue(RuleKey("Instance", target.Key), out var instanceRules);
-                rules.TryGetValue(RuleKey("Type", target.TypeKey), out var typeRules);
-                rules.TryGetValue(RuleKey("Group", target.Group), out var groupRules);
-                originalRules.TryGetValue(RuleKey("Type", target.TypeKey), out var baselineType);
-                foreach (var property in target.Properties)
-                {
-                    if (baselineType != null && baselineType.ContainsKey(property.Id))
-                        baselineKeys.Add(target.TypeKey + "\n" + property.Id);
-                    float value = 0;
-                    bool has = instanceRules != null && instanceRules.TryGetValue(property.Id, out value) ||
-                        typeRules != null && typeRules.TryGetValue(property.Id, out value) ||
-                        groupRules != null && groupRules.TryGetValue(property.Id, out value);
-                    if (has)
-                    {
-                        value = property.Sanitize(value); property.Touched = true;
-                        applied.Add((target, property, value)); property.Write(value);
-                    }
-                    else if (property.Touched) { property.RestoreCurrent(); property.Touched = false; }
-                }
-            }
+                if (target.IsAlive) BindTarget(target);
             var savedRings = OrbitalVisualAdapter.BindSavedRingValues(profile, Original);
             applySavedRingValues = savedRings.apply; restoreSavedRingValues = savedRings.restore;
             applySavedRingValues?.Invoke();
-            OriginalMatchedCount = baselineKeys.Count + savedRings.originalMatches;
-            OriginalUnmatchedCount = Original.Values.Count - OriginalMatchedCount;
+            originalRingMatches = savedRings.originalMatches;
             Revision++; Changed?.Invoke();
         }
         public void SetMode(VisualComparisonMode mode)

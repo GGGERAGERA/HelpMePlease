@@ -20,12 +20,24 @@ public sealed class PooledVisualConfigurationTests
             LiveVisualRuntime.RegisterHierarchy(root);
             LiveVisualRuntime.ApplyHierarchy(root);
             Assert.That(runtime.Revision, Is.EqualTo(revision), "Reusing a registered effect must not rebuild every scene target.");
-            var child = new GameObject("New particle child"); child.SetActive(false); child.transform.SetParent(root.transform);
-            child.AddComponent<ParticleSystem>();
-            int count = runtime.Targets.Count;
-            LiveVisualRuntime.RegisterHierarchy(root); LiveVisualRuntime.ApplyHierarchy(root);
-            Assert.That(runtime.Targets.Count, Is.GreaterThan(count), "A genuinely new child must still be discovered.");
-            Assert.That(runtime.Revision, Is.GreaterThan(revision));
+            int visited = 0;
+            var unrelated = new VisualTarget("unrelated", "unrelated", "unrelated", "unrelated", null)
+                { Alive = () => { visited++; return true; } };
+            runtime.Targets.Add(unrelated);
+            try
+            {
+                var child = new GameObject("New particle child");
+                child.SetActive(false);
+                child.transform.SetParent(root.transform);
+                child.AddComponent<ParticleSystem>();
+                int count = runtime.Targets.Count;
+                LiveVisualRuntime.RegisterHierarchy(root);
+                LiveVisualRuntime.ApplyHierarchy(root);
+                Assert.That(runtime.Targets.Count, Is.GreaterThan(count), "A genuinely new child must still be discovered.");
+                Assert.That(runtime.Revision, Is.GreaterThan(revision));
+                Assert.That(visited, Is.Zero, "Adding a pooled effect must not rebind unrelated scene targets.");
+            }
+            finally { runtime.Targets.Remove(unrelated); }
         });
     }
 

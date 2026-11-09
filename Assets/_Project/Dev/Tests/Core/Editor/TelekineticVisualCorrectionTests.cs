@@ -390,6 +390,9 @@ public sealed class TelekineticVisualCorrectionTests
         Assert.That(reward.Sprite, Is.SameAs(art.IconSource.sprite));
         Assert.That(reward.ImageTint, Is.EqualTo(art.IconSource.color));
         Assert.That(art.Sprites.Count(layer => layer.enabled && layer != art.Halo), Is.EqualTo(2));
+        var sniperIcon = OrbitalRewardIconResolver.Resolve(TelekineticPart.Sniper).Sprite;
+        Assert.That(sniperIcon, Is.SameAs(rig.ItemIcons[(int)TelekineticPart.Sniper]));
+        Assert.That(sniperIcon.pivot, Is.EqualTo(sniperIcon.rect.size * .5f));
 
         yield return Grant(station, OrbitalRewardKind.Sniper);
         yield return Grant(station, OrbitalRewardKind.Shotgun);

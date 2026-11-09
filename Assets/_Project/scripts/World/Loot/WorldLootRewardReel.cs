@@ -12,8 +12,7 @@ public sealed class WorldLootRewardReel : MonoBehaviour
     {
         public UpgradeData Upgrade;
         public string DisplayName;
-        public Sprite Icon;
-        public Color IconTint = Color.white;
+        public OrbitalRewardIconResolver.Icon Icon;
         public float Weight;
     }
 
@@ -209,15 +208,11 @@ public sealed class WorldLootRewardReel : MonoBehaviour
             if (upgrade == null)
                 continue;
 
-            Sprite icon = upgrade.icon;
-            Color iconTint = Color.white;
+            var icon = new OrbitalRewardIconResolver.Icon(upgrade.icon, Color.white);
             float weight = 1f;
             if (upgrade is OrbitalRewardData orbital)
             {
-                OrbitalRewardIconResolver.Icon resolved =
-                    OrbitalRewardIconResolver.Resolve(orbital);
-                icon = resolved.Sprite;
-                iconTint = resolved.ImageTint;
+                icon = OrbitalRewardIconResolver.Resolve(orbital);
                 weight = Mathf.Max(0.01f, orbital.Weight);
             }
 
@@ -227,7 +222,6 @@ public sealed class WorldLootRewardReel : MonoBehaviour
                 DisplayName = LocalizationService.EnsureExists().Get(
                     upgrade.upgradeName),
                 Icon = icon,
-                IconTint = iconTint,
                 Weight = weight
             });
         }
@@ -756,14 +750,10 @@ public sealed class WorldLootRewardReel : MonoBehaviour
         card.Reward = reward;
         card.Label.text = reward != null ? reward.DisplayName : "—";
         card.Background.color = new Color(0.1f, 0.14f, 0.2f, 1f);
-        bool hasIcon = reward != null && reward.Icon != null;
+        bool hasIcon = reward != null && reward.Icon.Sprite != null;
         card.Icon.gameObject.SetActive(hasIcon);
 
-        if (hasIcon)
-        {
-            card.Icon.sprite = reward.Icon;
-            card.Icon.color = reward.IconTint;
-        }
+        if (hasIcon) OrbitalRewardIconView.Set(card.Icon, reward.Icon);
     }
 
     private string GetStateLabel()

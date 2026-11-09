@@ -26,6 +26,12 @@ MonoBehaviour:
   RingDamageIcon: {fileID: -1636822819, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
   RingSpeedIcon: {fileID: 1877856116, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
   NewRingIcon: {fileID: -1955852563, guid: 682eea2f9d704c04dbd54827c34d5d67, type: 3}
+  MaxHealthRewardIcon: {fileID: 72200000, guid: c0dc118956c44e2c893232a846ef227f, type: 3}
+  MoveSpeedRewardIcon: {fileID: 72200001, guid: c0dc118956c44e2c893232a846ef227f, type: 3}
+  ShootingDamageRewardIcon: {fileID: 72200002, guid: c0dc118956c44e2c893232a846ef227f, type: 3}
+  ShootingRateRewardIcon: {fileID: 72200003, guid: c0dc118956c44e2c893232a846ef227f, type: 3}
+  ContactDamageRewardIcon: {fileID: 72200004, guid: c0dc118956c44e2c893232a846ef227f, type: 3}
+  ContactSizeRewardIcon: {fileID: 72200005, guid: c0dc118956c44e2c893232a846ef227f, type: 3}
   EnergyLinePrefab: {fileID: 8029792597844833736, guid: db8249cd301190e488b9d6ff70d5a1e7, type: 3}
   ShotHaloDuration: 0.09
   ShotHaloAlpha: 0.62

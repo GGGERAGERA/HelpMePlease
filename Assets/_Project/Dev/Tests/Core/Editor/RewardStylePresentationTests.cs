@@ -34,8 +34,8 @@ public sealed class RewardStylePresentationTests
         Time.timeScale = 0;
         var panel = Object.FindFirstObjectByType<UpgradePanelView>(FindObjectsInactive.Include);
         using var provider = new OrbitalRewardProvider(UpgradeManager.Instance.AllUpgrades.ToArray());
-        var kinds = new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.NewRing,
-            OrbitalRewardKind.RingPower, OrbitalRewardKind.MoveSpeed };
+        var kinds = new[] { OrbitalRewardKind.Pistol, OrbitalRewardKind.DamageLink,
+            OrbitalRewardKind.MoveSpeed, OrbitalRewardKind.RigExpansion };
         var rewards = kinds.Select(kind => provider.GetDefinition(kind)).Cast<UpgradeData>().ToArray();
         panel.Show(2, rewards.Take(3).ToArray(), _ => { });
         var cards = panel.GetComponentsInChildren<UpgradeCardView>().ToList();
@@ -56,10 +56,15 @@ public sealed class RewardStylePresentationTests
         yield return new WaitForSecondsRealtime(.5f);
         yield return Capture(panel, "types-normal");
         var buttons = cards.Select(c => c.GetComponent<RewardCardButton>()).ToArray();
-        Assert.That(buttons[0].colors.normalColor, Is.EqualTo(buttons[1].colors.normalColor));
-        Assert.That(buttons[0].colors.normalColor.r, Is.GreaterThan(buttons[0].colors.normalColor.b));
-        Assert.That(buttons[2].colors.normalColor.b, Is.GreaterThan(buttons[2].colors.normalColor.r));
-        Assert.That(buttons[3].colors.normalColor.g, Is.GreaterThan(buttons[3].colors.normalColor.r));
+        var typeLabels = new[] { "ОРУЖИЕ", "МОДУЛЬ", "УСИЛЕНИЕ", "КОНСТРУКЦИЯ" };
+        for (int i = 0; i < cards.Count; i++)
+        {
+            var labels = cards[i].GetComponentsInChildren<TextMeshProUGUI>().Select(label => label.text);
+            Assert.That((Color32)buttons[i].colors.normalColor, Is.EqualTo(new Color32(0x45, 0x53, 0x5F, 255)));
+            Assert.That(labels, Does.Contain(typeLabels[i]));
+            Assert.That(labels, Does.Not.Contain("+1 в запас"));
+            Assert.That(labels, Does.Not.Contain("До III уровня"));
+        }
         var pointer = new PointerEventData(EventSystem.current);
         foreach (var b in buttons) ExecuteEvents.Execute(b.gameObject, pointer, ExecuteEvents.pointerEnterHandler);
         yield return new WaitForSecondsRealtime(.3f);
@@ -92,26 +97,17 @@ public sealed class RewardStylePresentationTests
         var cards = panel.GetComponentsInChildren<UpgradeCardView>(true);
         Assert.That(cards.Length, Is.EqualTo(3));
         using var provider = new OrbitalRewardProvider(UpgradeManager.Instance.AllUpgrades.ToArray());
-        var state = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(RunStateManager.Instance.OrbitalStationState));
-        var rewards = new List<UpgradeData>();
-        foreach (OrbitalRewardKind kind in Enum.GetValues(typeof(OrbitalRewardKind)))
-            if (OrbitalRewardProvider.IsDemoReward(kind))
-            {
-                var presentationState = JsonUtility.FromJson<OrbitalRunState>(JsonUtility.ToJson(state));
-                // Capacity cards are offered only after all mounts have been built.
-                if (kind == OrbitalRewardKind.RingCapacity)
-                    presentationState.Rings[0].MountCount = presentationState.Rings[0].MountCapacity;
-                rewards.Add(Object.Instantiate(provider.GetDefinition(kind, presentationState)));
-            }
+        var rewards = provider.GetActiveCatalogue(RunStateManager.Instance.OrbitalStationState).ToList();
+        Assert.That(rewards.Count, Is.EqualTo(23));
         Directory.CreateDirectory(Output);
         File.WriteAllLines(Output + "/reward-card-texts.ru.txt", rewards.Select(reward =>
             Plain(LocalizationService.Instance.Get(reward.upgradeName)) + " — " +
             Plain(ProductionUpgradePresentation.GetCardDescription(reward))));
 
         UpgradeData clicked = null;
-        var samples = new[] { rewards.First(r => ((OrbitalRewardData)r).RewardKind == OrbitalRewardKind.Pistol),
-            rewards.First(r => ((OrbitalRewardData)r).RewardKind == OrbitalRewardKind.RingPower),
-            rewards.First(r => ((OrbitalRewardData)r).RewardKind == OrbitalRewardKind.MoveSpeed) };
+        var samples = new[] { rewards.First(r => r.RewardKind == OrbitalRewardKind.Pistol),
+            rewards.First(r => r.RewardKind == OrbitalRewardKind.RigExpansion),
+            rewards.First(r => r.RewardKind == OrbitalRewardKind.MoveSpeed) };
         panel.Show(2, samples, reward => clicked = reward);
         yield return new WaitForSecondsRealtime(.4f);
         yield return Capture(panel, "01-normal");
@@ -141,7 +137,6 @@ public sealed class RewardStylePresentationTests
         yield return new WaitForSecondsRealtime(1f);
         yield return Capture(panel, "05-event-reward");
         panel.Hide();
-        foreach (var reward in rewards) Object.Destroy(reward);
     }
 
     private static string Plain(string text) => Regex.Replace(Regex.Replace(text, "<[^>]+>", ""), @"\s+", " ").Trim();

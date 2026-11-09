@@ -13,7 +13,12 @@ using Object = UnityEngine.Object;
 [InitializeOnLoad]
 public static partial class VisualEffectsLabAuthoring
 {
-    static VisualEffectsLabAuthoring() => EditorApplication.update += Poll;
+    static VisualEffectsLabAuthoring()
+    {
+        EditorApplication.update += Poll;
+        EditorApplication.playModeStateChanged += CombatPlayState;
+        AssemblyReloadEvents.beforeAssemblyReload += EndCombatRoutine;
+    }
 
     [MenuItem("Tools/Subject42/Dev/Visual Effects/Rebuild catalog and scenes")]
     public static void BuildAll()
@@ -63,6 +68,7 @@ public static partial class VisualEffectsLabAuthoring
 
     private static void Poll()
     {
+        TickCombatPreview();
         if (EditorApplication.isCompiling || EditorApplication.isUpdating ||
             SessionState.GetBool("Subject42.Verification.AnyRunActive", false)) return;
         string pending = SessionState.GetString(EffectLabCatalog.PendingSceneKey, "");
@@ -83,6 +89,17 @@ public static partial class VisualEffectsLabAuthoring
                 case "author-shaders": RebuildShaders(); break;
                 case "play-effects": PlayEffects(); break;
                 case "play-shaders": PlayShaders(); break;
+                case "play-combat": PlayCombatPreview(); break;
+                case "play-combat-floor": PlayCombatFloor(); break;
+                case "play-combat-floor-crowd": PlayCombatFloorCrowd(); break;
+                case "play-centered-vortex": PlayCenteredVortex(); break;
+                case "measure-combat": MeasureCombatPreview(); break;
+                case "measure-combat-floor": MeasureCombatFloor(); break;
+                case "measure-combat-floor-crowd": MeasureCombatFloorCrowd(); break;
+                case "combat-baseline": SetCombatShaders(0); break;
+                case "combat-gravity": SetCombatShaders(1); break;
+                case "combat-links": SetCombatShaders(2); break;
+                case "combat-both": SetCombatShaders(3); break;
                 case "stop": EditorApplication.ExitPlaymode(); break;
                 case "capture":
                     if (!EditorApplication.isPlaying) throw new InvalidOperationException("Capture requires Play Mode.");

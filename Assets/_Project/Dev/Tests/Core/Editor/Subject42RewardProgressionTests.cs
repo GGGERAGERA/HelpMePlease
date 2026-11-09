@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Subject42.Combat.OrbitalStation;
+using Subject42.Combat.Telekinetic;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -190,6 +191,21 @@ public static class RewardScenarioAssertions
 [Category("Core")]
 public sealed class CasinoRewardTests
 {
+    [Test]
+    public void PreviouslyWonSawIsImportedWhenTheRunCreatesItsRig()
+    {
+        var original = OrbitalRunState.CreateDefault(42);
+        Assert.That(UpgradeManager.TryGrantPendingCasinoBonus(original,
+            OrbitalSlotSymbol.Saw, out var granted), Is.True);
+        Assert.That(granted.UsesTelekineticRig, Is.False);
+
+        granted.EnableTelekineticRig();
+
+        var owned = granted.Telekinetic.Items.Concat(granted.Telekinetic.Reserve);
+        Assert.That(owned.Select(item => item.Kind),
+            Is.EquivalentTo(new[] { TelekineticPart.Pistol, TelekineticPart.Saw }));
+    }
+
     [Test]
     public void CasinoLinkBonusPublishesAValidPairWithoutMutatingSource()
     {

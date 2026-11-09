@@ -31,6 +31,9 @@ namespace Subject42.Combat.Telekinetic
         public int EdgeCount { get; private set; }
         public int SocketCount { get; private set; }
         public bool CombatVisible => root!=null && root.activeSelf;
+#if UNITY_EDITOR
+        public MeshRenderer PreviewChassisRenderer { get; private set; }
+#endif
 
         private sealed class Geometry
         {
@@ -38,7 +41,17 @@ namespace Subject42.Combat.Telekinetic
             internal readonly List<int> Triangles=new();
             internal readonly List<Color> Colors=new();
             internal readonly List<Vector2> Uvs=new();
-            internal void Clear() { Vertices.Clear(); Triangles.Clear(); Colors.Clear(); Uvs.Clear(); }
+#if UNITY_EDITOR
+            private readonly List<(int First, float Length)> previewLinks = new();
+            internal void MarkPreviewLink(float length) => previewLinks.Add((Vertices.Count - 4, length));
+#endif
+            internal void Clear()
+            {
+                Vertices.Clear(); Triangles.Clear(); Colors.Clear(); Uvs.Clear();
+#if UNITY_EDITOR
+                previewLinks.Clear();
+#endif
+            }
             internal void Quad(Vector2 a,Vector2 b,float width,Color color)
             {
                 Vector2 side=new Vector2(-(b-a).y,(b-a).x).normalized*width*.5f;
@@ -62,6 +75,18 @@ namespace Subject42.Combat.Telekinetic
             {
                 mesh.Clear(); mesh.SetVertices(Vertices); mesh.SetUVs(0,Uvs); mesh.SetColors(Colors);
                 mesh.SetTriangles(Triangles,0); mesh.RecalculateBounds();
+#if UNITY_EDITOR
+                if (previewLinks.Count > 0)
+                {
+                    var previewUvs = new Vector2[Vertices.Count];
+                    foreach (var link in previewLinks)
+                    {
+                        previewUvs[link.First] = previewUvs[link.First + 1] = new Vector2(0, 1);
+                        previewUvs[link.First + 2] = previewUvs[link.First + 3] = new Vector2(link.Length, 1);
+                    }
+                    mesh.uv2 = previewUvs;
+                }
+#endif
             }
         }
         private struct Pulse
@@ -92,6 +117,9 @@ namespace Subject42.Combat.Telekinetic
             var mesh=new Mesh { name=label, indexFormat=IndexFormat.UInt32 };
             go.AddComponent<MeshFilter>().sharedMesh=mesh;
             var renderer=go.AddComponent<MeshRenderer>(); renderer.sharedMaterial=lab.SpriteMaterial;
+#if UNITY_EDITOR
+            if (order == -8) PreviewChassisRenderer = renderer;
+#endif
             renderer.sortingLayerName="Player"; renderer.sortingOrder=order;
             renderer.shadowCastingMode=ShadowCastingMode.Off; renderer.receiveShadows=false;
             return mesh;
@@ -176,7 +204,12 @@ namespace Subject42.Combat.Telekinetic
                 a += axis * EdgeTrim(fromItem);
                 b -= axis * EdgeTrim(toItem);
                 if (Vector2.Dot(b - a, axis) > 0)
+                {
                     metal.Quad(a, b, LinkWidth, armed ? Cyan : new Color(.34f, .65f, .74f, .86f));
+#if UNITY_EDITOR
+                    metal.MarkPreviewLink(Vector2.Distance(a, b));
+#endif
+                }
                 return;
             }
             Color channel=armed?Cyan:new Color(.42f,.48f,.55f,.38f);

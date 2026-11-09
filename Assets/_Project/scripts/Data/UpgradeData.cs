@@ -92,12 +92,20 @@ public class UpgradeData : ScriptableObject
     public float value = 1f;
 }
 
+internal sealed class TelekineticRankRewardData : UpgradeData
+{
+    internal Subject42.Combat.Telekinetic.TelekineticPart Part;
+}
+
 public static class ProductionUpgradePresentation
 {
     public static string GetCardDescription(UpgradeData upgrade)
     {
         if (upgrade == null)
             return string.Empty;
+
+        if (upgrade is Subject42.Combat.OrbitalStation.OrbitalRewardData { CompactDescription: { } compact })
+            return compact;
 
         if (upgrade.upgradeType != UpgradeType.HpRegeneration)
             return LocalizationService.EnsureExists().Get(upgrade.description);

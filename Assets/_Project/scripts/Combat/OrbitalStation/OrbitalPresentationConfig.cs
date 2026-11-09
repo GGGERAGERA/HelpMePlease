@@ -51,6 +51,9 @@ namespace Subject42.Combat.OrbitalStation
         public Sprite PixelSprite, CircleSprite, RingIcon;
         [Header("Run reward icons — leave missing authored art unassigned")]
         public Sprite NewMountIcon, RingCapacityIcon, RingDamageIcon, RingSpeedIcon, NewRingIcon;
+        public Sprite MaxHealthRewardIcon, MoveSpeedRewardIcon;
+        public Sprite ShootingDamageRewardIcon, ShootingRateRewardIcon;
+        public Sprite ContactDamageRewardIcon, ContactSizeRewardIcon;
         public LineRenderer EnergyLinePrefab;
         [Header("Cannon feedback — visual only, no contact geometry")]
         [Min(.01f)] public float ShotHaloDuration = .12f;

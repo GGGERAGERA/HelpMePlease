@@ -12,6 +12,11 @@ public sealed class GravityZone : LocalAnomalyZone
         public readonly Component Component;
         public readonly IAnomalyExternalVelocity VelocityTarget;
         public readonly HashSet<Collider2D> Colliders = new();
+#if UNITY_EDITOR
+        public Rigidbody2D DebugVortexDiscreteBody;
+        public List<(Collider2D Collider, LayerMask Mask)> DebugVortexCallbackMasks;
+        public float DebugVortexEnteredAt;
+#endif
 
         public AffectedObject(
             Component component,
@@ -91,6 +96,11 @@ public sealed class GravityZone : LocalAnomalyZone
     private AnomalyVisualTuningValues originalVisualValues;
     private AnomalyVisualTuningValues debugVisualValues;
     private bool visualValuesCaptured;
+#endif
+#if UNITY_EDITOR
+    private int debugVortexEnemyMask;
+    private (WorldBreakable Crate, Rigidbody2D Body)[] debugVortexCrates;
+    private float debugVortexStartedAt;
 #endif
 
     public void ConfigureOrbit(
@@ -188,6 +198,45 @@ public sealed class GravityZone : LocalAnomalyZone
 
 #endif
 
+#if UNITY_EDITOR
+    public void ConfigureDebugVortexPull(WorldBreakable[] crates)
+    {
+        ConfigureOrbit(8.5f, 3.25f, 11.5f, 3.25f, .85f, 2.8f);
+        debugVortexStartedAt = Time.time;
+        debugVortexEnemyMask = LayerMask.GetMask("Enemy");
+        debugVortexCrates = new (WorldBreakable, Rigidbody2D)[crates.Length];
+        for (int i = 0; i < crates.Length; i++)
+            debugVortexCrates[i] = (crates[i], crates[i].GetComponent<Rigidbody2D>());
+        foreach (var affected in affectedObjects)
+            ConfigureDebugVortexEnemyContacts(affected);
+    }
+
+    private void ConfigureDebugVortexEnemyContacts(AffectedObject affected)
+    {
+        if (affected.Component is not EnemyMovement enemy ||
+            !enemy.TryGetComponent<Rigidbody2D>(out var body) ||
+            affected.DebugVortexCallbackMasks != null) return;
+
+        // The preview compresses dozens of enemy bodies into one island.
+        // Keep ordinary contacts and avoid repeated time-of-impact solves in that pile.
+        if (body.collisionDetectionMode == CollisionDetectionMode2D.Continuous)
+        {
+            affected.DebugVortexDiscreteBody = body;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Discrete;
+        }
+
+        affected.DebugVortexCallbackMasks = new List<(Collider2D, LayerMask)>();
+        foreach (var collider in enemy.GetComponentsInChildren<Collider2D>(true))
+        {
+            if (collider.attachedRigidbody != body || (collider.callbackLayers.value & debugVortexEnemyMask) == 0)
+                continue;
+
+            affected.DebugVortexCallbackMasks.Add((collider, collider.callbackLayers));
+            collider.callbackLayers &= ~debugVortexEnemyMask;
+        }
+    }
+#endif
+
     public void SetDebugVisualEmphasis(float multiplier)
     {
         debugVisualEmphasis = Mathf.Clamp(multiplier, 1f, 1.75f);
@@ -253,13 +302,20 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private void MoveOrbitProps()
     {
-        if (AreaCollider == null || !AreaCollider.enabled || Time.deltaTime <= 0f ||
-            propOrbitDegreesPerSecond <= 0f) return;
+        if (AreaCollider == null || !AreaCollider.enabled || Time.deltaTime <= 0f) return;
+        Vector2 center = AreaCollider.transform.TransformPoint(AreaCollider.offset);
+#if UNITY_EDITOR
+        if (debugVortexCrates != null)
+        {
+            PullDebugVortexProps(center);
+            return;
+        }
+#endif
+        if (propOrbitDegreesPerSecond <= 0f) return;
 
         float angle = propOrbitDegreesPerSecond * Mathf.Deg2Rad * Time.deltaTime;
         float cosine = Mathf.Cos(angle);
         float sine = Mathf.Sin(angle);
-        Vector2 center = AreaCollider.transform.TransformPoint(AreaCollider.offset);
         var props = AnomalyMovableProp.ActiveProps;
         for (int i = 0; i < props.Count; i++)
         {
@@ -269,6 +325,25 @@ public sealed class GravityZone : LocalAnomalyZone
                 prop.Orbit(center, cosine, sine);
         }
     }
+
+#if UNITY_EDITOR
+    private void PullDebugVortexProps(Vector2 center)
+    {
+        foreach (AnomalyMovableProp prop in AnomalyMovableProp.ActiveProps)
+            if (prop != null && prop.isActiveAndEnabled && ContainsWorldPosition(prop.transform.position))
+                prop.MoveBy(CalculateOrbitVelocity(prop, center, prop.transform.position) * (.55f * Time.deltaTime));
+
+        foreach (var (crate, body) in debugVortexCrates)
+        {
+            if (crate == null || crate.IsBroken || !crate.isActiveAndEnabled) continue;
+            Vector2 position = body != null ? body.position : (Vector2)crate.transform.position;
+            if (!ContainsWorldPosition(position)) continue;
+            Vector2 step = CalculateOrbitVelocity(crate, center, position) * (.45f * Time.deltaTime);
+            if (body != null) body.position += step;
+            else crate.transform.position += (Vector3)step;
+        }
+    }
+#endif
 
     protected override void InitializeFromData(
         LocalAnomalyData data,
@@ -310,7 +385,12 @@ public sealed class GravityZone : LocalAnomalyZone
             return;
         }
 
-        affectedObjects.Add(new AffectedObject(component, target, other));
+        affected = new AffectedObject(component, target, other);
+        affectedObjects.Add(affected);
+#if UNITY_EDITOR
+        affected.DebugVortexEnteredAt = Time.time;
+        if (debugVortexCrates != null) ConfigureDebugVortexEnemyContacts(affected);
+#endif
 
         if (component is CharacterMovement2D)
             Controller?.NotifyLocalZoneEntered(this, Data);
@@ -353,6 +433,9 @@ public sealed class GravityZone : LocalAnomalyZone
 
             if (affected.Component == null)
             {
+#if UNITY_EDITOR
+                RestoreDebugVortexEnemyContacts(affected);
+#endif
                 affectedObjects.RemoveAt(i);
                 continue;
             }
@@ -382,6 +465,10 @@ public sealed class GravityZone : LocalAnomalyZone
                     center,
                     position
                 );
+#if UNITY_EDITOR
+                if (debugVortexCrates != null)
+                    velocity *= Mathf.SmoothStep(0f, 1f, (Time.time - affected.DebugVortexEnteredAt) / .28f);
+#endif
             }
             else
             {
@@ -413,6 +500,11 @@ public sealed class GravityZone : LocalAnomalyZone
         Vector2 center,
         Vector2 position)
     {
+#if UNITY_EDITOR
+        if (debugVortexCrates != null && component is EnemyProjectile)
+            return Vector2.zero;
+#endif
+
         Vector2 radial = position - center;
         float distance = radial.magnitude;
 
@@ -450,6 +542,22 @@ public sealed class GravityZone : LocalAnomalyZone
             inwardForce = inwardForceEnemies;
         }
 
+#if UNITY_EDITOR
+        if (debugVortexCrates != null)
+        {
+            if (component is IAnomalySpeedPickup) inwardForce = 2.2f;
+
+            Vector2 offset = position - center;
+            float inset = Mathf.Min(AreaSize.x * .5f - Mathf.Abs(offset.x),
+                AreaSize.y * .5f - Mathf.Abs(offset.y));
+            float edge = Mathf.SmoothStep(0f, 1f, inset / 1.5f);
+            float startup = Mathf.SmoothStep(0f, 1f, (Time.time - debugVortexStartedAt) / .45f);
+            float turn = Mathf.Min(orbitForce, distance * 1.8f);
+            float pull = inwardForce * Mathf.Clamp01(distance / .85f);
+            // Clockwise, matching the animated spiral. Both speeds approach zero at the core.
+            return (-tangent * turn - radial * pull) * (edge * startup);
+        }
+#endif
         float radius = Mathf.Max(
             0.1f,
             Mathf.Min(AreaSize.x, AreaSize.y) * 0.5f
@@ -494,6 +602,9 @@ public sealed class GravityZone : LocalAnomalyZone
 
     private void RemoveAffected(AffectedObject affected)
     {
+#if UNITY_EDITOR
+        RestoreDebugVortexEnemyContacts(affected);
+#endif
         if (affected.Component != null)
         {
             affected.VelocityTarget.RemoveAnomalyExternalVelocity(this);
@@ -504,6 +615,17 @@ public sealed class GravityZone : LocalAnomalyZone
 
         affectedObjects.Remove(affected);
     }
+
+#if UNITY_EDITOR
+    private static void RestoreDebugVortexEnemyContacts(AffectedObject affected)
+    {
+        if (affected.DebugVortexDiscreteBody != null)
+            affected.DebugVortexDiscreteBody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        if (affected.DebugVortexCallbackMasks == null) return;
+        foreach (var (collider, mask) in affected.DebugVortexCallbackMasks)
+            if (collider != null) collider.callbackLayers = mask;
+    }
+#endif
 
     private void ClearEffects()
     {

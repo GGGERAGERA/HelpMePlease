@@ -14,6 +14,9 @@ public class UpgradeCardView : MonoBehaviour
     [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI descriptionText;
+    [SerializeField] private TextMeshProUGUI rewardTypeLabel;
+    [SerializeField] private TextMeshProUGUI rewardDetailLabel;
+    [SerializeField] private Vector4 compactDescriptionMargins;
 
     [Header("Category Colors")]
     [SerializeField] private Color numericColor = new Color(0.239216f, 0.552941f, 1f, 1f);
@@ -49,6 +52,7 @@ public class UpgradeCardView : MonoBehaviour
     private Image.Type defaultIconType;
     private Vector2 defaultIconOffsetMin;
     private Vector2 defaultIconOffsetMax;
+    private Vector4 defaultDescriptionMargins;
 
     private void Awake()
     {
@@ -94,6 +98,7 @@ public class UpgradeCardView : MonoBehaviour
         {
             SetText(titleText, string.Empty);
             SetText(descriptionText, string.Empty);
+            SetCompactLabels(null);
             SetIcon(null, Color.white);
             gameObject.SetActive(false);
             return;
@@ -101,29 +106,27 @@ public class UpgradeCardView : MonoBehaviour
 
         gameObject.SetActive(true);
 
+        var orbitalReward = upgrade as OrbitalRewardData;
+        bool compact = orbitalReward != null && orbitalReward.CardType != RigRewardCardType.None;
+        if (descriptionText != null)
+            descriptionText.margin = compact ? compactDescriptionMargins : defaultDescriptionMargins;
         SetText(titleText, LocalizationService.EnsureExists().Get(upgrade.upgradeName));
         SetText(
             descriptionText,
-            (upgrade is OrbitalRewardData categoryReward ? OrbitalCategories.Label(categoryReward.EffectCategory) + "\n\n" : "") +
+            (!compact && orbitalReward != null ? OrbitalCategories.Label(orbitalReward.EffectCategory) + "\n\n" : "") +
             ProductionUpgradePresentation.GetCardDescription(upgrade));
 
-        SetCategory(upgrade.category);
-        if (upgrade is OrbitalRewardData orbitalReward)
-        {
-            OrbitalRewardIconResolver.Icon icon = OrbitalRewardIconResolver.Resolve(orbitalReward);
-            SetIcon(icon.Sprite, icon.ImageTint);
-            if (iconImage != null)
-            {
-                iconImage.type = Image.Type.Simple;
-                iconImage.preserveAspect = true;
-                // Inset only the image inside the existing upper icon frame.
-                iconImage.rectTransform.offsetMin = defaultIconOffsetMin + Vector2.one * 16f;
-                iconImage.rectTransform.offsetMax = defaultIconOffsetMax - Vector2.one * 16f;
-            }
-        }
+        SetCompactLabels(orbitalReward);
+        if (button is RewardCardButton rewardButton) rewardButton.SetReward(upgrade);
+        if (categoryFrameImage != null)
+            categoryFrameImage.color = compact && button != null ? button.colors.normalColor : GetCategoryColor(upgrade.category);
+
+        if (orbitalReward != null)
+            SetOrbitalIcon(OrbitalRewardIconResolver.Resolve(orbitalReward));
+        else if (upgrade is TelekineticRankRewardData rankReward)
+            SetOrbitalIcon(OrbitalRewardIconResolver.Resolve(rankReward.Part));
         else
             SetIcon(upgrade.icon, GetCategoryColor(upgrade.category));
-        if (button is RewardCardButton rewardButton) rewardButton.SetReward(upgrade);
         hoverAnimation?.RefreshRestingState();
     }
 
@@ -137,12 +140,18 @@ public class UpgradeCardView : MonoBehaviour
 
     private void SetIcon(Sprite icon, Color tint)
     {
-        if (iconImage == null)
-            return;
+        if (iconImage != null) OrbitalRewardIconView.Set(iconImage, new OrbitalRewardIconResolver.Icon(icon, tint));
+    }
 
-        iconImage.sprite = icon;
-        iconImage.color = tint;
-        iconImage.enabled = icon != null;
+    private void SetOrbitalIcon(OrbitalRewardIconResolver.Icon icon)
+    {
+        if (iconImage == null) return;
+        iconImage.type = Image.Type.Simple;
+        iconImage.preserveAspect = true;
+        // Inset only the image inside the existing upper icon frame.
+        iconImage.rectTransform.offsetMin = defaultIconOffsetMin + Vector2.one * 16f;
+        iconImage.rectTransform.offsetMax = defaultIconOffsetMax - Vector2.one * 16f;
+        OrbitalRewardIconView.Set(iconImage, icon);
     }
 
     private void CaptureVisualDefaults()
@@ -152,6 +161,8 @@ public class UpgradeCardView : MonoBehaviour
 
         if (iconFrameImage == null && iconImage != null && iconImage.transform.parent != null)
             iconFrameImage = iconImage.transform.parent.GetComponent<Image>();
+
+        if (descriptionText != null) defaultDescriptionMargins = descriptionText.margin;
 
         if (iconImage != null)
         {
@@ -201,12 +212,32 @@ public class UpgradeCardView : MonoBehaviour
             rarityDecorationRoot.SetActive(defaultRarityDecorationActive);
     }
 
-    private void SetCategory(UpgradeCategory category)
+    private void SetCompactLabels(OrbitalRewardData reward)
     {
-        Color color = GetCategoryColor(category);
+        var type = reward?.CardType ?? RigRewardCardType.None;
+        if (rewardTypeLabel != null)
+        {
+            rewardTypeLabel.gameObject.SetActive(type != RigRewardCardType.None);
+            if (type != RigRewardCardType.None)
+            {
+                var (key, accent) = type switch
+                {
+                    RigRewardCardType.Weapon => ("reward.rig.type.weapon", new Color32(0xE6, 0xA2, 0x65, 255)),
+                    RigRewardCardType.Module => ("reward.rig.type.module", new Color32(0xB3, 0x96, 0xF5, 255)),
+                    RigRewardCardType.Upgrade => ("reward.rig.type.upgrade", new Color32(0x74, 0xC9, 0xA6, 255)),
+                    _ => ("reward.rig.type.construction", new Color32(0x68, 0xCB, 0xD9, 255))
+                };
+                SetText(rewardTypeLabel, LocalizationService.EnsureExists().Get(key));
+                rewardTypeLabel.color = accent;
+            }
+        }
 
-        if (categoryFrameImage != null)
-            categoryFrameImage.color = color;
+        if (rewardDetailLabel != null)
+        {
+            bool visible = type != RigRewardCardType.None && !string.IsNullOrEmpty(reward.CardDetail);
+            rewardDetailLabel.gameObject.SetActive(visible);
+            if (visible) SetText(rewardDetailLabel, reward.CardDetail);
+        }
     }
 
     private Color GetCategoryColor(UpgradeCategory category)

@@ -44,7 +44,9 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
     {
         foreach (var symbol in OrbitalSlotMachine.Symbols)
             if (symbol is not (OrbitalSlotSymbol.Ring or OrbitalSlotSymbol.Gold or OrbitalSlotSymbol.Skull))
-                icons[(int)symbol] = OrbitalRewardIconResolver.Resolve(OrbitalSlotMachine.ModuleKind(symbol));
+                icons[(int)symbol] = OrbitalRewardIconResolver.ResolveBunkerModule(OrbitalSlotMachine.ModuleKind(symbol));
+        // An existing profile may still hold a SAW payout earned before it left the reels.
+        icons[(int)OrbitalSlotSymbol.Saw] = OrbitalRewardIconResolver.ResolveBunkerModule(OrbitalModuleKind.Saw);
         icons[(int)OrbitalSlotSymbol.Ring] = OrbitalRewardIconResolver.Resolve(OrbitalRewardKind.NewRing);
         icons[(int)OrbitalSlotSymbol.Gold] = new OrbitalRewardIconResolver.Icon(goldIcon, Color.white);
         icons[(int)OrbitalSlotSymbol.Skull] = new OrbitalRewardIconResolver.Icon(skullIcon, Color.white);
@@ -260,11 +262,7 @@ public sealed class BunkerOrbitalSlotPanel : MonoBehaviour
 
     private void SetIcon(Image image, OrbitalSlotSymbol symbol, float alpha)
     {
-        var icon = icons[(int)symbol];
-        image.sprite = icon.Sprite;
-        Color tint = icon.ImageTint;
-        tint.a *= alpha;
-        image.color = tint;
+        OrbitalRewardIconView.Set(image, icons[(int)symbol], alpha);
     }
 
     private static void PlayCue(AudioCueId cue)

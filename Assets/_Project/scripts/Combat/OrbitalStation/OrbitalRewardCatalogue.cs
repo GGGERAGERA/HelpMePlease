@@ -11,7 +11,8 @@ namespace Subject42.Combat.OrbitalStation
         public IReadOnlyList<OrbitalRewardData> GetActiveCatalogue(OrbitalRunState state)
         {
             RefreshPresentation(state);
-            return definitions.Where(d => IsInActivePool(d, state)).ToArray();
+            var active = definitions.Where(d => IsInActivePool(d, state));
+            return (state?.UsesTelekineticRig == true ? OrderRigCards(active) : active).ToArray();
         }
 
         public string GetUnavailableReason(OrbitalRewardKind kind, OrbitalRunState state, RunItemSlots slots)

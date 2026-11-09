@@ -8,12 +8,15 @@ public sealed class RewardCardButton : Button
     [Header("Reward presentation")]
     [SerializeField] private RewardCardVisualPreset[] visualPresets;
     [SerializeField] private RewardCardVisualPreset fallbackPreset;
+    [SerializeField] private RewardCardVisualPreset compactPreset;
     [SerializeField] private Image headerAccent;
 
     public void SetReward(UpgradeData reward)
     {
-        var preset = fallbackPreset;
-        if (reward is Subject42.Combat.OrbitalStation.OrbitalRewardData orbital && visualPresets != null)
+        var orbital = reward as Subject42.Combat.OrbitalStation.OrbitalRewardData;
+        bool compact = orbital != null && orbital.CardType != Subject42.Combat.OrbitalStation.RigRewardCardType.None;
+        var preset = compact ? compactPreset : fallbackPreset;
+        if (!compact && orbital != null && visualPresets != null)
             foreach (var candidate in visualPresets)
                 if (candidate != null && candidate.Matches(orbital.RewardKind))
                 {

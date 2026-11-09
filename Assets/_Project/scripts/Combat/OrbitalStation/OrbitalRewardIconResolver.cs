@@ -1,3 +1,4 @@
+using Subject42.Combat.Telekinetic;
 using UnityEngine;
 
 namespace Subject42.Combat.OrbitalStation
@@ -28,6 +29,12 @@ namespace Subject42.Combat.OrbitalStation
 
         public static Color ModuleColor(OrbitalModuleKind kind) => Resolve(kind).Tint;
 
+        public static Icon Resolve(TelekineticPart part) =>
+            OrbitalPresentationConfig.Active.TelekineticRigPrefab.GetItemIcon(part);
+
+        internal static Icon ResolveBunkerModule(OrbitalModuleKind kind) =>
+            OrbitalRewardProvider.GetRigPart(kind) is TelekineticPart part ? Resolve(part) : Resolve(kind);
+
         public static Icon Resolve(SegmentedLinkKind kind) =>
             new(SegmentedModulePresentation.Icon(kind), SegmentedModulePresentation.Color(kind));
 
@@ -40,8 +47,12 @@ namespace Subject42.Combat.OrbitalStation
             OrbitalRewardKind.ExtraShotLink => Resolve(SegmentedLinkKind.ExtraShot),
             OrbitalRewardKind.RicochetLink => Resolve(SegmentedLinkKind.Ricochet),
             OrbitalRewardKind.ModuleDamage => Resolve(OrbitalModuleKind.Pistol),
-            OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate => Resolve(OrbitalModuleKind.Pistol),
-            OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize => Resolve(OrbitalModuleKind.Saw),
+            OrbitalRewardKind.MaxHealth => new Icon(OrbitalPresentationConfig.Active.MaxHealthRewardIcon, Color.white),
+            OrbitalRewardKind.MoveSpeed => new Icon(OrbitalPresentationConfig.Active.MoveSpeedRewardIcon, Color.white),
+            OrbitalRewardKind.ShootingDamage => new Icon(OrbitalPresentationConfig.Active.ShootingDamageRewardIcon, Color.white),
+            OrbitalRewardKind.ShootingRate => new Icon(OrbitalPresentationConfig.Active.ShootingRateRewardIcon, Color.white),
+            OrbitalRewardKind.ContactDamage => new Icon(OrbitalPresentationConfig.Active.ContactDamageRewardIcon, Color.white),
+            OrbitalRewardKind.ContactSize => new Icon(OrbitalPresentationConfig.Active.ContactSizeRewardIcon, Color.white),
             OrbitalRewardKind.AddMount => new Icon(OrbitalPresentationConfig.Active.NewMountIcon, Color.white),
             OrbitalRewardKind.RingCapacity => new Icon(OrbitalPresentationConfig.Active.RingCapacityIcon, Color.white),
             OrbitalRewardKind.RingPower => new Icon(OrbitalPresentationConfig.Active.RingDamageIcon, Color.white),
@@ -52,17 +63,10 @@ namespace Subject42.Combat.OrbitalStation
 
         public static Icon Resolve(OrbitalRewardData reward)
         {
-            if (RunStateManager.Instance?.OrbitalStationState?.UsesTelekineticRig==true && OrbitalRewardProvider.GetRigPart(reward.RewardKind) is Subject42.Combat.Telekinetic.TelekineticPart part)
-            {
-                if (part == Subject42.Combat.Telekinetic.TelekineticPart.Sniper) return Resolve(OrbitalModuleKind.Sniper);
-                var prefab=OrbitalPresentationConfig.Active.TelekineticRigPrefab;
-                return new Icon(prefab.Icon(part),Subject42.Combat.Telekinetic.TelekineticRig.PartColor(part),true);
-            }
+            if (RunStateManager.Instance?.OrbitalStationState?.UsesTelekineticRig == true &&
+                OrbitalRewardProvider.GetRigPart(reward.RewardKind) is TelekineticPart part)
+                return Resolve(part);
             if (reward.RewardKind==OrbitalRewardKind.RigExpansion) return new Icon(OrbitalPresentationConfig.Active.NewMountIcon,Color.cyan);
-            if ((reward.RewardKind == OrbitalRewardKind.MaxHealth || reward.RewardKind == OrbitalRewardKind.MoveSpeed) &&
-                reward.BodyUpgrade != null)
-                return new Icon(reward.BodyUpgrade.icon,
-                    reward.RewardKind == OrbitalRewardKind.MaxHealth ? Color.red : Color.blue);
             return Resolve(reward.RewardKind);
         }
     }

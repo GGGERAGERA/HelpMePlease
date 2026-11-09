@@ -67,7 +67,7 @@ public static class OrbitalSlotMachine
         finally { resolving = false; }
     }
 
-    private static readonly OrbitalSlotSymbol[] symbols = { OrbitalSlotSymbol.Gun, OrbitalSlotSymbol.Arc, OrbitalSlotSymbol.Link, OrbitalSlotSymbol.Ring, OrbitalSlotSymbol.Gold, OrbitalSlotSymbol.Skull, OrbitalSlotSymbol.Saw, OrbitalSlotSymbol.Shotgun, OrbitalSlotSymbol.Sniper };
+    private static readonly OrbitalSlotSymbol[] symbols = { OrbitalSlotSymbol.Gun, OrbitalSlotSymbol.Arc, OrbitalSlotSymbol.Link, OrbitalSlotSymbol.Ring, OrbitalSlotSymbol.Gold, OrbitalSlotSymbol.Skull, OrbitalSlotSymbol.Shotgun, OrbitalSlotSymbol.Sniper };
     public static OrbitalSlotSymbol Roll() => symbols[Random.Range(0, symbols.Length)];
     public static System.Collections.Generic.IReadOnlyList<OrbitalSlotSymbol> Symbols => symbols;
     public static OrbitalSlotSymbol Neighbour(OrbitalSlotSymbol symbol, int offset)

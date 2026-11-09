@@ -46,13 +46,16 @@ public sealed class AnomalyMovableProp : MonoBehaviour
 
     internal void Orbit(Vector2 center, float cosine, float sine)
     {
-        // Overlapping circular zones must not move a prop twice in one frame.
+        Vector2 position = transform.position;
+        Vector2 offset = position - center;
+        MoveBy(center + new Vector2(offset.x * cosine - offset.y * sine,
+            offset.x * sine + offset.y * cosine) - position);
+    }
+
+    internal void MoveBy(Vector2 displacement)
+    {
         if (lastMovedFrame == Time.frameCount) return;
         lastMovedFrame = Time.frameCount;
-        Vector3 position = transform.position;
-        Vector2 offset = (Vector2)position - center;
-        position.x = center.x + offset.x * cosine - offset.y * sine;
-        position.y = center.y + offset.x * sine + offset.y * cosine;
-        transform.position = position;
+        transform.position += (Vector3)displacement;
     }
 }

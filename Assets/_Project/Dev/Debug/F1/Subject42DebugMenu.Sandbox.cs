@@ -233,10 +233,9 @@ public sealed partial class Subject42DebugMenu
         if (icon.Sprite != null)
         {
             var image = CreateRect("Icon", row).gameObject.AddComponent<Image>();
-            image.sprite = icon.Sprite;
-            image.color = icon.ImageTint;
             image.preserveAspect = true;
             image.raycastTarget = false;
+            OrbitalRewardIconView.Set(image, icon);
             image.gameObject.AddComponent<LayoutElement>().preferredWidth = 36f;
         }
         var label = CreateText("Название", row, title, 15f, TextAlignmentOptions.MidlineLeft, Color.white);
