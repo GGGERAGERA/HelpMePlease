@@ -88,10 +88,10 @@ MonoBehaviour:
     RapidCooldown: 5
     DoubleCooldown: 6
     RicochetCooldown: 5
-    EnergyBonus: 0.25
+    EnergyBonus: 1
     LevelCooldownBonus: 0.2
-    DamageMultiplier: 1.75
-    RapidMultiplier: 1.7
+    DamageMultiplier: 1.5
+    RapidMultiplier: 1.5
     RapidDuration: 2
     LevelEffectBonus: 0.5
     PierceCooldown: 5
@@ -105,13 +105,13 @@ MonoBehaviour:
     PierceBodies: 2
     SplashRadius: 1.5
     ChainRadius: 3.5
-    SplashDamageFraction: 0.35
+    SplashDamageFraction: 0.3
     ChainDamageFraction: 0.65
     CritMultiplier: 2
     SlowMultiplier: 0.65
     SlowSeconds: 2
     KnockBonus: 2.5
-    EchoDelay: 0.25
+    EchoDelay: 2
   Pistol:
     Presentation:
       Color: {r: 0.1, g: 0.95, b: 1, a: 1}
@@ -167,7 +167,7 @@ MonoBehaviour:
     ProjectileRadius: 0.14
     BurstShots: 1
     BurstInterval: 0.09
-    Pellets: 7
+    Pellets: 3
     SpreadDegrees: 42
     AimLeadSeconds: 0
     MaxAimCorrectionDegrees: 0

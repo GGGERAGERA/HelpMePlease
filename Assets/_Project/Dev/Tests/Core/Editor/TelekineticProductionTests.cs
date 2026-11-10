@@ -56,9 +56,9 @@ public sealed class TelekineticWeaponTooltipTests
                 Assert.That(tooltip.Split('\n').Count(line => line == "DMG I"), Is.EqualTo(connectedModules));
             }
 
-            AssertDamage(1.75f, 1);
+            AssertDamage(1.5f, 1);
             Assert.That(rig.Build.Move(above, new Vector2Int(-1, -1), 0), Is.True);
-            AssertDamage(2.5f, 2);
+            AssertDamage(2f, 2);
         }
         finally { Object.DestroyImmediate(owner); }
     }
@@ -93,12 +93,12 @@ public sealed class TelekineticWeaponTooltipTests
             Assert.That(linked, Is.Not.EqualTo(baseline));
             if (kind == TelekineticPart.DMG)
             {
-                Assert.That(rig.DamageFactor(weapon), Is.EqualTo(2.5f).Within(.001f), "DMG III applies as soon as the module is connected");
-                Assert.That(linked, Does.Contain($"Урон: {rig.BaseDamage(weapon) * 2.5f:0.##}"));
+                Assert.That(rig.DamageFactor(weapon), Is.EqualTo(2f).Within(.001f), "DMG III applies as soon as the module is connected");
+                Assert.That(linked, Does.Contain($"Урон: {rig.BaseDamage(weapon) * 2f:0.##}"));
                 var energy = rig.Build.Grant(TelekineticPart.Energy);
                 Assert.That(rig.Build.Install(energy, new Vector2Int(2, 1)), Is.True);
-                Assert.That(rig.DamageFactor(weapon), Is.EqualTo(2.875f).Within(.001f), "ENERGY strengthens the adjacent DMG");
-                Assert.That(Tooltip(), Does.Contain($"Урон: {rig.BaseDamage(weapon) * 2.875f:0.##}"));
+                Assert.That(rig.DamageFactor(weapon), Is.EqualTo(3f).Within(.001f), "ENERGY I doubles the adjacent DMG bonus");
+                Assert.That(Tooltip(), Does.Contain($"Урон: {rig.BaseDamage(weapon) * 3f:0.##}"));
                 Assert.That(rig.Build.Stow(energy), Is.True);
             }
 

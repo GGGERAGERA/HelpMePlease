@@ -1,15 +1,24 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Subject42.Combat.Telekinetic
 {
     public sealed partial class TelekineticRig
     {
+        internal const int ChainMaxJumps = 3;
+        private const float ChainTravelSeconds = .15f;
+        private const float ChainFadeSeconds = .14f;
+        private const float ChainArcHeight = 1.1f;
+        private static readonly Color ChainTail = new(.62f, .49f, 1f, .96f);
+        private static readonly Color ChainHead = new(.82f, .99f, 1f);
+
         private sealed class ImpactCharge
         {
             internal float SplashDamage,ChainDamage,SplashRadius,ChainRadius,Slow=1,SlowSeconds;
-            internal bool SecondarySpent;
-            internal readonly HashSet<EnemyHealth> Targets=new();
+            internal bool SplashSpent, ChainSpent;
+            internal readonly HashSet<EnemyHealth> SlowedTargets=new();
             internal ImpactCharge Copy() => new() { SplashDamage=SplashDamage,ChainDamage=ChainDamage,SplashRadius=SplashRadius,ChainRadius=ChainRadius,Slow=Slow,SlowSeconds=SlowSeconds };
             internal bool HasImpact => SplashDamage>0 || ChainDamage>0 || Slow<1;
         }
@@ -21,7 +30,12 @@ namespace Subject42.Combat.Telekinetic
             internal int Ricochets,Volleys,Echoes;
             internal ImpactCharge Impact;
         }
-        private sealed class DelayedEcho { internal CapturedAttack Attack; internal float Due; }
+        private sealed class DelayedEcho
+        {
+            internal CapturedAttack Attack;
+            internal Vector2 Point, Direction;
+            internal float Due;
+        }
         private sealed class SlowState { internal EnemyAnomalyEffects Effects; internal GameObject Marker; internal float Until,Multiplier; }
         private readonly Dictionary<long,ImpactCharge> projectileCharges=new();
         private readonly Dictionary<EnemyHealth,SlowState> slowed=new();
@@ -58,7 +72,7 @@ namespace Subject42.Combat.Telekinetic
             // Shield contacts raise no Hit; rejected damage must never use a stale target.
             if (Suppressed || shield || damage<=0 || !projectileCharges.TryGetValue(id,out var charge) || lastBodyTarget==null) return;
             var target=lastBodyTarget;
-            ApplyImpact(charge,target,target.transform.position);
+            ApplyImpact(charge,target,target.transform.position,killed);
         }
         private CapturedAttack CaptureAttack(TelekineticItem item) => DescribeAttack(item, ActiveModifiers(item));
 
@@ -99,11 +113,9 @@ namespace Subject42.Combat.Telekinetic
             }
             return contactTargets.Count>0;
         }
-        private bool EmitCaptured(CapturedAttack attack,int volleys,bool contactsReady=false)
+        private bool EmitCaptured(CapturedAttack attack,int volleys,Vector2 point,Vector2 direction,bool contactsReady=false)
         {
             var item=attack.Item; var profile=attack.Profile;
-            Vector2 point=views[item.Id].transform.position;
-            Vector2 direction=views[item.Id].transform.right;
             if (item.Kind==TelekineticPart.Saw)
             {
                 if (!contactsReady && !GatherContactTargets(point)) return false;
@@ -117,7 +129,7 @@ namespace Subject42.Combat.Telekinetic
                     {
                         if (profile.BypassShields) target.TakeDamage(attack.Damage,point); else combat.ApplyDamage(target,attack.Damage,point);
                     }
-                    if (target.CurrentHealth<before) ApplyImpact(impact,target,point);
+                    if (target.CurrentHealth<before) ApplyImpact(impact,target,point,target.IsDead);
                     if (target.CurrentHealth<before && profile.Knockback>0 && !target.IsDead && target.TryGetComponent<EnemyMovement>(out var movement))
                         movement.ApplyKnockback(((Vector2)target.transform.position-point).normalized,profile.Knockback);
                 }
@@ -138,32 +150,92 @@ namespace Subject42.Combat.Telekinetic
                 emittingImpact=null;
             }
             if (ShotClip!=null) audioSource.PlayOneShot(ShotClip,.08f);
-            TriggerWeaponEffects(item);
             return true;
         }
-        private void ApplyImpact(ImpactCharge charge,EnemyHealth target,Vector2 point)
+        private void ApplyImpact(ImpactCharge charge,EnemyHealth target,Vector2 point,bool killed)
         {
-            if (Suppressed || !charge.Targets.Add(target)) return;
-            if (charge.Slow<1 && target!=null && !target.IsDead) ApplySlow(target,charge.Slow,charge.SlowSeconds);
-            if (charge.SecondarySpent) return;
-            charge.SecondarySpent=true; // Secondary damage cannot trigger another charge or a chain network.
-            if (charge.SplashDamage>0)
+            if (Suppressed) return;
+            if (charge.Slow<1 && !killed && charge.SlowedTargets.Add(target)) ApplySlow(target,charge.Slow,charge.SlowSeconds);
+            if (charge.SplashDamage>0 && !charge.SplashSpent)
             {
+                charge.SplashSpent = true;
                 SplashBursts++; RingEffect(point,charge.SplashRadius,PartColor(TelekineticPart.Splash));
                 foreach (var other in combat.FindNearestMany(point,charge.SplashRadius,int.MaxValue))
                     if (other!=target && other.gameObject.scene==gameObject.scene) combat.ApplyDamage(other,charge.SplashDamage,point);
             }
-            if (charge.ChainDamage>0)
+            // All pellets and later contacts from this volley share the same charge.
+            if (killed && charge.ChainDamage>0 && !charge.ChainSpent)
             {
-                foreach (var other in combat.FindNearestMany(point,charge.ChainRadius,int.MaxValue))
-                {
-                    if (other==target || other.gameObject.scene!=gameObject.scene) continue;
-                    if (combat.ApplyDamage(other,charge.ChainDamage,point))
-                    { ChainJumps++; LineEffect(point,other.transform.position,PartColor(TelekineticPart.Chain)); }
-                    break;
-                }
+                charge.ChainSpent = true;
+                StartCoroutine(ApplyChain(charge, target.transform.position));
             }
         }
+
+        private IEnumerator ApplyChain(ImpactCharge charge, Vector2 point)
+        {
+            var scene = gameObject.scene;
+            var next = combat.FindNearest(point, charge.ChainRadius, scene);
+            if (next == null) yield break;
+
+            var line = EffectLine(ChainTail, .11f, worldSorted: true);
+            line.endColor = ChainHead;
+            var points = new Vector3[7];
+            line.positionCount = points.Length;
+            Vector2 endpoint = point;
+            for (int hop = 0; hop < ChainMaxJumps; hop++)
+            {
+                float startedAt = Time.time;
+                bool retargeted = false;
+                while (true)
+                {
+                    if (!ChainArcActive(line)) yield break;
+                    if (next == null || !next.isActiveAndEnabled || next.IsDead)
+                    {
+                        next = retargeted ? null : combat.FindNearest(point, charge.ChainRadius, scene);
+                        if (next == null)
+                        {
+                            Destroy(line.gameObject);
+                            yield break;
+                        }
+                        retargeted = true;
+                    }
+
+                    endpoint = next.transform.position;
+                    float progress = Mathf.Clamp01((Time.time - startedAt) / ChainTravelSeconds);
+                    line.widthMultiplier = Mathf.Lerp(.11f, .17f, progress * progress);
+                    DrawChainArc(line, points, point, endpoint, 0f,
+                        Mathf.Lerp(.32f, 1f, progress), progress < .55f ? 1f : -1f);
+                    if (progress >= 1f) break;
+                    yield return null;
+                }
+
+                if (!combat.ApplyDamage(next, charge.ChainDamage, point)) break;
+                ChainJumps++;
+                if (!next.IsDead || hop + 1 == ChainMaxJumps) break;
+
+                var following = combat.FindNearest(endpoint, charge.ChainRadius, scene);
+                if (following == null) break;
+                point = endpoint;
+                next = following;
+                yield return null;
+            }
+
+            float fadeAt = Time.time;
+            for (float age = 0; age < ChainFadeSeconds; age = Time.time - fadeAt)
+            {
+                if (!ChainArcActive(line)) yield break;
+                if (next != null && next.isActiveAndEnabled && !next.IsDead) endpoint = next.transform.position;
+                float progress = age / ChainFadeSeconds;
+                line.startColor = new Color(ChainTail.r, ChainTail.g, ChainTail.b, ChainTail.a * (1f - progress));
+                line.endColor = new Color(ChainHead.r, ChainHead.g, ChainHead.b, 1f - progress);
+                line.widthMultiplier = Mathf.Lerp(.17f, .03f, progress);
+                DrawChainArc(line, points, point, endpoint, Mathf.SmoothStep(0f, 1f, progress), 1f, -1f);
+                yield return null;
+            }
+            if (line != null) Destroy(line.gameObject);
+        }
+
+        private bool ChainArcActive(LineRenderer line) => line != null && line.gameObject.activeSelf && !Suppressed;
         private void ApplySlow(EnemyHealth target,float multiplier,float seconds)
         {
             if (!target.TryGetComponent<EnemyMovement>(out var movement)) return;
@@ -184,7 +256,7 @@ namespace Subject42.Combat.Telekinetic
             {
                 var echo=echoes[i]; if (echo.Due>CombatSeconds) continue;
                 echoes.RemoveAt(i);
-                if (EmitCaptured(echo.Attack,1)) { EchoShots++; echo.Attack.Item.Shots++; ShotsFired++; }
+                if (EmitCaptured(echo.Attack,1,echo.Point,echo.Direction)) { EchoShots++; echo.Attack.Item.Shots++; ShotsFired++; }
             }
             expiredSlows.Clear();
             foreach (var pair in slowed)
@@ -197,19 +269,39 @@ namespace Subject42.Combat.Telekinetic
             foreach (var target in expiredSlows) slowed.Remove(target);
             effectVisuals.RemoveAll(go=>go==null);
         }
-        private LineRenderer EffectLine(Color color)
+        private LineRenderer EffectLine(Color color, float width = .035f, bool worldSorted = false)
         {
-            var go=new GameObject("Telekinetic effect pulse"); go.transform.SetParent(transform,false); effectVisuals.Add(go);
+            var go = new GameObject("Telekinetic effect pulse");
+            // A chain crosses different actors, so it must sort outside the player's group.
+            if (!worldSorted) go.transform.SetParent(transform, false);
+            else if (go.scene != gameObject.scene) SceneManager.MoveGameObjectToScene(go, gameObject.scene);
+            effectVisuals.Add(go);
             var line=go.AddComponent<LineRenderer>(); line.sharedMaterial=SpriteMaterial; line.startColor=line.endColor=color;
-            line.widthMultiplier=.035f; line.sortingLayerName="Player"; line.sortingOrder=65;
-            Destroy(go,.18f); return line;
+            line.widthMultiplier=width; line.sortingLayerName="Player"; line.sortingOrder=65;
+            return line;
         }
-        private void LineEffect(Vector2 from,Vector2 to,Color color)
-        { var line=EffectLine(color); line.positionCount=3; line.SetPosition(0,from); line.SetPosition(1,(from+to)*.5f+Vector2.up*.13f); line.SetPosition(2,to); }
+
+        private static void DrawChainArc(LineRenderer line, Vector3[] points, Vector2 from, Vector2 to,
+            float tail, float head, float polarity)
+        {
+            from.y += ChainArcHeight;
+            to.y += ChainArcHeight;
+            Vector2 delta = to - from;
+            Vector2 kink = Vector2.Perpendicular(delta.normalized) * Mathf.Clamp(delta.magnitude * .18f, .1f, .23f);
+            for (int i = 0; i < points.Length; i++)
+            {
+                float t = Mathf.Lerp(tail, head, (float)i / (points.Length - 1));
+                float crown = 4f * t * (1f - t);
+                float zigzag = i == 0 || i == points.Length - 1 ? 0f : (i % 2 == 0 ? polarity : -polarity);
+                points[i] = from + delta * t + (Vector2.up * .22f + kink * zigzag) * crown;
+            }
+            line.SetPositions(points);
+        }
         private void RingEffect(Vector2 point,float radius,Color color)
         {
             var line=EffectLine(color); line.positionCount=17;
             for (int i=0;i<=16;i++) { float a=i*Mathf.PI/8; line.SetPosition(i,point+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius); }
+            Destroy(line.gameObject,.18f);
         }
         private void ClearEffectState()
         {

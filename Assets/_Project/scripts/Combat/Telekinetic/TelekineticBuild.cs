@@ -195,7 +195,7 @@ namespace Subject42.Combat.Telekinetic
         }
         public static string Label(TelekineticPart kind) => kind switch
         {
-            TelekineticPart.Frame => "FRAME", TelekineticPart.Pistol => "PISTOL", TelekineticPart.Shotgun => "SHOTGUN",
+            TelekineticPart.Frame => "FRAME", TelekineticPart.Pistol => "GUN", TelekineticPart.Shotgun => "SHOTGUN",
             TelekineticPart.Saw => "SAW", TelekineticPart.Double => "2X", TelekineticPart.Energy => "ENERGY", _ => kind.ToString().ToUpperInvariant()
         };
         public static string Roman(int level) => level==1 ? "I" : level==2 ? "II" : "III";
@@ -205,21 +205,21 @@ namespace Subject42.Combat.Telekinetic
     public sealed class TelekineticModuleTuning
     {
         [Min(.1f)] public float DamageCooldown=4, RapidCooldown=5, DoubleCooldown=6, RicochetCooldown=5;
-        [Min(0)] public float EnergyBonus=.25f;
+        [Min(0)] public float EnergyBonus=1f;
         [Min(0)] public float LevelCooldownBonus=.2f;
-        [Min(1)] public float DamageMultiplier=1.75f, RapidMultiplier=1.7f;
+        [Min(1)] public float DamageMultiplier=1.5f, RapidMultiplier=1.5f;
         [Min(.1f)] public float RapidDuration=2;
         [Min(0)] public float LevelEffectBonus=.5f;
         [Header("Extended modules / experimental values")]
         [Min(.1f)] public float PierceCooldown=5,SplashCooldown=6,ChainCooldown=6,CritCooldown=5,SlowCooldown=4,ShredCooldown=6,KnockCooldown=4,EchoCooldown=6;
         [Min(1)] public int PierceBodies=2;
         [Min(.1f)] public float SplashRadius=1.5f,ChainRadius=3.5f;
-        [Min(0)] public float SplashDamageFraction=.35f,ChainDamageFraction=.65f;
+        [Min(0)] public float SplashDamageFraction=.3f,ChainDamageFraction=.65f;
         [Min(1)] public float CritMultiplier=2;
         [Range(.1f,1)] public float SlowMultiplier=.65f;
         [Min(.1f)] public float SlowSeconds=2;
         [Min(0)] public float KnockBonus=2.5f;
-        [Min(.05f)] public float EchoDelay=.25f;
+        [Min(.05f)] public float EchoDelay=2f;
         public float Strength(TelekineticItem c) => 1+(c.Level-1)*LevelEffectBonus;
         public float Cooldown(TelekineticItem c,TelekineticBuild build)
         {

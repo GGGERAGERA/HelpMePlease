@@ -32,8 +32,8 @@ MonoBehaviour:
     ru: "Быстрый одиночный огонь"
     en: "Fast single shots"
   - key: reward.rig.card.Shotgun
-    ru: "{0} дробин веером. Отталкивает цели"
-    en: "{0} pellets in a spread. Knocks targets back"
+    ru: "Выпускает {0} снаряда за раз"
+    en: "Fires {0} projectiles at once"
   - key: reward.rig.card.Sniper
     ru: "Дальний выстрел сквозь щит"
     en: "Long-range shot through shields"
@@ -47,23 +47,23 @@ MonoBehaviour:
     ru: "Частота атак +{0:0}%"
     en: "Attack rate +{0:0}%"
   - key: reward.rig.card.Double
-    ru: "Дублирует атаку сразу"
-    en: "Repeats the attack immediately"
+    ru: "Двойной выстрел"
+    en: "Double shot"
   - key: reward.rig.card.RIC
     ru: "Снаряд отскакивает к другой цели"
     en: "Shots bounce to another target"
   - key: reward.rig.card.Energy
-    ru: "Усиливает числовые эффекты соседних модулей"
-    en: "Boosts numerical effects of adjacent modules"
+    ru: "Усиливает числовые эффекты соседних модулей в {0:0.##} раза"
+    en: "Multiplies numerical effects of adjacent modules by {0:0.##}"
   - key: reward.rig.card.Pierce
     ru: "Снаряд пробивает ещё {0} цели"
     en: "Shots pierce {0} more targets"
   - key: reward.rig.card.Splash
-    ru: "Попадание наносит урон вокруг цели"
-    en: "Hits damage enemies around the target"
+    ru: "Урон по соседним целям {0:0}%"
+    en: "{0:0}% damage to nearby targets"
   - key: reward.rig.card.Chain
-    ru: "Попадание задевает ещё одну цель"
-    en: "Hits damage one more nearby target"
+    ru: "Дуга прыгает при добивании. До {0} прыжков за залп"
+    en: "An arc jumps on each kill. Up to {0} jumps per volley"
   - key: reward.rig.card.Crit
     ru: "Урон каждой атаки ×{0:0.##}"
     en: "Each attack deals ×{0:0.##} damage"
@@ -77,20 +77,14 @@ MonoBehaviour:
     ru: "Атаки сильнее отталкивают"
     en: "Attacks knock targets back farther"
   - key: reward.rig.card.Echo
-    ru: "Повторяет атаку с задержкой"
-    en: "Repeats the attack after a delay"
+    ru: "Повторяет атаку через {0:0.##} секунды"
+    en: "Repeats the attack after {0:0.##} seconds"
   - key: reward.rig.card.health
     ru: "+{0:0} к макс. здоровью"
     en: "+{0:0} max health"
   - key: reward.rig.card.movement
     ru: "+{0:0}% базовой скорости"
     en: "+{0:0}% base movement speed"
-  - key: reward.rig.card.shootingDamage
-    ru: "Урон стрельбы ×1,20"
-    en: "Shooting damage ×1.20"
-  - key: reward.rig.card.shootingRate
-    ru: "Скорострельность ×1,15"
-    en: "Fire rate ×1.15"
   - key: reward.rig.card.contactDamage
     ru: "Контактный урон ×1,20"
     en: "Contact damage ×1.20"
@@ -830,8 +824,8 @@ MonoBehaviour:
     ru: "Следующий этап протокола эвакуации."
     en: "Next stage of the escape protocol."
   - key: bunker.module_name.pistol
-    ru: "ПИСТОЛЕТ"
-    en: "PISTOL"
+    ru: "GUN"
+    en: "GUN"
   - key: hud.enter_room
     ru: "ВОЙТИ В ПОМЕЩЕНИЕ"
     en: "ENTER ROOM"
@@ -1223,8 +1217,8 @@ MonoBehaviour:
     ru: "+1 кольцо\n1 точка / ёмкость 3."
     en: "+1 ring\n1 mount / capacity 3."
   - key: reward.gun
-    ru: "ПИСТОЛЕТ"
-    en: "PISTOL"
+    ru: "GUN"
+    en: "GUN"
   - key: reward.missReturnPistol
     ru: "Возврат промаха"
     en: "Miss Return"

@@ -526,7 +526,6 @@ namespace Subject42.Combat.Telekinetic
         {
             string name = item.Kind switch
             {
-                TelekineticPart.Pistol => "Пистолет",
                 TelekineticPart.Shotgun => "Дробовик",
                 TelekineticPart.Sniper => "Снайперка",
                 TelekineticPart.Saw => "Пила",
@@ -550,7 +549,7 @@ namespace Subject42.Combat.Telekinetic
                 TelekineticPart.Energy => $"Сила числовых эффектов соседних модулей +{Modules.EnergyBonus * item.Level:P0}",
                 TelekineticPart.Pierce => "Снаряд пробивает врагов",
                 TelekineticPart.Splash => "Урон по области",
-                TelekineticPart.Chain => "Поражает дополнительную цель",
+                TelekineticPart.Chain => $"Дуга прыгает при добивании · до {ChainMaxJumps} прыжков за залп",
                 TelekineticPart.Crit => $"Каждая атака ×{modifier.CritMultiplier:0.##} урона",
                 TelekineticPart.Slow => "Замедляет цель",
                 TelekineticPart.Shred => "Атака обходит щиты",

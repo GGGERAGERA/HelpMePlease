@@ -11,18 +11,19 @@ namespace Subject42.Combat.Telekinetic
         private Sprite PartSprite(TelekineticPart kind) => kind switch
         {
             TelekineticPart.DMG=>SegmentedModulePresentation.Icon(SegmentedLinkKind.Damage),
-            TelekineticPart.FR=>SegmentedModulePresentation.Icon(SegmentedLinkKind.FireRate),
+            TelekineticPart.FR=>OrbitalPresentationConfig.Active.ShootingRateRewardIcon,
             TelekineticPart.Double=>SegmentedModulePresentation.Icon(SegmentedLinkKind.ExtraShot),
             TelekineticPart.RIC=>SegmentedModulePresentation.Icon(SegmentedLinkKind.Ricochet), _=>ItemIcons[(int)kind]
         };
         private void ApplyIcon(SpriteRenderer renderer,TelekineticPart kind)
         {
-            renderer.sprite=PartSprite(kind); renderer.sharedMaterial=SpriteMaterial; renderer.color=PartColor(kind);
+            var icon = GetItemIcon(kind);
+            renderer.sprite=icon.Sprite; renderer.sharedMaterial=SpriteMaterial; renderer.color=icon.ImageTint;
             var texture=new MaterialPropertyBlock(); texture.SetTexture("_MainTex",renderer.sprite.texture);
             renderer.SetPropertyBlock(texture);
         }
         internal OrbitalRewardIconResolver.Icon GetItemIcon(TelekineticPart kind) =>
-            new(PartSprite(kind), PartColor(kind), WeaponKind(kind));
+            new(PartSprite(kind), kind == TelekineticPart.FR ? Color.white : PartColor(kind), WeaponKind(kind));
 
         private void DrawIcon(Rect rect, TelekineticPart kind)
         {

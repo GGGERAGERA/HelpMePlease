@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Subject42.Combat.OrbitalStation
 {
@@ -312,15 +313,18 @@ namespace Subject42.Combat.OrbitalStation
             return projectile;
         }
 
-        public EnemyHealth FindNearest(Vector2 origin, float range)
+        public EnemyHealth FindNearest(Vector2 origin, float range) => FindNearest(origin, range, default);
+
+        internal EnemyHealth FindNearest(Vector2 origin, float range, Scene scene)
         {
             EnemyHealth best = null;
             float bestDistance = range * range;
+            bool sameSceneOnly = scene.IsValid();
             var enemies = EnemyHealth.GetActiveEnumerator();
             while (enemies.MoveNext())
             {
                 EnemyHealth enemy = enemies.Current;
-                if (!IsValid(enemy))
+                if (!IsValid(enemy) || sameSceneOnly && enemy.gameObject.scene != scene)
                     continue;
                 float distance = ((Vector2)enemy.transform.position - origin).sqrMagnitude;
                 if (distance >= bestDistance)

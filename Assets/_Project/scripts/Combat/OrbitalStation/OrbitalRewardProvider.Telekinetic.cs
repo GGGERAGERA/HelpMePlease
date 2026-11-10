@@ -30,7 +30,7 @@ namespace Subject42.Combat.OrbitalStation
         };
         private static bool RigSupported(OrbitalRewardKind kind) => GetRigPart(kind).HasValue || kind is
             OrbitalRewardKind.RigExpansion or OrbitalRewardKind.MaxHealth or OrbitalRewardKind.MoveSpeed or
-            OrbitalRewardKind.ShootingDamage or OrbitalRewardKind.ShootingRate or OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize;
+            OrbitalRewardKind.ContactDamage or OrbitalRewardKind.ContactSize;
 
         private static IOrderedEnumerable<OrbitalRewardData> OrderRigCards(IEnumerable<OrbitalRewardData> rewards) =>
             rewards.OrderBy(reward => reward.CardType).ThenBy(reward =>
@@ -75,8 +75,6 @@ namespace Subject42.Combat.OrbitalStation
                     ProductionUpgradeProfiles.MaxHealthBonus(1)),
                 OrbitalRewardKind.MoveSpeed => string.Format(localization.Get("reward.rig.card.movement"),
                     (ProductionUpgradeProfiles.MoveSpeedMultiplier(1) - 1f) * 100f),
-                OrbitalRewardKind.ShootingDamage => localization.Get("reward.rig.card.shootingDamage"),
-                OrbitalRewardKind.ShootingRate => localization.Get("reward.rig.card.shootingRate"),
                 OrbitalRewardKind.ContactDamage => localization.Get("reward.rig.card.contactDamage"),
                 OrbitalRewardKind.ContactSize => localization.Get("reward.rig.card.contactSize"),
                 _ => null
@@ -99,9 +97,13 @@ namespace Subject42.Combat.OrbitalStation
                 TelekineticPart.Shotgun => string.Format(text, rig.Shotgun.Pellets),
                 TelekineticPart.DMG => string.Format(text, (tuning.DamageMultiplier - 1f) * 100f),
                 TelekineticPart.FR => string.Format(text, (tuning.RapidMultiplier - 1f) * 100f),
+                TelekineticPart.Energy => string.Format(text, 1f + tuning.EnergyBonus),
                 TelekineticPart.Pierce => string.Format(text, tuning.PierceBodies),
+                TelekineticPart.Splash => string.Format(text, tuning.SplashDamageFraction * 100f),
+                TelekineticPart.Chain => string.Format(text, TelekineticRig.ChainMaxJumps),
                 TelekineticPart.Crit => string.Format(text, tuning.CritMultiplier),
                 TelekineticPart.Slow => string.Format(text, tuning.SlowSeconds),
+                TelekineticPart.Echo => string.Format(text, tuning.EchoDelay),
                 _ => text
             };
         }

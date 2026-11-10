@@ -83,18 +83,22 @@ namespace Subject42.Combat.Telekinetic
             foreach (var item in Build.Items)
             {
                 if (!item.IsWeapon) continue;
-                var view=views[item.Id];
-                if (item.Kind==TelekineticPart.Saw) view.transform.localScale=Vector3.one*station.State.ContactSizeMultiplier;
-                if (item.Kind==TelekineticPart.Saw) view.transform.GetChild(0).Rotate(0,0,Saw.SpinDegreesPerSecond*dt,Space.Self);
+                var view=views[item.Id].transform;
+                if (item.Kind==TelekineticPart.Saw) view.localScale=Vector3.one*station.State.ContactSizeMultiplier;
+                if (item.Kind==TelekineticPart.Saw) view.GetChild(0).Rotate(0,0,Saw.SpinDegreesPerSecond*dt,Space.Self);
                 item.ShotRemaining-=dt*RateFactor(item);
                 if (item.ShotRemaining>0) continue;
                 bool saw=item.Kind==TelekineticPart.Saw;
-                if (saw && !GatherContactTargets(view.transform.position)) continue;
+                Vector2 point = view.position;
+                Vector2 direction = view.right;
+                if (saw && !GatherContactTargets(point)) continue;
                 var attack=CaptureAttack(item);
-                if (!EmitCaptured(attack,attack.Volleys,saw)) continue;
+                if (!EmitCaptured(attack,attack.Volleys,point,direction,saw)) continue;
+                if (!saw) TriggerWeaponEffects(item);
                 item.ShotRemaining = BaseAttackInterval(item);
                 item.Shots+=attack.Volleys; ShotsFired+=attack.Volleys;
-                for (int i=0;i<attack.Echoes;i++) echoes.Add(new DelayedEcho { Attack=attack,Due=CombatSeconds+Modules.EchoDelay+i*.04f });
+                for (int i=0;i<attack.Echoes;i++)
+                    echoes.Add(new DelayedEcho { Attack=attack,Point=point,Direction=direction,Due=CombatSeconds+Modules.EchoDelay+i*.04f });
             }
         }
     }
