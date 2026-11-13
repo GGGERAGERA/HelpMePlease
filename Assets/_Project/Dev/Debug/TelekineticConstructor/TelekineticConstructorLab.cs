@@ -92,13 +92,16 @@ namespace Subject42.DebugLabs.Telekinetic
         public void SetEditing(bool value)
         {
             if (!ready || !value && Player.IsDead) return;
+            if (value) StopOrbitFight();
             Editing=value; dragging=null; merging=false;
             StructureView.SetCombatVisible(!value);
+            Construction.gameObject.SetActive(value || !orbitExperiment);
             BulletTime.Release(); shiftNeedsRelease=true; pointerNeedsRelease=true;
             movement.BulletTimeControlMultiplier=1;
             movement.RemoveAnomalySpeedMultiplier(this);
             SetTime(value ? 0 : 1);
             if (value) { Player.GetComponent<Rigidbody2D>().linearVelocity=Vector2.zero; Build.Disconnected.Clear(); }
+            else if (orbitExperiment && orbitStation==null) StartOrbitFight();
         }
         private void SetTime(float value) { Time.timeScale=value; Time.fixedDeltaTime=priorFixedDelta*Mathf.Max(.1f,value); }
         private void Update()
@@ -113,7 +116,6 @@ namespace Subject42.DebugLabs.Telekinetic
             if (!held) shiftNeedsRelease=false;
             AdvanceBulletTime(held && !shiftNeedsRelease,Time.unscaledDeltaTime);
             Player.DebugInvulnerable=Invincible;
-            AdvancePose(focused ? (Input.GetKey(KeyCode.Q)?1:0)-(Input.GetKey(KeyCode.E)?1:0) : 0,Time.deltaTime);
             bool pointer=focused && Input.GetMouseButton(1);
             if (!pointer) pointerNeedsRelease=false;
             Vector2 desired=Vector2.zero;
@@ -126,7 +128,12 @@ namespace Subject42.DebugLabs.Telekinetic
             CenterOffset=Vector2.MoveTowards(CenterOffset,desired,(steering?CenterMoveSpeed:CenterReturnSpeed)*Time.deltaTime);
             if (steering) movement.SetAnomalySpeedMultiplier(this,.7f); else movement.RemoveAnomalySpeedMultiplier(this);
             CombatSeconds+=Time.deltaTime;
-            TickEffectTimers(); TickModules(Time.deltaTime); TickWeapons(Time.deltaTime); combat.Tick(Time.deltaTime);
+            if (orbitExperiment) TickOrbitFight(focused, Time.deltaTime);
+            else
+            {
+                AdvancePose(focused ? (Input.GetKey(KeyCode.Q)?1:0)-(Input.GetKey(KeyCode.E)?1:0) : 0,Time.deltaTime);
+                TickEffectTimers(); TickModules(Time.deltaTime); TickWeapons(Time.deltaTime); combat.Tick(Time.deltaTime);
+            }
             MaintainEnemies();
         }
         public void AdvancePose(float turn, float dt)
@@ -156,6 +163,7 @@ namespace Subject42.DebugLabs.Telekinetic
         {
             if (!ready) return;
             Construction.position=(Vector2)Player.transform.position+CenterOffset;
+            if (orbitStation!=null) orbitStation.transform.position=Construction.position;
             ArenaCamera.transform.position=new Vector3(Player.transform.position.x,Player.transform.position.y,-10);
             foreach (var c in Build.Items)
             {
@@ -276,6 +284,8 @@ namespace Subject42.DebugLabs.Telekinetic
             SetEditing(true); ClearEnemies(); combat.DebugClearProjectiles();
             CreatePlayer();
             BulletTime.Reset(); CombatSeconds=0; ShotsFired=ModulePulses=0; CenterOffset=Vector2.zero; RotationEnergy=RotationCapacity;
+            orbitSpawnRandom=new System.Random(42);
+            if (orbitExperiment) Angle=0;
             foreach (var c in Build.Items)
             {
                 c.Damage.Clear(); c.Rapid.Clear(); c.RapidUntil.Clear(); c.Extra.Clear(); c.Ricochet.Clear(); c.Effects.Clear();
@@ -287,21 +297,30 @@ namespace Subject42.DebugLabs.Telekinetic
         {
             enemies.RemoveAll(e=>e==null || e.IsDead);
             // Density is a target, not a clamped cap. The UI accepts any nonnegative integer.
-            int target=Mathf.Max(0,EnemyDensity);
+            int target=orbitExperiment ? OrbitEnemyCount : Mathf.Max(0,EnemyDensity);
             while (enemies.Count>target) { var e=enemies[enemies.Count-1]; enemies.RemoveAt(enemies.Count-1); e.gameObject.SetActive(false); Destroy(e.gameObject); }
             int count=Mathf.Min(target-enemies.Count,20); // Spread creation cost across frames, never reduce the requested density.
             for (int i=0;i<count;i++)
             {
-                Vector2 p=(Vector2)Player.transform.position+Random.insideUnitCircle.normalized*Random.Range(8,12);
-                SpawnTarget(p);
+                if (orbitExperiment) SpawnOrbitEnemy();
+                else
+                {
+                    Vector2 p=(Vector2)Player.transform.position+Random.insideUnitCircle.normalized*Random.Range(8,12);
+                    SpawnTarget(p);
+                }
             }
         }
-        public EnemyHealth SpawnTarget(Vector2 position,bool stationary=false,bool shield=false)
+        public EnemyHealth SpawnTarget(Vector2 position,bool stationary=false,bool shield=false) =>
+            SpawnEnemy(shield ? ShieldEnemyPrefab : EnemyPrefab, position, stationary, EnemyMaxHealth);
+
+        private EnemyHealth SpawnEnemy(GameObject prefab, Vector2 position, bool stationary, float? maxHealth)
         {
-            var go=Instantiate(shield?ShieldEnemyPrefab:EnemyPrefab,position,Quaternion.identity,transform);
+            var go=Instantiate(prefab,position,Quaternion.identity,transform);
             var dummy=go.AddComponent<LabEnemyDummy>(); dummy.Initialize(); dummy.Invulnerable=false;
             if (stationary) dummy.ApplyMode(LabEnemyDummyMode.Static);
-            var health=go.GetComponent<EnemyHealth>(); health.SetRuntimeMaxHealth(EnemyMaxHealth); health.NotifySpawnConfigured(); enemies.Add(health);
+            var health=go.GetComponent<EnemyHealth>();
+            if (maxHealth.HasValue) health.SetRuntimeMaxHealth(maxHealth.Value);
+            health.NotifySpawnConfigured(); enemies.Add(health);
             return health;
         }
         public void ClearEnemies()
@@ -313,13 +332,15 @@ namespace Subject42.DebugLabs.Telekinetic
         private void CancelGesture() { dragging=null; brush=null; merging=false; selected=null; Build.Disconnected.Clear(); notice="Действие отменено."; }
         private void SuspendInput()
         {
-            BulletTime.Release(); shiftNeedsRelease=pointerNeedsRelease=true;
+            BulletTime.Release(); shiftNeedsRelease=pointerNeedsRelease=true; ReleaseOrbitPointer();
             movement?.RemoveAnomalySpeedMultiplier(this);
             if (!Editing) { movement.BulletTimeControlMultiplier=1; SetTime(1); }
         }
         private void OnApplicationFocus(bool focus) { if (!focus && ready) SuspendInput(); }
         private void OnDestroy()
         {
+            StopOrbitFight();
+            if (orbitRunState!=null) Destroy(orbitRunState.gameObject);
             ClearEffectState();
             if (Player!=null) { Player.Died-=OnDefeated; if (PlayerRuntimeReference.CachedPlayer==Player.gameObject) PlayerRuntimeReference.Clear(); }
             combat?.Teardown();

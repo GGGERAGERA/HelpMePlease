@@ -411,6 +411,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a2c5b30af909824c87295f9679260d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Subject42.DebugLabs.Telekinetic.TelekineticConstructorLab
+  orbitCharacter: {fileID: 11400000, guid: 2a744b263115165479af439141435aec, type: 2}
+  flankerPrefab: {fileID: 7821586422439862423, guid: 326afad193fa87641ba4865b7fab1529, type: 3}
+  breacherPrefab: {fileID: 6036874466036541359, guid: a90b92d6d8918f942a5a99f5b9ac0b9b, type: 3}
+  orbitSpeed: 90
   PlayerTemplate: {fileID: 8888517378344167164}
   EnemyPrefab: {fileID: 8973031007421530716, guid: 86df554c5e41c0e488ca79d580848906, type: 3}
   ArenaCamera: {fileID: 1190010012}
@@ -439,6 +443,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5db5cd1d5a21cc84f99922125ab8452b, type: 3}
   - {fileID: 21300000, guid: 91b1f94d80f69304f9cc96b664536bbc, type: 3}
   - {fileID: 21300000, guid: 50ac28f4bf740f94a9a78ae08bc8621a, type: 3}
+  - {fileID: 0}
   ShieldEnemyPrefab: {fileID: 6885503732443489488, guid: acf7c638f23d24946aad3baa04a194d4, type: 3}
   ShotClip: {fileID: 8300000, guid: 907d3442b4fc4244ea4e9c020e3966d6, type: 3}
   SawClip: {fileID: 8300000, guid: a93ea7b78df801c4aa5a9aa966352e9a, type: 3}
@@ -622,6 +627,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83e380cb5b6c04d4392a78687116a3a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Subject42.DebugLabs.Telekinetic.TelekineticStructureView
+  SimpleLinks: 0
   SegmentPitch: 0.17
   SpineWidth: 0.21
   PulseStrength: 0.18

@@ -16,7 +16,13 @@ namespace Subject42.DebugLabs.Telekinetic
         private int brushTurns,dragTurns;
         private Vector2Int dragOffset;
         private float UiScale=>Mathf.Min(Screen.width/UiWidth,Screen.height/UiHeight);
-        private bool PointerOverPanel() => Input.mousePosition.y<72*UiScale || Input.mousePosition.y>Screen.height-105*UiScale;
+        private static readonly Rect OrbitPanel = new(20,755,1560,125);
+        private static readonly Rect CombatStatusPanel = new(20,20,710,80);
+        private bool PointerOverPanel() => orbitExperiment ? !IsOrbitArena(Input.mousePosition) :
+            Input.mousePosition.y<72*UiScale || Input.mousePosition.y>Screen.height-105*UiScale;
+        private Vector2 OrbitGuiPoint(Vector2 screen) => new Vector2(screen.x, Screen.height-screen.y)/UiScale;
+        private bool IsOrbitArena(Vector2 screen) => ArenaCamera.pixelRect.Contains(screen) &&
+            !OrbitPanel.Contains(OrbitGuiPoint(screen)) && !CombatStatusPanel.Contains(OrbitGuiPoint(screen));
         public static Color PartColor(TelekineticPart kind) => kind switch
         {
             TelekineticPart.Frame=>new(.33f,.46f,.52f), TelekineticPart.DMG=>new(1,.38f,.3f), TelekineticPart.FR=>new(1,.74f,.18f),
@@ -58,6 +64,7 @@ namespace Subject42.DebugLabs.Telekinetic
         private void OnGUI()
         {
             if (!ready) return;
+            if (orbitExperiment && !Editing) ReadOrbitPointer(Event.current);
             EnsureStyles(); var old=GUI.matrix;
             GUI.matrix=Matrix4x4.Scale(new Vector3(UiScale,UiScale,1));
             if (Editing) DrawConstructor(); else DrawCombatHud();
@@ -77,6 +84,8 @@ namespace Subject42.DebugLabs.Telekinetic
             Text(48,70,1050,24,"V2 · многоклеточные предметы · 9 × 9 · R — поворот формы на 90°",true);
             if (Event.current.type==EventType.KeyDown && Event.current.keyCode==KeyCode.R)
             { RotateInteraction(); Event.current.Use(); }
+            Text(870,32,315,22,"Эксперимент с вращением",true);
+            DrawOrbitModeButtons(870,55);
             if (Button(1275,38,278,43,"Tab   /   Вернуться в бой")) SetEditing(false);
             Fill(new Rect(26,113,350,760),new Color(.055f,.075f,.1f));
             Text(45,128,310,27,"СОЗДАТЬ ЭЛЕМЕНТ");
@@ -275,8 +284,14 @@ namespace Subject42.DebugLabs.Telekinetic
                 Fill(new Rect(0,0,1600,900),new Color(.08f,.35f,.7f,.1f));
                 Fill(new Rect(0,0,1600,6),new Color(.2f,.8f,1)); Fill(new Rect(0,894,1600,6),new Color(.2f,.8f,1));
             }
-            Fill(new Rect(20,20,710,80),new Color(.02f,.04f,.07f,.88f));
+            Fill(CombatStatusPanel,new Color(.02f,.04f,.07f,.88f));
             GUI.Label(new Rect(36,27,680,31),BulletTime.IsActive?"BULLET TIME   /   SHIFT":"TELEKINETIC LAB   /   свободная конструкция",titleStyle);
+            if (orbitExperiment)
+            {
+                Text(36,65,680,28,$"Враги {Alive}/{OrbitEnemyCount} · залпы {ShotsFired} · HP {Player.CurrentHealth:F0}",true);
+                DrawOrbitHud();
+                return;
+            }
             Text(36,65,680,28,$"Враги {Alive}/{EnemyDensity} · залпы {ShotsFired} · импульсы {ModulePulses} · HP {Player.CurrentHealth:F0}",true);
             Fill(new Rect(20,810,1560,70),new Color(.02f,.04f,.07f,.9f));
             Text(36,821,1170,28,"WASD — движение     Q / E — поворот     ПКМ — центр     Shift — Bullet Time     Tab — конструктор");
@@ -285,6 +300,53 @@ namespace Subject42.DebugLabs.Telekinetic
             Text(736,853,270,24,$"Q/E: {RotationEnergy:F0}/{RotationCapacity:F0}   (ENERGY ≠ Q/E)",true);
             Fill(new Rect(1020,855,170,12),new Color(.12f,.2f,.25f)); Fill(new Rect(1020,855,170*RotationEnergy/RotationCapacity,12),new Color(.95f,.74f,.3f));
             if (Button(1250,826,310,35,"Tab   /   Конструктор")) SetEditing(true);
+        }
+
+        private void DrawOrbitModeButtons(float x, float y)
+        {
+            if (OrbitButton(x, y, 108, "A · Авто", orbitExperiment && orbitMode == OrbitMode.Auto)) SelectOrbitMode(OrbitMode.Auto);
+            if (OrbitButton(x + 114, y, 130, "B · Ручной", orbitExperiment && orbitMode == OrbitMode.Manual)) SelectOrbitMode(OrbitMode.Manual);
+            if (OrbitButton(x + 250, y, 130, "C · Перехват", orbitExperiment && orbitMode == OrbitMode.Assist)) SelectOrbitMode(OrbitMode.Assist);
+        }
+
+        private void DrawOrbitHud()
+        {
+            if (orbitAiming && Event.current.type == EventType.Repaint)
+            {
+                Vector2 start = OrbitGuiPoint(ArenaCamera.WorldToScreenPoint(primaryView.position + primaryView.right * .28f));
+                Vector2 end = OrbitGuiPoint(ArenaCamera.WorldToScreenPoint(primaryView.position + primaryView.right * 1.05f));
+                Link(start, end, new Color(1f,.83f,.38f), 3);
+            }
+            Fill(OrbitPanel,new Color(.02f,.04f,.07f,.93f));
+            DrawOrbitModeButtons(36,769);
+            string aimHelp = orbitMode switch
+            {
+                OrbitMode.Manual => "Курсор — прицел · ЛКМ — огонь",
+                OrbitMode.Assist => "Удерживать ЛКМ — наводить при автоогне",
+                _ => "Вращение и огонь наружу"
+            };
+            string weapon = primaryWeapon == null ? "Нет стрелкового оружия" :
+                $"{TelekineticBuild.Label(primaryWeapon.Kind)} [{primaryWeapon.Position.x}, {primaryWeapon.Position.y}]";
+            Text(436,774,500,45,$"{weapon}  ·  {aimHelp}",true);
+            Text(955,770,195,24,$"Вращение {orbitSpeed:F0}°/с",true);
+            orbitSpeed=GUI.HorizontalSlider(new Rect(1095,776,132,24),orbitSpeed,20,240);
+            if (Button(1250,769,310,32,"Tab   /   Конструктор")) SetEditing(true);
+
+            if (OrbitButton(36,814,112,"Обычные",orbitEnemies==OrbitEnemies.Regular)) SelectOrbitEnemies(OrbitEnemies.Regular);
+            if (OrbitButton(154,814,124,"Обходчик",orbitEnemies==OrbitEnemies.Flanker)) SelectOrbitEnemies(OrbitEnemies.Flanker);
+            if (OrbitButton(284,814,132,"Проломщик",orbitEnemies==OrbitEnemies.Breacher)) SelectOrbitEnemies(OrbitEnemies.Breacher);
+            if (Button(436,814,143,32,"Новый бой")) NewFight();
+            Text(603,819,900,29,"WASD — движение    ПКМ — центр    Shift — Bullet Time",true);
+            Text(603,847,230,22,$"Bullet Time  {BulletTime.Energy:P0}",true);
+        }
+
+        private bool OrbitButton(float x, float y, float width, string label, bool active)
+        {
+            Color previous=GUI.backgroundColor;
+            if (active) GUI.backgroundColor=new Color(.4f,.85f,1);
+            bool pressed=Button(x,y,width,32,label);
+            GUI.backgroundColor=previous;
+            return pressed;
         }
     }
 }
